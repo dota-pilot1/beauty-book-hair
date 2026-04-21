@@ -6,6 +6,7 @@ import { roleApi } from "@/entities/user/api/roleApi";
 import { permissionApi } from "@/entities/permission/api/permissionApi";
 import { toast, toastError } from "@/shared/lib/toast";
 import { RoleManageDialog } from "./RoleManageDialog";
+import { UserRoleDialog } from "@/features/user-management/UserRoleDialog";
 import type { Role } from "@/entities/user/model/types";
 import type { Permission } from "@/entities/permission/model/types";
 
@@ -13,6 +14,7 @@ export function RolePermissionManager() {
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
   const [manageOpen, setManageOpen] = useState(false);
+  const [userRoleOpen, setUserRoleOpen] = useState(false);
   const qc = useQueryClient();
 
   const { data: roles = [], isLoading: rolesLoading } = useQuery({
@@ -82,16 +84,25 @@ export function RolePermissionManager() {
         <aside className="w-56 shrink-0 border-r border-border bg-muted/30 flex flex-col">
           <div className="flex h-12 items-center justify-between px-4 border-b border-border shrink-0">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">역할 목록</p>
-            <button
-              onClick={() => setManageOpen(true)}
-              title="역할 관리"
-              className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setUserRoleOpen(true)}
+                title="유저 롤 설정"
+                className="rounded-md px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-input"
+              >
+                유저 롤
+              </button>
+              <button
+                onClick={() => setManageOpen(true)}
+                title="역할 관리"
+                className="rounded-md p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            </div>
           </div>
           {rolesLoading ? (
             <p className="px-3 py-3 text-sm text-muted-foreground">로딩 중...</p>
@@ -204,6 +215,11 @@ export function RolePermissionManager() {
         open={manageOpen}
         roles={roles}
         onClose={() => setManageOpen(false)}
+      />
+
+      <UserRoleDialog
+        open={userRoleOpen}
+        onClose={() => setUserRoleOpen(false)}
       />
     </>
   );
