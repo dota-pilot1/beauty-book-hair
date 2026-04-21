@@ -1,6 +1,6 @@
-# Twilio Callcenter
+# Pilot Callcenter
 
-Twilio 기반 콜센터 관리 플랫폼 (진행 중).
+AWS Connect 기반 콜센터 관리 플랫폼 (진행 중).
 
 ---
 
@@ -13,6 +13,11 @@ Twilio 기반 콜센터 관리 플랫폼 (진행 중).
 - [x] 토큰 갱신 (`POST /api/auth/refresh`) — Refresh Token Rotation
 - [x] 로그아웃 (`POST /api/auth/logout`) — DB refresh token 삭제
 - [x] 내 정보 조회 (`GET /api/auth/me`) — 인증 필요
+
+### 상담 기록
+- [x] 통화 시작 (`POST /api/calls/start`) — contactId(선택), fromNumber, toNumber
+- [x] 통화 종료 (`PATCH /api/calls/{callSid}/end`) — durationSec
+- [x] 상담 목록 조회 (`GET /api/calls`) — 최신순
 
 ### 프론트엔드
 - [x] 회원가입 페이지 (`/register`) — react-hook-form + zod 유효성 검증
@@ -49,7 +54,7 @@ Twilio 기반 콜센터 관리 플랫폼 (진행 중).
 ### 1. DB 실행 (Docker)
 
 ```bash
-cd twilio-callcenter-container
+cd pilot-callcenter-container
 docker compose up -d
 ```
 
@@ -58,7 +63,7 @@ PostgreSQL이 `localhost:5434`에서 기동됩니다.
 ### 2. 백엔드 실행
 
 ```bash
-cd twilio-callcenter-server
+cd pilot-callcenter-server
 ./gradlew bootRun
 ```
 
@@ -67,7 +72,7 @@ cd twilio-callcenter-server
 ### 3. 프론트엔드 실행
 
 ```bash
-cd twilio-callcenter-front
+cd pilot-callcenter-front
 npm install
 npm run dev
 ```
@@ -76,15 +81,21 @@ npm run dev
 
 ---
 
-## 테스트 계정 (Swagger 기본값)
+## API — 상담 기록
+
+로컬 개발 및 AWS Connect Lambda에서 호출하는 엔드포인트.
 
 ```
-이메일:   terecal@daum.net
-비밀번호: password123!@
-사용자명: 홍길동
+POST  /api/calls/start
+      Body: { "contactId": "(선택)", "fromNumber": "010-xxxx-xxxx", "toNumber": "02-xxxx-xxxx" }
+
+PATCH /api/calls/{callSid}/end
+      Body: { "durationSec": 120 }
+
+GET   /api/calls
 ```
 
-비밀번호 규칙: 영문 + 숫자 + 특수문자 포함, 8자 이상.
+AWS Connect 연동 시 Lambda에서 위 엔드포인트를 호출하도록 연결하면 됩니다.
 
 ---
 

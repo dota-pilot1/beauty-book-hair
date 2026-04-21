@@ -3,10 +3,10 @@ server:
 
 spring:
   application:
-    name: twilio-callcenter-server
+    name: pilot-callcenter-server
 
   datasource:
-    url: jdbc:postgresql://localhost:5434/twilio_callcenter
+    url: jdbc:postgresql://localhost:5434/pilot_callcenter
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
@@ -21,7 +21,7 @@ spring:
     show-sql: true
 
 jwt:
-  secret: ${JWT_SECRET:twilio-callcenter-dev-secret-key-must-be-at-least-32-bytes-long}
+  secret: ${JWT_SECRET:pilot-callcenter-dev-secret-key-must-be-at-least-32-bytes-long}
   access-token-expiration-ms: 1800000
   refresh-token-expiration-ms: 604800000
-  issuer: twilio-callcenter
+  issuer: pilot-callcenter

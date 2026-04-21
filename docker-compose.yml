@@ -1,12 +1,12 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: twilio-callcenter-postgres
+    container_name: pilot-callcenter-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: twilio_callcenter
+      POSTGRES_DB: pilot_callcenter
     ports:
       - "5434:5432"
     volumes:
