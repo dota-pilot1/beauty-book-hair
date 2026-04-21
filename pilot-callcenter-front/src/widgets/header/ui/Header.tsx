@@ -131,7 +131,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-2">
+      <div className="flex h-14 w-full items-center justify-between px-4">
         {/* Left: logo + nav */}
         <nav className="flex items-center gap-6">
           <Link

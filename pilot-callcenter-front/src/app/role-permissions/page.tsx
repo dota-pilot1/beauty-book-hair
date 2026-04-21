@@ -6,7 +6,7 @@ import { RolePermissionManager } from "@/features/role-management/RolePermission
 export default function RolePermissionsPage() {
   return (
     <RequireAuth>
-      <main className="w-full px-2 py-4">
+      <main className="w-full py-2">
         <header className="mb-3">
           <h1 className="text-2xl font-bold tracking-tight">역할-권한 매핑</h1>
           <p className="text-sm text-muted-foreground mt-1">
