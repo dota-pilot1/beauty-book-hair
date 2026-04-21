@@ -42,7 +42,9 @@ function AdminDropdown() {
   const isActive =
     pathname.startsWith("/users") ||
     pathname.startsWith("/roles") ||
-    pathname.startsWith("/permissions");
+    pathname.startsWith("/permissions") ||
+    pathname.startsWith("/permission-categories") ||
+    pathname.startsWith("/role-permissions");
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -73,7 +75,7 @@ function AdminDropdown() {
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-2 w-36 rounded-lg border border-border bg-background shadow-lg z-50 py-1 overflow-hidden">
+        <div className="absolute left-0 top-full mt-2 w-44 rounded-lg border border-border bg-background shadow-lg z-50 py-1 overflow-hidden">
           <Link
             href="/users"
             onClick={() => setOpen(false)}
@@ -87,6 +89,21 @@ function AdminDropdown() {
             className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           >
             롤 관리
+          </Link>
+          <Link
+            href="/role-permissions"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            역할-권한 매핑
+          </Link>
+          <div className="my-1 border-t border-border/50" />
+          <Link
+            href="/permission-categories"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            권한 카테고리
           </Link>
           <Link
             href="/permissions"

@@ -6,6 +6,7 @@ import { permissionApi } from "@/entities/permission/api/permissionApi";
 import { toast, toastError } from "@/shared/lib/toast";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { PermissionFormDialog } from "./PermissionFormDialog";
+import { PermissionCategoryFormDialog } from "./PermissionCategoryFormDialog";
 import type { Permission } from "@/entities/permission/model/types";
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -20,7 +21,9 @@ const CATEGORY_COLORS: Record<string, string> = {
 export function PermissionTable() {
   const qc = useQueryClient();
   const [formTarget, setFormTarget] = useState<Permission | null | "new">(null);
+  const [defaultCategoryCode, setDefaultCategoryCode] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Permission | null>(null);
+  const [categoryFormOpen, setCategoryFormOpen] = useState(false);
 
   const { data: permissions, isLoading, isError } = useQuery({
     queryKey: ["permissions"],
@@ -41,15 +44,22 @@ export function PermissionTable() {
   if (isError) return <p className="text-sm text-destructive">데이터를 불러오지 못했습니다.</p>;
 
   const grouped = permissions?.reduce<Record<string, Permission[]>>((acc, p) => {
-    (acc[p.category] = acc[p.category] ?? []).push(p);
+    const key = p.category?.code ?? "기타";
+    (acc[key] = acc[key] ?? []).push(p);
     return acc;
   }, {});
 
   return (
     <>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex justify-end gap-2">
         <button
-          onClick={() => setFormTarget("new")}
+          onClick={() => setCategoryFormOpen(true)}
+          className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent transition-colors"
+        >
+          + 카테고리 등록
+        </button>
+        <button
+          onClick={() => { setDefaultCategoryCode(null); setFormTarget("new"); }}
           className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium hover:opacity-90 transition-opacity"
         >
           + 권한 등록
@@ -59,9 +69,20 @@ export function PermissionTable() {
       <div className="space-y-6">
         {Object.entries(grouped ?? {}).map(([category, perms]) => (
           <div key={category}>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {category}
-            </h2>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {category}
+              </h2>
+              <button
+                onClick={() => {
+                  setDefaultCategoryCode(perms[0]?.category?.code ?? category);
+                  setFormTarget("new");
+                }}
+                className="rounded-md border border-input bg-background px-2.5 py-1 text-xs font-medium hover:bg-accent transition-colors"
+              >
+                + 권한 등록
+              </button>
+            </div>
             <div className="overflow-x-auto rounded-lg border border-border">
               <table className="w-full text-sm">
                 <thead>
@@ -86,14 +107,17 @@ export function PermissionTable() {
                       <Td className="font-medium">{p.name}</Td>
                       <Td className="text-muted-foreground">{p.description ?? "-"}</Td>
                       <Td>
-                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${CATEGORY_COLORS[p.category] ?? "text-muted-foreground"}`}>
-                          {p.category}
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${CATEGORY_COLORS[p.category?.code ?? ""] ?? "text-muted-foreground"}`}>
+                          {p.category?.name ?? p.category?.code ?? "-"}
                         </span>
                       </Td>
                       <Td className="text-right">
                         <div className="flex justify-end gap-2">
                           <button
-                            onClick={() => setFormTarget(p)}
+                            onClick={() => {
+                              setDefaultCategoryCode(null);
+                              setFormTarget(p);
+                            }}
                             className="rounded border border-input px-2 py-0.5 text-xs hover:bg-accent"
                           >
                             수정
@@ -118,7 +142,17 @@ export function PermissionTable() {
       <PermissionFormDialog
         open={formTarget !== null}
         permission={formTarget === "new" ? null : formTarget}
-        onClose={() => setFormTarget(null)}
+        defaultCategoryCode={formTarget === "new" ? defaultCategoryCode : null}
+        onClose={() => {
+          setFormTarget(null);
+          setDefaultCategoryCode(null);
+        }}
+      />
+
+      <PermissionCategoryFormDialog
+        open={categoryFormOpen}
+        category={null}
+        onClose={() => setCategoryFormOpen(false)}
       />
 
       <ConfirmDialog

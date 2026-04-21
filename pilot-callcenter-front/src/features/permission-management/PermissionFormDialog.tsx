@@ -4,12 +4,11 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { permissionApi } from "@/entities/permission/api/permissionApi";
+import { permissionCategoryApi } from "@/entities/permission-category/api/permissionCategoryApi";
 import { toast, toastError } from "@/shared/lib/toast";
 import type { Permission } from "@/entities/permission/model/types";
-
-const CATEGORIES = ["USER", "ROLE", "PERMISSION", "DASHBOARD", "REPORT", "SYSTEM"];
 
 const createSchema = z.object({
   code: z
@@ -18,32 +17,45 @@ const createSchema = z.object({
     .regex(/^[A-Z][A-Z0-9_]*$/, "대문자/숫자/언더스코어 형식이어야 합니다."),
   name: z.string().min(1, "이름을 입력해주세요.").max(80),
   description: z.string().max(255).optional(),
-  category: z.string().min(1, "카테고리를 선택해주세요."),
+  categoryCode: z.string().min(1, "카테고리를 선택해주세요."),
 });
 
 const updateSchema = z.object({
   name: z.string().min(1, "이름을 입력해주세요.").max(80),
   description: z.string().max(255).optional(),
-  category: z.string().min(1, "카테고리를 선택해주세요."),
+  categoryCode: z.string().min(1, "카테고리를 선택해주세요."),
 });
 
 type Props = {
   open: boolean;
   permission?: Permission | null;
+  defaultCategoryCode?: string | null;
   onClose: () => void;
 };
 
-export function PermissionFormDialog({ open, permission, onClose }: Props) {
+type PermissionFormValues = {
+  code?: string;
+  name: string;
+  description?: string;
+  categoryCode: string;
+};
+
+export function PermissionFormDialog({ open, permission, defaultCategoryCode, onClose }: Props) {
   const isEdit = !!permission;
   const qc = useQueryClient();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: categories = [] } = useQuery({
+    queryKey: ["permission-categories"],
+    queryFn: () => permissionCategoryApi.list(),
+    enabled: open,
+  });
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<any>({
+  } = useForm<PermissionFormValues>({
     resolver: zodResolver(isEdit ? updateSchema : createSchema),
   });
 
@@ -51,11 +63,15 @@ export function PermissionFormDialog({ open, permission, onClose }: Props) {
     if (open) {
       reset(
         isEdit
-          ? { name: permission.name, description: permission.description ?? "", category: permission.category }
-          : { code: "", name: "", description: "", category: "" }
+          ? {
+              name: permission.name,
+              description: permission.description ?? "",
+              categoryCode: permission.category?.code ?? "",
+            }
+          : { code: "", name: "", description: "", categoryCode: defaultCategoryCode ?? "" }
       );
     }
-  }, [open, permission, isEdit, reset]);
+  }, [open, permission, isEdit, reset, defaultCategoryCode]);
 
   const mutation = useMutation({
     mutationFn: (values: Record<string, string>) =>
@@ -63,13 +79,13 @@ export function PermissionFormDialog({ open, permission, onClose }: Props) {
         ? permissionApi.update(permission!.id, {
             name: values.name,
             description: values.description,
-            category: values.category,
+            categoryCode: values.categoryCode,
           })
         : permissionApi.create({
             code: values.code,
             name: values.name,
             description: values.description,
-            category: values.category,
+            categoryCode: values.categoryCode,
           }),
     onSuccess: () => {
       toast.success(isEdit ? "권한이 수정되었습니다." : "권한이 등록되었습니다.");
@@ -92,7 +108,7 @@ export function PermissionFormDialog({ open, permission, onClose }: Props) {
       >
         <h2 className="text-base font-semibold mb-4">{isEdit ? "권한 수정" : "권한 등록"}</h2>
 
-        <form onSubmit={handleSubmit((v) => mutation.mutate(v as Record<string, string>))} className="space-y-4">
+        <form onSubmit={handleSubmit((values) => mutation.mutate(values))} className="space-y-4">
           {!isEdit ? (
             <Field label="코드" error={errors.code?.message as string}>
               <input
@@ -124,14 +140,14 @@ export function PermissionFormDialog({ open, permission, onClose }: Props) {
             />
           </Field>
 
-          <Field label="카테고리" error={errors.category?.message as string}>
+          <Field label="카테고리" error={errors.categoryCode?.message as string}>
             <select
-              {...register("category")}
+              {...register("categoryCode")}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">카테고리 선택</option>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
+              {categories.map((c) => (
+                <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
               ))}
             </select>
           </Field>
