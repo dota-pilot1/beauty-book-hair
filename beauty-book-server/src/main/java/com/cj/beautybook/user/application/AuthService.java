@@ -45,7 +45,10 @@ public class AuthService {
         if (userRepository.existsByEmail(req.email())) {
             throw new DuplicateEmailException();
         }
-        Role defaultRole = roleRepository.findByCode(RoleSeeder.ROLE_USER)
+        String signupRoleCode = userRepository.count() == 0
+                ? RoleSeeder.ROLE_ADMIN
+                : RoleSeeder.ROLE_USER;
+        Role defaultRole = roleRepository.findByCode(signupRoleCode)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
         String hash = passwordEncoder.encode(req.password());
         User saved = userRepository.save(User.createNewUser(req.email(), hash, req.username(), defaultRole));

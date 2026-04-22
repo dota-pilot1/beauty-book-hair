@@ -17,44 +17,16 @@ import { isAxiosError } from "@/shared/api/axios";
 const PAGE_SIZE = 10;
 
 export function UserTableWithGuard() {
-  const router = useRouter();
-  const [dismissed, setDismissed] = useState(false);
-
-  const { isError, error } = useQuery({
-    queryKey: ["users", 0, 10],
-    queryFn: () => userApi.list(0, 10),
-    retry: false,
-  });
-
-  const isForbidden =
-    isError && isAxiosError(error) && error.response?.status === 403;
-
-  const handleDismiss = () => {
-    setDismissed(true);
-    router.push("/");
-  };
-
-  if (isForbidden && !dismissed) {
-    return (
-      <AlertDialog
-        open={true}
-        variant="warning"
-        title="접근 권한이 없습니다"
-        description="이 페이지는 관리자 전용입니다. 홈 화면으로 이동합니다."
-        confirmText="홈으로 이동"
-        onConfirm={handleDismiss}
-      />
-    );
-  }
-
   return <UserTable />;
 }
 
 export function UserTable() {
+  const router = useRouter();
   const [page, setPage] = useState(0);
   const [editingUser, setEditingUser] = useState<UserListItem | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<UserListItem | null>(null);
+  const [dismissedForbidden, setDismissedForbidden] = useState(false);
   const qc = useQueryClient();
 
   const deleteMutation = useMutation({
@@ -67,11 +39,35 @@ export function UserTable() {
     onError: (e) => toastError(e, "삭제에 실패했습니다."),
   });
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, error } = useQuery({
     queryKey: ["users", page, PAGE_SIZE],
     queryFn: () => userApi.list(page, PAGE_SIZE),
     placeholderData: keepPreviousData,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
+
+  const isForbidden =
+    isError && isAxiosError(error) && error.response?.status === 403;
+
+  const handleForbiddenDismiss = () => {
+    setDismissedForbidden(true);
+    router.push("/");
+  };
+
+  if (isForbidden && !dismissedForbidden) {
+    return (
+      <AlertDialog
+        open={true}
+        variant="warning"
+        title="접근 권한이 없습니다"
+        description="이 페이지는 관리자 전용입니다. 홈 화면으로 이동합니다."
+        confirmText="홈으로 이동"
+        onConfirm={handleForbiddenDismiss}
+      />
+    );
+  }
 
   if (isLoading) {
     return <div className="py-12 text-center text-sm text-muted-foreground">불러오는 중...</div>;
