@@ -32,4 +32,6 @@ export const auth = {
   featureAuth: "JWT auth · role & permission management",
   featureTheme: "6 brand palettes · dark mode",
   featureI18n: "i18n (Korean / English / Japanese / Chinese)",
+  imagePlaceholder: "Intro image area",
+  imagePlaceholderTag: "PLACEHOLDER",
 };

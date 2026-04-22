@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles, Shield, Palette, Globe } from "lucide-react";
+import { Sparkles, Shield, Palette, Globe, Image as ImageIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type AuthLayoutProps = {
@@ -45,7 +45,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
           />
 
           {/* Left page — brand intro */}
-          <section className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/30 to-accent/20 p-8">
+          <section className="relative hidden lg:flex flex-col gap-5 overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/30 to-accent/20 p-7">
             <div
               aria-hidden
               className="pointer-events-none absolute -top-16 -left-16 h-56 w-56 rounded-full bg-primary/20 blur-3xl"
@@ -55,6 +55,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
               className="pointer-events-none absolute -bottom-20 -right-10 h-64 w-64 rounded-full bg-accent/30 blur-3xl"
             />
 
+            {/* Brand */}
             <div className="relative flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -62,22 +63,34 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
               BeautyBook
             </div>
 
-            <div className="relative space-y-5">
-              <h2 className="text-2xl font-bold leading-tight tracking-tight text-foreground whitespace-pre-line">
+            {/* Image placeholder */}
+            <div className="relative flex-1 min-h-[140px] flex items-center justify-center rounded-xl border-2 border-dashed border-border bg-background/40 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
+                <ImageIcon className="h-6 w-6" />
+                <span className="text-[11px] font-medium">{t("imagePlaceholder")}</span>
+              </div>
+              <span className="absolute top-2 left-2 rounded-md bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground ring-1 ring-border">
+                {t("imagePlaceholderTag")}
+              </span>
+            </div>
+
+            {/* Intro copy */}
+            <div className="relative space-y-3">
+              <h2 className="text-xl font-bold leading-snug tracking-tight text-foreground whitespace-pre-line">
                 {t("introTitle")}
               </h2>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 {t("introSubtitle")}
               </p>
 
-              <ul className="space-y-2.5 pt-1">
+              <ul className="space-y-2 pt-1">
                 {features.map(({ icon: Icon, key }) => (
                   <li
                     key={key}
                     className="flex items-center gap-2.5 text-xs text-foreground/80"
                   >
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-background/70 ring-1 ring-border shadow-sm">
-                      <Icon className="h-3.5 w-3.5 text-primary" />
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-background/70 ring-1 ring-border shadow-sm">
+                      <Icon className="h-3 w-3 text-primary" />
                     </span>
                     <span>{t(key)}</span>
                   </li>

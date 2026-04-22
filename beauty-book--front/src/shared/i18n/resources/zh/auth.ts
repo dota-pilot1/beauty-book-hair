@@ -32,4 +32,6 @@ export const auth = {
   featureAuth: "JWT 鉴权 · 角色与权限管理",
   featureTheme: "6 种品牌配色 · 深色模式",
   featureI18n: "多语言 (韩语 / 英语 / 日语 / 中文)",
+  imagePlaceholder: "介绍图片区域",
+  imagePlaceholderTag: "PLACEHOLDER",
 };

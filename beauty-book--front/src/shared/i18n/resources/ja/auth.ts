@@ -32,4 +32,6 @@ export const auth = {
   featureAuth: "JWT 認証・ロール / 権限管理",
   featureTheme: "6色のブランドパレット・ダークモード",
   featureI18n: "多言語対応 (韓国語 / 英語 / 日本語 / 中国語)",
+  imagePlaceholder: "紹介画像エリア",
+  imagePlaceholderTag: "PLACEHOLDER",
 };

@@ -32,4 +32,6 @@ export const auth = {
   featureAuth: "JWT 인증 · 역할/권한 관리",
   featureTheme: "6색 브랜드 팔레트 · 다크모드",
   featureI18n: "다국어 (한국어 / English / 日本語 / 中文)",
+  imagePlaceholder: "소개 이미지 영역",
+  imagePlaceholderTag: "PLACEHOLDER",
 };
