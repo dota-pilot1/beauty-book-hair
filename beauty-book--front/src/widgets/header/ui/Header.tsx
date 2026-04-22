@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth, authActions } from "@/entities/user/model/authStore";
 import { RoleBadge } from "@/features/user-management/RoleBadge";
 import { NavLink } from "@/shared/ui/NavLink";
 import { ThemeSwitcher } from "@/shared/ui/theme/ThemeSwitcher";
+import { LanguageSelect } from "@/shared/ui/LanguageSelect";
 
 function UserAvatar({ name }: { name: string }) {
   const initials = (name ?? "?").slice(0, 2).toUpperCase();
@@ -36,6 +38,7 @@ function LogoutIcon() {
 }
 
 function AdminDropdown() {
+  const { t } = useTranslation("nav");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
@@ -60,7 +63,7 @@ function AdminDropdown() {
           isActive ? "text-foreground font-medium" : "text-muted-foreground hover:text-foreground"
         }`}
       >
-        관리
+        {t("admin")}
         <svg
           className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"
@@ -79,14 +82,14 @@ function AdminDropdown() {
             onClick={() => setOpen(false)}
             className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           >
-            유저 관리
+            {t("users")}
           </Link>
           <Link
             href="/role-permissions"
             onClick={() => setOpen(false)}
             className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           >
-            역할-권한 매핑
+            {t("rolePermissions")}
           </Link>
         </div>
       )}
@@ -95,6 +98,7 @@ function AdminDropdown() {
 }
 
 function UserDropdown({ displayName, user }: { displayName: string; user: NonNullable<ReturnType<typeof useAuth>["user"]> }) {
+  const { t } = useTranslation("nav");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -135,7 +139,7 @@ function UserDropdown({ displayName, user }: { displayName: string; user: NonNul
             onClick={() => setOpen(false)}
             className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           >
-            내 프로필
+            {t("profile")}
           </Link>
         </div>
       )}
@@ -144,6 +148,7 @@ function UserDropdown({ displayName, user }: { displayName: string; user: NonNul
 }
 
 export function Header() {
+  const { t } = useTranslation("nav");
   const { status, user } = useAuth();
   const router = useRouter();
 
@@ -168,7 +173,7 @@ export function Header() {
           {status === "authenticated" && (
             <>
               <NavLink href="/dashboard" exact>
-                대시보드
+                {t("dashboard")}
               </NavLink>
               <AdminDropdown />
             </>
@@ -177,6 +182,7 @@ export function Header() {
 
         {/* Right: user info + actions */}
         <div className="flex items-center gap-2">
+          <LanguageSelect />
           <ThemeSwitcher />
           {status === "authenticated" ? (
             <>
@@ -187,7 +193,7 @@ export function Header() {
                 className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               >
                 <LogoutIcon />
-                <span className="hidden sm:inline">로그아웃</span>
+                <span className="hidden sm:inline">{t("logout")}</span>
               </button>
             </>
           ) : status === "anonymous" ? (
@@ -196,13 +202,13 @@ export function Header() {
                 href="/register"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                회원가입
+                {t("register")}
               </Link>
               <Link
                 href="/login"
                 className="rounded-full bg-primary text-primary-foreground px-4 py-1.5 text-sm font-medium leading-none hover:opacity-90 transition-opacity"
               >
-                로그인
+                {t("login")}
               </Link>
             </>
           ) : null}

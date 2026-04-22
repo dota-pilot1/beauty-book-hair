@@ -6,6 +6,7 @@ import { QueryProvider } from "./QueryProvider";
 import { AuthInitializer } from "./AuthInitializer";
 import { Header } from "@/widgets/header";
 import { ThemeInitializer } from "@/shared/ui/theme/ThemeInitializer";
+import { I18nProvider } from "@/shared/i18n/I18nProvider";
 
 const themeNoFlashScript = `(function(){try{var t=localStorage.getItem("theme-color");if(t&&t!=="default")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();`;
 
@@ -38,12 +39,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeInitializer />
-        <QueryProvider>
-          <AuthInitializer>
-            <Header />
-            {children}
-          </AuthInitializer>
-        </QueryProvider>
+        <I18nProvider>
+          <QueryProvider>
+            <AuthInitializer>
+              <Header />
+              {children}
+            </AuthInitializer>
+          </QueryProvider>
+        </I18nProvider>
         <Toaster position="bottom-right" richColors />
       </body>
     </html>
