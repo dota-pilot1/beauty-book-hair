@@ -1,6 +1,6 @@
-# twilio-callcenter-front
+# beauty-book--front
 
-Next.js 16 + React 19 + Tailwind v4 + shadcn (new-york) 기반 프론트엔드.
+Next.js 16 + React 19 + Tailwind v4 기반 프론트엔드.
 
 ## Dev
 
