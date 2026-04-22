@@ -26,4 +26,10 @@ export const auth = {
   signupSuccess: "회원가입이 완료되었습니다. 로그인해주세요.",
   signupFailed: "요청 중 오류가 발생했습니다.",
   invalidCredentials: "이메일 또는 비밀번호가 올바르지 않습니다.",
+  introTitle: "팀을 위한\n깔끔한 인증 보일러플레이트",
+  introSubtitle:
+    "Spring Boot + Next.js 기반으로 회원/역할/권한 관리까지 갖춘 스타터 템플릿. 바로 이어 붙여 쓰세요.",
+  featureAuth: "JWT 인증 · 역할/권한 관리",
+  featureTheme: "6색 브랜드 팔레트 · 다크모드",
+  featureI18n: "다국어 (한국어 / English / 日本語 / 中文)",
 };

@@ -26,4 +26,10 @@ export const auth = {
   signupSuccess: "注册完成,请登录。",
   signupFailed: "请求时发生错误。",
   invalidCredentials: "邮箱或密码不正确。",
+  introTitle: "面向团队的\n简洁鉴权样板",
+  introSubtitle:
+    "基于 Spring Boot + Next.js,内置用户 / 角色 / 权限管理的起步模板。",
+  featureAuth: "JWT 鉴权 · 角色与权限管理",
+  featureTheme: "6 种品牌配色 · 深色模式",
+  featureI18n: "多语言 (韩语 / 英语 / 日语 / 中文)",
 };

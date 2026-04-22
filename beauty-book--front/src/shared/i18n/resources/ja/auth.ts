@@ -26,4 +26,10 @@ export const auth = {
   signupSuccess: "会員登録が完了しました。ログインしてください。",
   signupFailed: "リクエスト中にエラーが発生しました。",
   invalidCredentials: "メールアドレスまたはパスワードが正しくありません。",
+  introTitle: "チームのための\nシンプルな認証ボイラープレート",
+  introSubtitle:
+    "Spring Boot + Next.js ベースで、ユーザー・ロール・権限管理まで揃ったスターターテンプレート。",
+  featureAuth: "JWT 認証・ロール / 権限管理",
+  featureTheme: "6色のブランドパレット・ダークモード",
+  featureI18n: "多言語対応 (韓国語 / 英語 / 日本語 / 中国語)",
 };

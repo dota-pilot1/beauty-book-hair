@@ -26,4 +26,10 @@ export const auth = {
   signupSuccess: "Account created. Please sign in.",
   signupFailed: "An error occurred. Please try again.",
   invalidCredentials: "Invalid email or password.",
+  introTitle: "A clean auth boilerplate\nfor your team",
+  introSubtitle:
+    "Starter template with users, roles & permissions — built on Spring Boot + Next.js. Plug it in and ship.",
+  featureAuth: "JWT auth · role & permission management",
+  featureTheme: "6 brand palettes · dark mode",
+  featureI18n: "i18n (Korean / English / Japanese / Chinese)",
 };
