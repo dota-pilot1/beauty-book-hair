@@ -1,16 +1,92 @@
 # BeautyBook — Auth Boilerplate
 
-Next.js + Spring Boot 기반 인증·인가 보일러플레이트입니다.
-회원가입·로그인·JWT 인증, 역할(Role) 관리, 권한(Permission) 관리, 역할-권한 매핑까지 갖춘 관리자 기능을 제공합니다.
+Next.js + Spring Boot 기반 **인증·인가 보일러플레이트**입니다.
+JWT 인증, **RBAC (Role-Based Access Control)** 기반 역할·권한 관리, 역할-권한 매핑, 유저 역할 변경까지 관리자 기능을 제공합니다.
+
+**설계 포인트**
+- 백엔드: **DDD 4-Layer** 구조 (Presentation / Application / Domain / Infrastructure) × 바운디드 컨텍스트 분리
+- 프론트: **FSD (Feature-Sliced Design)** 구조 (app / widgets / features / entities / shared)
+- 영속성: **Spring Data JPA** — 도메인 엔티티(@Entity) + `JpaRepository` 인터페이스로 infrastructure 층에 격리
+- 보안: Spring Security + JWT Access/Refresh Token + `@PreAuthorize` 기반 메서드 보안
 
 ## 기술 스택
 
 | 영역 | 스택 |
 | --- | --- |
-| Frontend | Next.js 16, React 19, Tailwind v4, TanStack Query |
-| Backend | Spring Boot, Spring Security, JWT |
+| Frontend | Next.js 16, React 19, Tailwind v4, TanStack Query, react-hook-form + zod, i18next |
+| Backend | Spring Boot, Spring Security, Spring Data JPA, JWT |
 | DB | PostgreSQL 15 |
 | Infra | Docker Compose |
+
+## 아키텍처
+
+### 백엔드 — DDD 4-Layer × 바운디드 컨텍스트
+
+바운디드 컨텍스트(= 최상위 패키지) 단위로 독립적인 4계층 구조를 갖습니다.
+
+```
+com.cj.beautybook/
+├── auth/                      # 인증 컨텍스트
+│   ├── domain/                # RefreshToken (도메인 엔티티 @Entity)
+│   ├── infrastructure/        # RefreshTokenRepository (JpaRepository)
+│   ├── security/              # JwtAuthenticationFilter, UserPrincipal, CustomUserDetailsService
+│   └── jwt/                   # JwtTokenProvider, JwtProperties, TokenType
+├── user/                      # 유저 컨텍스트
+│   ├── domain/ application/ infrastructure/ presentation/(+dto)
+├── role/                      # 역할 컨텍스트
+├── permission/                # 권한 컨텍스트
+├── permission_category/       # 권한 카테고리 컨텍스트
+└── common/                    # 횡단 관심사 (response, exception)
+```
+
+| 계층 | 역할 | 예시 |
+| --- | --- | --- |
+| **presentation** | HTTP 진입점 + DTO | `RoleController`, `request/response DTO` |
+| **application** | 유스케이스 / 트랜잭션 경계 | `RoleService` |
+| **domain** | JPA 엔티티 · 도메인 규칙 | `Role`, `Permission`, `User` (`@Entity`) |
+| **infrastructure** | 영속성 어댑터 | `RoleRepository extends JpaRepository<Role, Long>` |
+
+- `presentation → application → domain` 은 하향 의존. `domain` 은 다른 계층을 모른다.
+- `infrastructure` 는 `domain` 의 Repository 인터페이스를 구현 (Spring Data JPA 가 프록시 자동 생성).
+
+### 프론트엔드 — FSD (Feature-Sliced Design)
+
+```
+beauty-book--front/src/
+├── app/                       # Next.js App Router 라우트 + 전역 Provider
+├── widgets/                   # 여러 feature 가 결합된 복합 UI (header)
+├── features/                  # 단일 비즈니스 플로우
+│   ├── auth/                  # login / signup 폼
+│   ├── user-management/
+│   ├── role-management/
+│   └── permission-management/
+├── entities/                  # 도메인 모델 + API + 모델 스토어
+│   ├── user/                  # authStore, authApi, 타입
+│   ├── permission/
+│   └── permission-category/
+└── shared/                    # 범용 UI · 유틸 · i18n · api client
+    ├── ui/                    # FormField, PasswordInput, AuthLayout, ThemeSwitcher ...
+    ├── lib/validation/        # zod 스키마
+    ├── api/                   # axios instance, errors
+    └── i18n/                  # i18next 설정 + 리소스
+```
+
+**의존 방향 규칙** (위 → 아래만 허용):
+`app → widgets → features → entities → shared`
+
+같은 계층 간 import 금지 — 복잡성 폭발을 구조적으로 차단합니다.
+
+### RBAC 모델
+
+```
+User ──(N:1)── Role ──(N:M)── Permission ──(N:1)── PermissionCategory
+```
+
+- **User** 는 단일 `Role` 을 가집니다 (확장 시 N:M 으로 변경 가능).
+- **Role** 과 **Permission** 은 N:M 매핑 (`role_permissions` 조인 테이블).
+- **Permission** 은 카테고리로 묶어 UI 에서 체크박스 그룹으로 편집.
+- 최초 가입자는 서버에서 강제로 `ROLE_ADMIN` 부여, 이후 가입자는 `ROLE_USER`.
+- 인가 체크: API 는 Spring Security (`@PreAuthorize("hasRole('ADMIN')")`), 화면은 [RequireAuth](beauty-book--front/src/widgets/guards/RequireAuth.tsx) 가드.
 
 ## 주요 기능
 
