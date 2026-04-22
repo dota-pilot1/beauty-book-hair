@@ -121,3 +121,7 @@ npm run dev
 
 - **첫 번째 가입자** → 서버에서 강제로 `ROLE_ADMIN` 부여
 - **이후 가입자** → 기본 `ROLE_USER`
+
+---
+
+> 다음 단계 보강 아이디어 (이메일 인증, OAuth, Refresh Token, 2FA+Audit Log, E2E+CI 등) 는 [보일러 플레이트 강화 방법.md](./보일러%20플레이트%20강화%20방법.md) 참고.
