@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Sparkles, Shield, Palette, Globe, Image as ImageIcon } from "lucide-react";
+import { Sparkles, Image as ImageIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { siteSettingApi } from "@/entities/site-setting/api/siteSettingApi";
@@ -21,14 +21,6 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
     staleTime: 5 * 60 * 1000,
   });
 
-  const features = [
-    { icon: Shield, key: "featureAuth", fallback: "JWT 인증 · 역할/권한 관리" },
-    { icon: Palette, key: "featureTheme", fallback: "6색 브랜드 팔레트 · 다크모드" },
-    { icon: Globe, key: "featureI18n", fallback: "다국어 지원" },
-  ];
-
-  const introTitle = siteSetting?.introTitle ?? t("introTitle", { defaultValue: "팀을 위한\n깔끔한 인증 보일러플레이트" });
-  const introSubtitle = siteSetting?.introSubtitle ?? t("introSubtitle", { defaultValue: "Spring Boot + Next.js 기반. 회원·역할·권한까지 갖춘 스타터 템플릿." });
   const heroImageUrl = siteSetting?.heroImageUrl ?? null;
 
   return (
@@ -55,7 +47,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
             className="absolute inset-x-0 bottom-0 h-[3px] bg-gradient-to-r from-accent/60 via-accent to-accent/60"
           />
 
-          {/* Left page — brand intro */}
+          {/* Left page — brand + hero image */}
           <section className="relative hidden lg:flex h-full flex-col gap-5 overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/30 to-accent/20 p-7">
             <div
               aria-hidden
@@ -75,7 +67,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
             </div>
 
             {/* Hero image (from site-settings) or placeholder */}
-            <div className="relative flex-1 min-h-[300px] overflow-hidden rounded-xl border-2 border-dashed border-border/80 bg-background/50 backdrop-blur-sm">
+            <div className="relative flex-1 overflow-hidden rounded-xl border-2 border-dashed border-border/80 bg-background/50 backdrop-blur-sm">
               {heroImageUrl ? (
                 <Image
                   src={heroImageUrl}
@@ -100,32 +92,8 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
               )}
             </div>
 
-            {/* Intro copy */}
-            <div className="relative space-y-2.5">
-              <h2 className="text-lg font-bold leading-snug tracking-tight text-foreground whitespace-pre-line">
-                {introTitle}
-              </h2>
-              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
-                {introSubtitle}
-              </p>
-
-              <ul className="space-y-1.5 pt-1">
-                {features.map(({ icon: Icon, key, fallback }) => (
-                  <li
-                    key={key}
-                    className="flex items-center gap-2.5 text-xs text-foreground/80"
-                  >
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-background/80 ring-1 ring-border shadow-sm">
-                      <Icon className="h-3 w-3 text-primary" />
-                    </span>
-                    <span>{t(key, { defaultValue: fallback })}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <p className="relative text-[10px] text-muted-foreground mt-auto">
-              © {new Date().getFullYear()} BeautyBook · Auth Boilerplate
+            <p className="relative text-[10px] text-muted-foreground">
+              © {new Date().getFullYear()} BeautyBook
             </p>
           </section>
 
