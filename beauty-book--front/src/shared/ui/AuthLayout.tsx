@@ -1,7 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { Sparkles, Shield, Palette, Globe, Image as ImageIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { siteSettingApi } from "@/entities/site-setting/api/siteSettingApi";
 
 type AuthLayoutProps = {
   title: string;
@@ -12,15 +15,25 @@ type AuthLayoutProps = {
 export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   const { t } = useTranslation("auth");
 
+  const { data: siteSetting } = useQuery({
+    queryKey: ["site-settings"],
+    queryFn: siteSettingApi.get,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const features = [
     { icon: Shield, key: "featureAuth", fallback: "JWT 인증 · 역할/권한 관리" },
     { icon: Palette, key: "featureTheme", fallback: "6색 브랜드 팔레트 · 다크모드" },
     { icon: Globe, key: "featureI18n", fallback: "다국어 지원" },
   ];
 
+  const introTitle = siteSetting?.introTitle ?? t("introTitle", { defaultValue: "팀을 위한\n깔끔한 인증 보일러플레이트" });
+  const introSubtitle = siteSetting?.introSubtitle ?? t("introSubtitle", { defaultValue: "Spring Boot + Next.js 기반. 회원·역할·권한까지 갖춘 스타터 템플릿." });
+  const heroImageUrl = siteSetting?.heroImageUrl ?? null;
+
   return (
     <main className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-4 py-10 sm:py-14 bg-gradient-to-br from-muted/40 via-background to-accent/10">
-      <div className="relative w-full max-w-4xl">
+      <div className="relative w-full max-w-5xl">
         {/* Soft outer glow ring */}
         <div
           aria-hidden
@@ -28,7 +41,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
         />
 
         {/* Card = the "booklet" — items-stretch makes both pages equal height */}
-        <div className="relative grid lg:grid-cols-2 items-stretch rounded-2xl border-2 border-border bg-background shadow-[0_24px_70px_-18px_rgba(0,0,0,0.25)] ring-1 ring-black/5 overflow-hidden lg:min-h-[620px]">
+        <div className="relative grid lg:grid-cols-2 items-stretch rounded-2xl border-2 border-border bg-background shadow-[0_24px_70px_-18px_rgba(0,0,0,0.25)] ring-1 ring-black/5 overflow-hidden lg:min-h-[720px]">
           <span
             aria-hidden
             className="hidden lg:block absolute top-6 bottom-6 left-1/2 w-px bg-border"
@@ -61,29 +74,39 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
               BeautyBook
             </div>
 
-            {/* Image placeholder — labeled as '소개 이미지 영역' */}
-            <div className="relative flex-1 min-h-[160px] flex items-center justify-center rounded-xl border-2 border-dashed border-border/80 bg-background/50 backdrop-blur-sm">
-              <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
-                <ImageIcon className="h-7 w-7" />
-                <span className="text-[11px] font-medium">
-                  {t("imagePlaceholder", { defaultValue: "소개 이미지 영역" })}
-                </span>
-              </div>
-              <span className="absolute top-2 left-2 rounded-md bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground ring-1 ring-border">
-                {t("imagePlaceholderTag", { defaultValue: "PLACEHOLDER" })}
-              </span>
+            {/* Hero image (from site-settings) or placeholder */}
+            <div className="relative flex-1 min-h-[300px] overflow-hidden rounded-xl border-2 border-dashed border-border/80 bg-background/50 backdrop-blur-sm">
+              {heroImageUrl ? (
+                <Image
+                  src={heroImageUrl}
+                  alt="대문 이미지"
+                  fill
+                  unoptimized
+                  sizes="(max-width: 1024px) 100vw, 512px"
+                  className="object-cover"
+                />
+              ) : (
+                <>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                    <ImageIcon className="h-10 w-10" />
+                    <span className="text-xs font-medium">
+                      {t("imagePlaceholder", { defaultValue: "소개 이미지 영역" })}
+                    </span>
+                  </div>
+                  <span className="absolute top-2 left-2 rounded-md bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground ring-1 ring-border">
+                    {t("imagePlaceholderTag", { defaultValue: "PLACEHOLDER" })}
+                  </span>
+                </>
+              )}
             </div>
 
             {/* Intro copy */}
             <div className="relative space-y-2.5">
               <h2 className="text-lg font-bold leading-snug tracking-tight text-foreground whitespace-pre-line">
-                {t("introTitle", { defaultValue: "팀을 위한\n깔끔한 인증 보일러플레이트" })}
+                {introTitle}
               </h2>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {t("introSubtitle", {
-                  defaultValue:
-                    "Spring Boot + Next.js 기반. 회원·역할·권한까지 갖춘 스타터 템플릿.",
-                })}
+              <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">
+                {introSubtitle}
               </p>
 
               <ul className="space-y-1.5 pt-1">

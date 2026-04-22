@@ -5,6 +5,9 @@ spring:
   application:
     name: beauty-book-server
 
+  config:
+    import: optional:classpath:application-local.yaml
+
   datasource:
     url: jdbc:postgresql://localhost:5434/beauty_book
     username: postgres
@@ -25,3 +28,12 @@ jwt:
   access-token-expiration-ms: 1800000
   refresh-token-expiration-ms: 604800000
   issuer: beauty-book
+
+aws:
+  s3:
+    access-key: ${AWS_ACCESS_KEY_ID:}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:}
+    bucket: ${AWS_S3_BUCKET_NAME:}
+    region: ${AWS_S3_REGION:ap-northeast-2}
+    prefix: ${AWS_S3_PREFIX:beauty-book}
+    presign-expires-seconds: 300

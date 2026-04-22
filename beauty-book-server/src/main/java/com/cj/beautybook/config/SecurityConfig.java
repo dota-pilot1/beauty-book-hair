@@ -79,6 +79,7 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/check-email"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/site-settings").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

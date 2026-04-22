@@ -1,0 +1,7 @@
+aws:
+  s3:
+    access-key: YOUR_AWS_ACCESS_KEY_ID
+    secret-key: YOUR_AWS_SECRET_ACCESS_KEY
+    bucket: your-bucket-name
+    region: ap-northeast-2
+    prefix: beauty-book

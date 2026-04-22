@@ -24,6 +24,9 @@ public enum ErrorCode {
     PERMISSION_CATEGORY_IN_USE(HttpStatus.CONFLICT, "PCAT_003", "해당 카테고리를 사용 중인 권한이 있어 삭제할 수 없습니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON_002", "접근 권한이 없습니다."),
     VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "COMMON_001", "입력값이 올바르지 않습니다."),
+    UPLOAD_NOT_CONFIGURED(HttpStatus.SERVICE_UNAVAILABLE, "UPLOAD_001", "파일 업로드(S3)가 설정되지 않았습니다."),
+    UPLOAD_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "UPLOAD_002", "허용되지 않은 파일 형식입니다."),
+    SITE_SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "SITE_001", "사이트 설정을 찾을 수 없습니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_999", "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;

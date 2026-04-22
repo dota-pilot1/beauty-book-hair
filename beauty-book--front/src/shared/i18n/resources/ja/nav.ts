@@ -3,6 +3,7 @@ export const nav = {
   admin: "管理",
   users: "ユーザー管理",
   rolePermissions: "ロール・権限マッピング",
+  siteSettings: "メイン管理",
   profile: "マイプロフィール",
   logout: "ログアウト",
   login: "ログイン",

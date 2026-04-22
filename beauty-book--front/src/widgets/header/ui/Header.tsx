@@ -46,7 +46,8 @@ function AdminDropdown() {
 
   const isActive =
     pathname.startsWith("/users") ||
-    pathname.startsWith("/role-permissions");
+    pathname.startsWith("/role-permissions") ||
+    pathname.startsWith("/site-settings");
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -91,6 +92,13 @@ function AdminDropdown() {
             className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
           >
             {t("rolePermissions")}
+          </Link>
+          <Link
+            href="/site-settings"
+            onClick={() => setOpen(false)}
+            className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          >
+            {t("siteSettings")}
           </Link>
         </div>
       )}

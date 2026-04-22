@@ -3,6 +3,7 @@ export const nav = {
   admin: "Admin",
   users: "Users",
   rolePermissions: "Roles & Permissions",
+  siteSettings: "Landing Page",
   profile: "My Profile",
   logout: "Logout",
   login: "Login",
