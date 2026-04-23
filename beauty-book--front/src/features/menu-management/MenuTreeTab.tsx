@@ -13,10 +13,11 @@ import {
 import { restrictToVerticalAxis, restrictToWindowEdges } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, GripVertical } from "lucide-react";
+import { ChevronRight, GripVertical, Plus, Trash2 } from "lucide-react";
 import { menuApi, type UpdateMenuBody } from "@/entities/menu/api/menuApi";
 import type { MenuRecord, MenuItem } from "@/entities/menu/model/types";
 import { toast, toastError } from "@/shared/lib/toast";
+import { MenuFormDialog } from "./MenuFormDialog";
 
 function buildTree(flat: MenuRecord[]): MenuItem[] {
   const map = new Map<number, MenuItem>();
@@ -54,10 +55,12 @@ function DetailPanel({
   menu,
   allMenus,
   onSaved,
+  onDeleted,
 }: {
   menu: MenuRecord;
   allMenus: MenuRecord[];
   onSaved: () => void;
+  onDeleted: () => void;
 }) {
   const qc = useQueryClient();
   const [form, setForm] = useState<UpdateMenuBody>(toUpdateBody(menu));
@@ -75,6 +78,21 @@ function DetailPanel({
     onError: (e) => toastError(e, "저장에 실패했습니다."),
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: () => menuApi.delete(menu.id),
+    onSuccess: () => {
+      toast.success("삭제되었습니다.");
+      qc.invalidateQueries({ queryKey: ["menus"] });
+      onDeleted();
+    },
+    onError: (e) => toastError(e, "삭제에 실패했습니다."),
+  });
+
+  const handleDelete = () => {
+    if (!confirm(`"${menu.label}" 메뉴를 삭제하시겠습니까?\n하위 메뉴가 있으면 삭제할 수 없습니다.`)) return;
+    deleteMutation.mutate();
+  };
+
   const roots = allMenus.filter(
     (m) => m.parentId === null && m.id !== menu.id
   );
@@ -86,13 +104,23 @@ function DetailPanel({
           <p className="text-xs text-muted-foreground font-mono">{menu.code}</p>
           <h3 className="font-semibold text-base">{menu.label}</h3>
         </div>
-        <button
-          onClick={() => mutation.mutate()}
-          disabled={mutation.isPending}
-          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
-        >
-          {mutation.isPending ? "저장 중..." : "저장"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+            className="rounded-md border border-destructive/40 text-destructive px-3 py-1.5 text-sm font-medium hover:bg-destructive/10 disabled:opacity-60 flex items-center gap-1"
+          >
+            <Trash2 size={14} />
+            삭제
+          </button>
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending}
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
+          >
+            {mutation.isPending ? "저장 중..." : "저장"}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 overflow-y-auto flex-1">
@@ -299,6 +327,7 @@ export function MenuTreeTab() {
   const [selected, setSelected] = useState<MenuRecord | null>(null);
   const [openMap, setOpenMap] = useState<Record<number, boolean>>({});
   const [localFlat, setLocalFlat] = useState<MenuRecord[] | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data: serverMenus = [], isLoading } = useQuery({
     queryKey: ["menus"],
@@ -369,8 +398,17 @@ export function MenuTreeTab() {
     <div className="flex gap-4 h-[600px]">
       {/* Left: Tree */}
       <div className="w-72 shrink-0 rounded-lg border border-border bg-muted/20 flex flex-col overflow-hidden">
-        <div className="px-3 py-2 border-b border-border text-xs font-semibold text-muted-foreground">
-          메뉴 트리 <span className="ml-1 font-normal opacity-60">드래그로 순서 변경</span>
+        <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+          <div className="text-xs font-semibold text-muted-foreground">
+            메뉴 트리 <span className="ml-1 font-normal opacity-60">드래그로 순서 변경</span>
+          </div>
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="rounded-md bg-primary text-primary-foreground px-2 py-1 text-xs font-medium hover:opacity-90 flex items-center gap-1"
+          >
+            <Plus size={12} />
+            추가
+          </button>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
           <DndContext
@@ -409,6 +447,7 @@ export function MenuTreeTab() {
             menu={selected}
             allMenus={flat}
             onSaved={() => setSelected(null)}
+            onDeleted={() => setSelected(null)}
           />
         ) : (
           <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
@@ -416,6 +455,14 @@ export function MenuTreeTab() {
           </div>
         )}
       </div>
+
+      {createOpen && (
+        <MenuFormDialog
+          target="new"
+          menus={flat}
+          onClose={() => setCreateOpen(false)}
+        />
+      )}
     </div>
   );
 }
