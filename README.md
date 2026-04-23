@@ -36,6 +36,7 @@ com.cj.beautybook/
 ├── role/                      # 역할 컨텍스트
 ├── permission/                # 권한 컨텍스트
 ├── permission_category/       # 권한 카테고리 컨텍스트
+├── menu/                      # 헤더 메뉴 컨텍스트 (DB 기반 N차 트리)
 └── common/                    # 횡단 관심사 (response, exception)
 ```
 
@@ -97,6 +98,7 @@ User ──(N:1)── Role ──(N:M)── Permission ──(N:1)── Permi
 - 역할-권한 매핑 (체크박스 UI)
 - 유저 역할 변경
 - 관리자 전용 페이지 가드 (RequireAuth)
+- **DB 기반 헤더 메뉴** — N차 트리, 관리자 CRUD UI (`/menu-management`), 드래그로 순서 변경, `requiredRole` 기반 가시성 필터 (상세: [docs-for-메뉴 데이터 디비 저장 and 헤더 메뉴 출력/](./docs-for-메뉴%20데이터%20디비%20저장%20and%20헤더%20메뉴%20출력/))
 - **브랜드 컬러 테마 스위처** (6색 팔레트, 전체 surface 톤 전환, localStorage 지속)
 - **다국어 (i18n)** — 한국어 / English / 日本語 / 中文, 헤더 드롭다운으로 실시간 전환
 
@@ -192,6 +194,7 @@ npm run dev
 - `PermissionCategorySeeder` — 기본 권한 카테고리
 - `RoleSeeder` — ROLE_ADMIN / ROLE_MANAGER / ROLE_USER
 - `PermissionSeeder` — 기본 권한 9종
+- `MenuSeeder` — 헤더 메뉴 기본 6개 (대시보드 + 관리 하위 4개)
 
 ## 가입 정책
 
