@@ -14,6 +14,7 @@ export type CreateBeautyServiceBody = {
   targetGender: BeautyServiceTargetGender;
   visible: boolean;
   displayOrder: number;
+  imageUrls?: string[];
 };
 
 export type UpdateBeautyServiceBody = Omit<CreateBeautyServiceBody, "code">;

@@ -109,11 +109,8 @@ public class Reservation {
         return reservation;
     }
 
-    public void changeStatus(ReservationStatus status) {
+    public void changeStatus(ReservationStatus status, String adminMemo) {
         this.status = status;
-    }
-
-    public void updateAdminMemo(String adminMemo) {
-        this.adminMemo = adminMemo;
+        if (adminMemo != null) this.adminMemo = adminMemo;
     }
 }

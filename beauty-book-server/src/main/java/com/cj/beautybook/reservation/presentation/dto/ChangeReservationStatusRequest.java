@@ -4,5 +4,6 @@ import com.cj.beautybook.reservation.domain.ReservationStatus;
 import jakarta.validation.constraints.NotNull;
 
 public record ChangeReservationStatusRequest(
-        @NotNull ReservationStatus status
+        @NotNull ReservationStatus status,
+        String adminMemo
 ) {}

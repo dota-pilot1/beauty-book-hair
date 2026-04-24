@@ -20,6 +20,6 @@ export const reservationApi = {
   listByDate: (date: string) =>
     api.get<Reservation[]>("/api/reservations", { params: { date } }).then((r) => r.data),
 
-  changeStatus: (id: number, status: string) =>
-    api.patch<Reservation>(`/api/reservations/${id}/status`, { status }).then((r) => r.data),
+  changeStatus: (id: number, status: string, adminMemo?: string) =>
+    api.patch<Reservation>(`/api/reservations/${id}/status`, { status, adminMemo }).then((r) => r.data),
 };

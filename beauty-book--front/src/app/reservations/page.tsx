@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { CalendarDays } from "lucide-react";
-import * as Switch from "@radix-ui/react-switch";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
 import { useReservationsByDate, useMyReservations, useChangeReservationStatus } from "@/entities/reservation/model/useReservations";
@@ -50,26 +49,55 @@ function ReservationsContent() {
 
   const dateOptions = useMemo(() => getNextDateOptions(7), []);
   const [selectedDate, setSelectedDate] = useState(dateOptions[0].value);
+  const [viewAll, setViewAll] = useState(true);
+
+  const showAll = isAdmin && viewAll;
 
   const allQuery = useReservationsByDate(selectedDate);
   const myQuery = useMyReservations();
   const changeStatus = useChangeReservationStatus();
 
-  const reservations = isAdmin ? (allQuery.data ?? []) : (myQuery.data ?? []).filter((r) => {
+  const reservations = showAll ? (allQuery.data ?? []) : (myQuery.data ?? []).filter((r) => {
     const kst = new Date(r.startAt).toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
     return kst === selectedDate;
   });
-  const isLoading = isAdmin ? allQuery.isLoading : myQuery.isLoading;
+  const isLoading = showAll ? allQuery.isLoading : myQuery.isLoading;
 
   return (
     <CustomerShell
       eyebrow="Reservations"
       title="예약 현황"
-      description={isAdmin ? "전체 예약 현황을 날짜별로 확인하고 승인·관리합니다." : "내 예약 현황을 날짜별로 확인합니다."}
+      description={showAll ? "전체 예약 현황을 날짜별로 확인하고 승인·관리합니다." : "내 예약 현황을 날짜별로 확인합니다."}
       showSidebarIntro={false}
       showHeader={false}
     >
       <div className="space-y-4">
+        {/* 관리자 전체/나 토글 */}
+        {isAdmin && (
+          <div className="flex">
+            <div className="inline-flex rounded-xl border border-black/10 bg-muted/30 p-1">
+              <button
+                type="button"
+                onClick={() => setViewAll(true)}
+                className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
+                  viewAll ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                전체
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewAll(false)}
+                className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
+                  !viewAll ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                나
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* 날짜 탭 */}
         <section className="grid grid-cols-4 gap-2 sm:grid-cols-7">
           {dateOptions.map((opt) => (
@@ -114,7 +142,9 @@ function ReservationsContent() {
                   key={r.id}
                   reservation={r}
                   isAdmin={isAdmin}
-                  onChangeStatus={(status) => changeStatus.mutate({ id: r.id, status })}
+                  onChangeStatus={(status, adminMemo) =>
+                    changeStatus.mutate({ id: r.id, status, adminMemo })
+                  }
                   isPending={changeStatus.isPending}
                 />
               ))
@@ -126,6 +156,14 @@ function ReservationsContent() {
   );
 }
 
+const ADMIN_STATUS_BUTTONS = [
+  { status: "REQUESTED",          label: "승인 대기", className: "border-amber-300 bg-amber-50 text-amber-700",     activeRing: "ring-amber-200" },
+  { status: "CONFIRMED",          label: "예약 확정", className: "border-emerald-300 bg-emerald-50 text-emerald-700", activeRing: "ring-emerald-200" },
+  { status: "COMPLETED",          label: "완료",      className: "border-blue-300 bg-blue-50 text-blue-700",         activeRing: "ring-blue-200" },
+  { status: "NO_SHOW",            label: "노쇼",      className: "border-rose-300 bg-rose-50 text-rose-700",         activeRing: "ring-rose-200" },
+  { status: "CANCELLED_BY_ADMIN", label: "취소",      className: "border-black/15 bg-muted text-muted-foreground",   activeRing: "" },
+] as const;
+
 function ReservationCard({
   reservation: r,
   isAdmin,
@@ -134,16 +172,25 @@ function ReservationCard({
 }: {
   reservation: Reservation;
   isAdmin: boolean;
-  onChangeStatus: (status: string) => void;
+  onChangeStatus: (status: string, adminMemo?: string) => void;
   isPending: boolean;
 }) {
-  const meta = STATUS_META[r.status];
+  const [cancelMemo, setCancelMemo] = useState("");
+  const [showCancelInput, setShowCancelInput] = useState(false);
+
+  const handleAdminCancel = () => {
+    onChangeStatus("CANCELLED_BY_ADMIN", cancelMemo || undefined);
+    setShowCancelInput(false);
+    setCancelMemo("");
+  };
+
   const isActive = ["REQUESTED", "CONFIRMED"].includes(r.status);
 
   return (
     <div className="rounded-2xl border border-black/10 bg-background p-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
+      <div className="flex items-start gap-4">
+        {/* 예약 정보 */}
+        <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground">
             {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
           </p>
@@ -152,67 +199,77 @@ function ReservationCard({
             {r.staffName}
             {isAdmin && ` · ${r.customerName} (${r.customerPhone})`}
           </p>
+          {r.adminMemo && (
+            <p className="mt-1 text-xs text-muted-foreground">메모: {r.adminMemo}</p>
+          )}
         </div>
 
-        {/* 관리자: 승인 토글 / 그 외: 상태 뱃지 */}
-        {isAdmin && r.status === "REQUESTED" ? (
-          <div className="flex shrink-0 flex-col items-end gap-1.5">
-            <span className="text-xs text-muted-foreground">승인</span>
-            <Switch.Root
-              checked={false}
-              disabled={isPending}
-              onCheckedChange={(checked) => {
-                if (checked) onChangeStatus("CONFIRMED");
-              }}
-              className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full bg-muted transition-colors data-[state=checked]:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Switch.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-5" />
-            </Switch.Root>
+        {/* 관리자: 상태 버튼 그룹 (우측) */}
+        {isAdmin && (
+          <div className="shrink-0">
+            {!showCancelInput ? (
+              <div className="flex flex-col gap-1">
+                {ADMIN_STATUS_BUTTONS.map(({ status, label, className }) => {
+                  const isCurrent = r.status === status;
+                  const isCancelBtn = status === "CANCELLED_BY_ADMIN";
+                  return (
+                    <button
+                      key={status}
+                      type="button"
+                      disabled={isPending || isCurrent}
+                      onClick={() => isCancelBtn ? setShowCancelInput(true) : onChangeStatus(status)}
+                      className={`rounded-lg border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-default ${
+                        isCurrent
+                          ? className
+                          : "border-black/10 bg-background text-muted-foreground hover:bg-accent disabled:opacity-40"
+                      }`}
+                    >
+                      {isCurrent ? `✓ ${label}` : label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="w-48 space-y-2">
+                <p className="text-xs font-medium text-rose-600">취소 사유 (선택)</p>
+                <textarea
+                  value={cancelMemo}
+                  onChange={(e) => setCancelMemo(e.target.value)}
+                  placeholder="취소 사유를 입력하세요..."
+                  rows={2}
+                  className="w-full resize-none rounded-xl border border-black/10 bg-muted/30 px-3 py-2 text-xs outline-none focus:border-black/20"
+                />
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={handleAdminCancel}
+                    className="flex-1 rounded-lg bg-rose-500 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                  >
+                    취소 확정
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowCancelInput(false); setCancelMemo(""); }}
+                    className="flex-1 rounded-lg border border-black/10 py-1.5 text-xs font-medium text-muted-foreground"
+                  >
+                    돌아가기
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        ) : isAdmin && r.status === "CONFIRMED" ? (
-          <div className="flex shrink-0 flex-col items-end gap-1.5">
-            <span className="text-xs text-muted-foreground">승인</span>
-            <Switch.Root
-              checked={true}
-              disabled={isPending}
-              onCheckedChange={(checked) => {
-                if (!checked) onChangeStatus("CANCELLED_BY_ADMIN");
-              }}
-              className="relative inline-flex h-6 w-11 cursor-pointer items-center rounded-full bg-muted transition-colors data-[state=checked]:bg-primary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Switch.Thumb className="block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-5" />
-            </Switch.Root>
-          </div>
-        ) : (
-          <span className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-medium ${meta.className}`}>
-            {meta.label}
+        )}
+
+        {/* 고객: 상태 뱃지만 */}
+        {!isAdmin && (
+          <span className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-medium ${STATUS_META[r.status].className}`}>
+            {STATUS_META[r.status].label}
           </span>
         )}
       </div>
 
-      {/* 관리자 추가 액션 (완료/노쇼) */}
-      {isAdmin && r.status === "CONFIRMED" && (
-        <div className="mt-3 flex gap-2 border-t border-black/5 pt-3">
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => onChangeStatus("COMPLETED")}
-            className="rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary disabled:opacity-50"
-          >
-            완료 처리
-          </button>
-          <button
-            type="button"
-            disabled={isPending}
-            onClick={() => onChangeStatus("NO_SHOW")}
-            className="rounded-lg border border-black/10 px-3 py-1.5 text-xs font-medium text-muted-foreground disabled:opacity-50"
-          >
-            노쇼
-          </button>
-        </div>
-      )}
-
-      {/* 고객 취소 */}
+      {/* 고객 취소 버튼 */}
       {!isAdmin && isActive && (
         <div className="mt-3 border-t border-black/5 pt-3">
           <button

@@ -18,7 +18,7 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
   const qc = useQueryClient();
   const [formTarget, setFormTarget] = useState<BeautyService | null | "new">(null);
   const [deleteTarget, setDeleteTarget] = useState<BeautyService | null>(null);
-  const [viewMode, setViewMode] = useState<"table" | "card">("table");
+  const [viewMode, setViewMode] = useState<"table" | "card">("card");
 
   const { data: services, isLoading, isError } = useQuery({
     queryKey: ["beauty-services", selectedCategoryId],
@@ -35,13 +35,32 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
     onError: (e) => toastError(e, "삭제에 실패했습니다."),
   });
 
+  const visibilityMutation = useMutation({
+    mutationFn: (service: BeautyService) =>
+      beautyServiceApi.update(service.id, {
+        name: service.name,
+        categoryId: service.category.id,
+        description: service.description ?? undefined,
+        durationMinutes: service.durationMinutes,
+        price: service.price,
+        targetGender: service.targetGender,
+        visible: !service.visible,
+        displayOrder: service.displayOrder,
+        imageUrls: service.imageUrls ?? [],
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["beauty-services"] });
+    },
+    onError: (e) => toastError(e, "노출 상태 변경에 실패했습니다."),
+  });
+
   if (isLoading) return <p className="text-sm text-muted-foreground">로딩 중...</p>;
   if (isError) return <p className="text-sm text-destructive">데이터를 불러오지 못했습니다.</p>;
 
   return (
     <section className="min-w-0 rounded-md border border-border bg-background shadow-sm">
       <div className="flex flex-col gap-3 border-b border-border px-5 py-4 md:flex-row md:items-center md:justify-between">
-        <div>
+        <div className="min-w-0">
           <h2 className="text-xl font-semibold tracking-tight">
             {selectedCategory ? `${selectedCategory.name} 시술` : "시술 목록"}
           </h2>
@@ -49,27 +68,7 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
             {selectedCategory ? selectedCategory.description || "선택한 카테고리의 시술입니다." : "전체 시술을 관리합니다."}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="inline-flex rounded-md border border-border bg-muted/40 p-1">
-            <button
-              type="button"
-              onClick={() => setViewMode("table")}
-              className={`inline-flex h-8 w-8 items-center justify-center rounded ${viewMode === "table" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-              aria-label="테이블 보기"
-              title="테이블 보기"
-            >
-              <Table2 className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("card")}
-              className={`inline-flex h-8 w-8 items-center justify-center rounded ${viewMode === "card" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-              aria-label="카드 보기"
-              title="카드 보기"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-          </div>
+        <div className="flex items-center justify-end">
           <button
             onClick={() => setFormTarget("new")}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90"
@@ -80,8 +79,31 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
         </div>
       </div>
 
+      <div className="flex px-5 pt-5">
+        <div className="inline-flex rounded-md border border-border bg-muted/40 p-1">
+          <button
+            type="button"
+            onClick={() => setViewMode("card")}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded ${viewMode === "card" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            aria-label="카드 보기"
+            title="카드 보기"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("table")}
+            className={`inline-flex h-8 w-8 items-center justify-center rounded ${viewMode === "table" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+            aria-label="테이블 보기"
+            title="테이블 보기"
+          >
+            <Table2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
       {viewMode === "table" ? (
-        <div className="m-5 overflow-x-auto rounded-md border border-border">
+        <div className="mx-5 mb-5 mt-3 overflow-x-auto rounded-md border border-border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40">
@@ -125,7 +147,7 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
           </table>
         </div>
       ) : (
-        <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 px-5 pb-5 pt-3 md:grid-cols-2 xl:grid-cols-3">
           {services?.length === 0 ? (
             <div className="rounded-md border border-dashed border-border bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground md:col-span-2 xl:col-span-3">
               등록된 시술이 없습니다.
@@ -134,21 +156,38 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
           {services?.map((service) => (
             <article key={service.id} className="overflow-hidden rounded-md border border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
               <div className="relative flex aspect-[16/9] items-center justify-center border-b border-border bg-muted/50">
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-border bg-background shadow-sm">
-                    <ImagePlus className="h-5 w-5" />
+                {service.imageUrls?.[0] ? (
+                  <div
+                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                    style={{ backgroundImage: `url(${service.imageUrls[0]})` }}
+                    aria-label={`${service.name} 대표 이미지`}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-border bg-background shadow-sm">
+                      <ImagePlus className="h-5 w-5" />
+                    </span>
+                    <span className="text-xs">이미지 미등록</span>
+                  </div>
+                )}
+                {service.imageUrls && service.imageUrls.length > 1 ? (
+                  <span className="absolute bottom-3 right-3 rounded-sm bg-background/90 px-2 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+                    +{service.imageUrls.length - 1}
                   </span>
-                  <span className="text-xs">이미지 입력 예정</span>
-                </div>
-                <span className="absolute right-3 top-3 rounded-sm bg-background/90 px-2 py-1 text-xs font-medium text-muted-foreground shadow-sm">
-                  {service.visible ? "노출" : "숨김"}
-                </span>
+                ) : null}
               </div>
 
               <div className="p-4">
-                <div className="min-w-0">
-                  <h3 className="truncate text-base font-semibold">{service.name}</h3>
-                  <p className="mt-1 font-mono text-xs text-muted-foreground">{service.code}</p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-base font-semibold">{service.name}</h3>
+                    <p className="mt-1 font-mono text-xs text-muted-foreground">{service.code}</p>
+                  </div>
+                  <VisibilityToggle
+                    service={service}
+                    loading={visibilityMutation.isPending}
+                    onToggle={() => visibilityMutation.mutate(service)}
+                  />
                 </div>
 
                 {service.description ? (
@@ -235,6 +274,43 @@ function ServiceActions({
         삭제
       </button>
     </div>
+  );
+}
+
+function VisibilityToggle({
+  service,
+  loading,
+  onToggle,
+}: {
+  service: BeautyService;
+  loading: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={loading}
+      className="inline-flex h-7 shrink-0 items-center gap-2 rounded-full border border-border bg-background px-2 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted/40 disabled:opacity-60"
+      aria-pressed={service.visible}
+      aria-label={`${service.name} ${service.visible ? "숨김 처리" : "노출 처리"}`}
+      title={service.visible ? "노출 중" : "숨김"}
+    >
+      <span className={service.visible ? "text-foreground" : "text-muted-foreground"}>
+        {service.visible ? "노출" : "숨김"}
+      </span>
+      <span
+        className={`relative h-4 w-8 overflow-hidden rounded-full transition-colors ${
+          service.visible ? "bg-emerald-500" : "bg-muted-foreground/25"
+        }`}
+      >
+        <span
+          className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-background shadow-sm transition-transform ${
+            service.visible ? "translate-x-4" : "translate-x-0"
+          }`}
+        />
+      </span>
+    </button>
   );
 }
 

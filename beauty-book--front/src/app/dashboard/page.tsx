@@ -1,49 +1,35 @@
 "use client";
 
 import Link from "next/link";
-import {
-  CalendarRange,
-  ChartNoAxesColumn,
-  Clock3,
-  Scissors,
-  Users,
-} from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
+import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { useAuth } from "@/entities/user/model/authStore";
+import {
+  useReservationsByDate,
+  useChangeReservationStatus,
+} from "@/entities/reservation/model/useReservations";
+import type { Reservation, ReservationStatus } from "@/entities/reservation/model/types";
+import { useMemo, useState } from "react";
 
-const stats = [
-  { label: "오늘 예약", value: "12", hint: "실데이터 연결 전 예시 수치" },
-  { label: "취소 대기", value: "2", hint: "취소/변경 요청 확인 영역" },
-  { label: "근무 직원", value: "5", hint: "직원 스케줄 연결 예정" },
-  { label: "신규 고객", value: "3", hint: "고객 관리 기능 연결 예정" },
-];
+const STATUS_META: Record<ReservationStatus, { label: string; className: string }> = {
+  REQUESTED:             { label: "승인 대기",   className: "bg-amber-50 text-amber-700 ring-1 ring-amber-200" },
+  CONFIRMED:             { label: "예약 확정",   className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" },
+  CANCELLED_BY_CUSTOMER: { label: "고객 취소",   className: "bg-muted text-muted-foreground" },
+  CANCELLED_BY_ADMIN:    { label: "관리자 취소", className: "bg-muted text-muted-foreground" },
+  COMPLETED:             { label: "완료",        className: "bg-blue-50 text-blue-700 ring-1 ring-blue-200" },
+  NO_SHOW:               { label: "노쇼",        className: "bg-rose-50 text-rose-700 ring-1 ring-rose-200" },
+};
 
-const quickLinks = [
-  {
-    href: "/booking",
-    title: "예약 홈 윤곽 보기",
-    description: "고객 로그인 후 진입할 예약 홈 초안 화면입니다.",
-    icon: CalendarRange,
-  },
-  {
-    href: "/users",
-    title: "사용자 관리",
-    description: "현재 운영 중인 계정과 역할을 바로 확인합니다.",
-    icon: Users,
-  },
-  {
-    href: "/site-settings",
-    title: "메인 관리",
-    description: "메인 소개 영역과 전역 설정을 수정합니다.",
-    icon: ChartNoAxesColumn,
-  },
-];
+function formatTime(iso: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Seoul",
+  }).format(new Date(iso));
+}
 
-const pipeline = [
-  "예약 엔티티와 상태 정의",
-  "직원 / 고객 / 서비스 마스터 데이터 추가",
-  "예약 관리 페이지와 시간 계산 로직 연결",
-];
+function todayKST() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+}
 
 export default function DashboardPage() {
   return (
@@ -55,102 +41,176 @@ export default function DashboardPage() {
 
 function DashboardInner() {
   const { user } = useAuth();
+  const today = useMemo(() => todayKST(), []);
+
+  const { data: todayReservations = [], isLoading } = useReservationsByDate(today);
+  const changeStatus = useChangeReservationStatus();
+
+  const requested = todayReservations.filter((r) => r.status === "REQUESTED").length;
+  const confirmed = todayReservations.filter((r) => r.status === "CONFIRMED").length;
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-7xl flex-col gap-6 px-4 py-8">
-      <section className="rounded-3xl border border-border/60 bg-gradient-to-br from-background via-background to-muted/40 p-8 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl space-y-3">
-            <span className="inline-flex w-fit rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground">
-              Admin Dashboard Draft
+    <AdminShell
+      eyebrow="Admin Dashboard"
+      title={`${user?.username ?? "운영자"}님, 오늘 운영 현황입니다.`}
+      description="오늘 예약 현황을 확인하고 승인·완료·노쇼를 처리합니다."
+      action={
+        <Link
+          href="/reservations"
+          className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+        >
+          전체 예약 보기
+        </Link>
+      }
+    >
+      <div className="space-y-4">
+        {/* 통계 */}
+        <section className="grid gap-3 md:grid-cols-4">
+          {[
+            { label: "오늘 전체 예약", value: isLoading ? "…" : String(todayReservations.length) },
+            { label: "승인 대기",      value: isLoading ? "…" : String(requested) },
+            { label: "예약 확정",      value: isLoading ? "…" : String(confirmed) },
+            { label: "근무 직원",      value: "—" },
+          ].map((item) => (
+            <article key={item.label} className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
+              <p className="text-sm text-muted-foreground">{item.label}</p>
+              <p className="mt-3 text-3xl font-semibold tracking-tight">{item.value}</p>
+            </article>
+          ))}
+        </section>
+
+        {/* 오늘 예약 현황 */}
+        <section className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <CalendarDays className="h-4 w-4" />
+            오늘 예약 현황
+            <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {todayReservations.length}건
             </span>
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                {user?.username ?? "운영자"}님, 오늘 운영 상황을 먼저 보는 화면입니다.
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-                지금은 예약 기능 본구현 전 단계라 실제 수치 대신 구조 윤곽만 보여줍니다.
-                이후 예약, 고객, 직원, 서비스 데이터가 연결되면 이 대시보드가 운영 메인 화면이 됩니다.
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted/50" />
+              ))
+            ) : todayReservations.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                오늘 예약이 없습니다.
               </p>
-            </div>
+            ) : (
+              todayReservations.map((r) => (
+                <DashboardReservationCard
+                  key={r.id}
+                  reservation={r}
+                  onChangeStatus={(status, adminMemo) => changeStatus.mutate({ id: r.id, status, adminMemo })}
+                  isPending={changeStatus.isPending}
+                />
+              ))
+            )}
           </div>
+        </section>
+      </div>
+    </AdminShell>
+  );
+}
 
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/booking"
-              className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
-            >
-              고객 예약 홈 보기
-            </Link>
-            <Link
-              href="/menu-management"
-              className="inline-flex items-center justify-center rounded-full border border-border px-5 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
-            >
-              메뉴 관리
-            </Link>
-          </div>
+const ADMIN_STATUS_BUTTONS = [
+  { status: "REQUESTED",          label: "승인 대기", className: "border-amber-300 bg-amber-50 text-amber-700" },
+  { status: "CONFIRMED",          label: "예약 확정", className: "border-emerald-300 bg-emerald-50 text-emerald-700" },
+  { status: "COMPLETED",          label: "완료",      className: "border-blue-300 bg-blue-50 text-blue-700" },
+  { status: "NO_SHOW",            label: "노쇼",      className: "border-rose-300 bg-rose-50 text-rose-700" },
+  { status: "CANCELLED_BY_ADMIN", label: "취소",      className: "border-black/15 bg-muted text-muted-foreground" },
+] as const;
+
+function DashboardReservationCard({
+  reservation: r,
+  onChangeStatus,
+  isPending,
+}: {
+  reservation: Reservation;
+  onChangeStatus: (status: string, adminMemo?: string) => void;
+  isPending: boolean;
+}) {
+  const [showCancelInput, setShowCancelInput] = useState(false);
+  const [cancelMemo, setCancelMemo] = useState("");
+
+  const handleAdminCancel = () => {
+    onChangeStatus("CANCELLED_BY_ADMIN", cancelMemo || undefined);
+    setShowCancelInput(false);
+    setCancelMemo("");
+  };
+
+  return (
+    <div className="rounded-2xl border border-black/10 bg-background p-4">
+      <div className="flex items-start gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-muted-foreground">
+            {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
+          </p>
+          <h3 className="mt-1 text-base font-semibold text-foreground">{r.beautyServiceName}</h3>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {r.staffName} · {r.customerName} ({r.customerPhone})
+          </p>
+          {r.adminMemo && (
+            <p className="mt-1 text-xs text-muted-foreground">메모: {r.adminMemo}</p>
+          )}
         </div>
-      </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((item) => (
-          <article
-            key={item.label}
-            className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm"
-          >
-            <p className="text-sm text-muted-foreground">{item.label}</p>
-            <p className="mt-3 text-3xl font-semibold tracking-tight">{item.value}</p>
-            <p className="mt-2 text-xs text-muted-foreground">{item.hint}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <article className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Clock3 className="h-4 w-4" />
-            빠른 이동
-          </div>
-          <div className="mt-4 grid gap-3">
-            {quickLinks.map(({ href, title, description, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="rounded-2xl border border-border/60 bg-background px-4 py-4 transition-colors hover:bg-accent"
-              >
-                <div className="flex items-start gap-3">
-                  <span className="inline-flex rounded-xl bg-primary/10 p-2 text-primary">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <h2 className="text-sm font-medium text-foreground">{title}</h2>
-                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                      {description}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </article>
-
-        <article className="rounded-2xl border border-border/60 bg-card p-6 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Scissors className="h-4 w-4" />
-            다음 구현 순서
-          </div>
-          <ol className="mt-4 space-y-3 text-sm text-muted-foreground">
-            {pipeline.map((item, index) => (
-              <li
-                key={item}
-                className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-3"
-              >
-                {index + 1}. {item}
-              </li>
-            ))}
-          </ol>
-        </article>
-      </section>
-    </main>
+        <div className="shrink-0">
+          {!showCancelInput ? (
+            <div className="flex flex-col gap-1">
+              {ADMIN_STATUS_BUTTONS.map(({ status, label, className }) => {
+                const isCurrent = r.status === status;
+                const isCancelBtn = status === "CANCELLED_BY_ADMIN";
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    disabled={isPending || isCurrent}
+                    onClick={() => isCancelBtn ? setShowCancelInput(true) : onChangeStatus(status)}
+                    className={`rounded-lg border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-default ${
+                      isCurrent
+                        ? className
+                        : "border-black/10 bg-background text-muted-foreground hover:bg-accent disabled:opacity-40"
+                    }`}
+                  >
+                    {isCurrent ? `✓ ${label}` : label}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="w-44 space-y-2">
+              <p className="text-xs font-medium text-rose-600">취소 사유 (선택)</p>
+              <textarea
+                value={cancelMemo}
+                onChange={(e) => setCancelMemo(e.target.value)}
+                placeholder="취소 사유를 입력하세요..."
+                rows={2}
+                className="w-full resize-none rounded-xl border border-black/10 bg-muted/30 px-3 py-2 text-xs outline-none focus:border-black/20"
+              />
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={handleAdminCancel}
+                  className="flex-1 rounded-lg bg-rose-500 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                >
+                  취소 확정
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowCancelInput(false); setCancelMemo(""); }}
+                  className="flex-1 rounded-lg border border-black/10 py-1.5 text-xs font-medium text-muted-foreground"
+                >
+                  돌아가기
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

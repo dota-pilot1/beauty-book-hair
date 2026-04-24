@@ -71,7 +71,7 @@ public class ReservationController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         return ReservationResponse.from(
-                reservationService.changeStatus(id, req.status(), principal)
+                reservationService.changeStatus(id, req, principal)
         );
     }
 }

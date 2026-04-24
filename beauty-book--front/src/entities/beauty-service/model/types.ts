@@ -21,5 +21,6 @@ export type BeautyService = {
   targetGender: BeautyServiceTargetGender;
   visible: boolean;
   displayOrder: number;
+  imageUrls: string[];
   createdAt: string;
 };

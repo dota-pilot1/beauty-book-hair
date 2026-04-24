@@ -8,6 +8,7 @@ import com.cj.beautybook.common.exception.ErrorCode;
 import com.cj.beautybook.reservation.domain.Reservation;
 import com.cj.beautybook.reservation.domain.ReservationStatus;
 import com.cj.beautybook.reservation.infrastructure.ReservationRepository;
+import com.cj.beautybook.reservation.presentation.dto.ChangeReservationStatusRequest;
 import com.cj.beautybook.reservation.presentation.dto.CreateReservationRequest;
 import com.cj.beautybook.staff.domain.Staff;
 import com.cj.beautybook.staff.infrastructure.StaffRepository;
@@ -83,7 +84,8 @@ public class ReservationService {
     }
 
     @Transactional
-    public Reservation changeStatus(Long id, ReservationStatus status, UserPrincipal principal) {
+    public Reservation changeStatus(Long id, ChangeReservationStatusRequest req, UserPrincipal principal) {
+        ReservationStatus status = req.status();
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.RESERVATION_NOT_FOUND));
 
@@ -94,7 +96,7 @@ public class ReservationService {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
-        reservation.changeStatus(status);
+        reservation.changeStatus(status, req.adminMemo());
         return reservationRepository.save(reservation);
     }
 }

@@ -11,7 +11,6 @@ import {
   Sparkles,
   UserRoundSearch,
 } from "lucide-react";
-import { useAuth } from "@/entities/user/model/authStore";
 import { cn } from "@/shared/lib/utils";
 
 type CustomerShellProps = {
@@ -35,8 +34,8 @@ type CustomerNavItem = {
 const customerNavItems: CustomerNavItem[] = [
   {
     href: "/customer-space",
-    label: "예약 고객 공간",
-    description: "소개, 빠른 예약 시작, 상담과 최근 상태를 봅니다.",
+    label: "미용실 소개",
+    description: "매장 소개, 빠른 예약 시작, 상담과 최근 상태를 봅니다.",
     icon: LayoutGrid,
   },
   {
@@ -82,13 +81,12 @@ export function CustomerShell({
   showHeader = true,
 }: CustomerShellProps) {
   const pathname = usePathname();
-  const { user } = useAuth();
   const normalizedPathname =
     pathname && pathname !== "/" ? pathname.replace(/\/+$/, "") || "/" : pathname;
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-7xl gap-6 px-4 py-6 lg:px-6">
-      <aside className="hidden w-72 shrink-0 lg:block">
+    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-[1760px] gap-3 px-2 py-5 lg:px-3">
+      <aside className="hidden w-[16rem] shrink-0 lg:block">
         <div className="sticky top-20 rounded-3xl border border-black/12 bg-sidebar/90 p-4 shadow-sm">
           {showSidebarIntro ? (
             <Link
@@ -104,10 +102,10 @@ export function CustomerShell({
                 BeautyBook
               </p>
               <h2 className="mt-3 text-xl font-semibold tracking-tight text-foreground">
-                예약 고객 공간
+                미용실 소개
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                예약 요청, 내 예약 확인, 기본 정보 관리를 한곳에서 진행합니다.
+                매장 분위기와 시술 정보를 보고 예약을 시작합니다.
               </p>
             </Link>
           ) : null}
@@ -162,16 +160,6 @@ export function CustomerShell({
               );
             })}
           </nav>
-
-          <div className="mt-4 rounded-2xl border border-black/12 bg-background/70 p-4">
-            <p className="text-xs text-muted-foreground">현재 로그인</p>
-            <p className="mt-1 text-sm font-medium text-foreground">
-              {user?.username ?? "고객"}
-            </p>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              고객용 화면은 예약 요청과 상태 확인을 가장 빠르게 할 수 있는 구조로 정리 중입니다.
-            </p>
-          </div>
         </div>
       </aside>
 
@@ -195,7 +183,7 @@ export function CustomerShell({
           </header>
         ) : null}
 
-        <div className={cn("grid gap-6", aside ? "xl:grid-cols-[1.25fr_0.75fr]" : "grid-cols-1")}>
+        <div className={cn("grid gap-4", aside ? "xl:grid-cols-[minmax(0,1fr)_360px]" : "grid-cols-1")}>
           <div className="min-w-0">{children}</div>
           {aside ? <div className="min-w-0">{aside}</div> : null}
         </div>

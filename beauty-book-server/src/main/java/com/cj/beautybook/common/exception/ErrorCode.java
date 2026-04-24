@@ -30,6 +30,21 @@ public enum ErrorCode {
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "MENU_001", "메뉴를 찾을 수 없습니다."),
     MENU_CODE_DUPLICATE(HttpStatus.CONFLICT, "MENU_002", "이미 존재하는 메뉴 코드입니다."),
     MENU_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "MENU_003", "부모 메뉴를 찾을 수 없습니다."),
+    BEAUTY_SERVICE_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "BSVC_CAT_001", "시술 카테고리를 찾을 수 없습니다."),
+    BEAUTY_SERVICE_CATEGORY_CODE_DUPLICATE(HttpStatus.CONFLICT, "BSVC_CAT_002", "이미 존재하는 시술 카테고리 코드입니다."),
+    BEAUTY_SERVICE_CATEGORY_IN_USE(HttpStatus.CONFLICT, "BSVC_CAT_003", "해당 카테고리를 사용 중인 시술이 있어 삭제할 수 없습니다."),
+    BEAUTY_SERVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "BSVC_001", "시술 정보를 찾을 수 없습니다."),
+    BEAUTY_SERVICE_CODE_DUPLICATE(HttpStatus.CONFLICT, "BSVC_002", "이미 존재하는 시술 코드입니다."),
+    STAFF_NOT_FOUND(HttpStatus.NOT_FOUND, "STFF_001", "직원을 찾을 수 없습니다."),
+    STAFF_SERVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "STFF_002", "직원 시술 매핑을 찾을 수 없습니다."),
+    BUSINESS_HOUR_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHD_001", "영업시간을 찾을 수 없습니다."),
+    STAFF_WORKING_HOUR_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHD_002", "직원 근무시간을 찾을 수 없습니다."),
+    BLOCKED_TIME_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHD_003", "예약 불가 시간을 찾을 수 없습니다."),
+    SCHEDULE_INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "SCHD_004", "시작 시간은 종료 시간보다 빨라야 합니다."),
+    BLOCKED_TIME_OVERLAP(HttpStatus.CONFLICT, "SCHD_005", "이미 겹치는 예약 불가 시간이 있습니다."),
+    RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RSVN_001", "예약을 찾을 수 없습니다."),
+    RESERVATION_TIME_UNAVAILABLE(HttpStatus.CONFLICT, "RSVN_002", "선택한 시간에는 예약할 수 없습니다."),
+    RESERVATION_INVALID_STATUS(HttpStatus.BAD_REQUEST, "RSVN_003", "예약 상태가 올바르지 않습니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_999", "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;

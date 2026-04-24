@@ -42,9 +42,9 @@ export default function CustomerSpacePage() {
   return (
     <RequireAuth>
       <CustomerShell
-        eyebrow="Customer Hub"
-        title="예약 고객 공간에서 빠르게 다음 행동을 고릅니다."
-        description="이 화면은 고객용 허브입니다. 바로 예약을 시작하거나, 최근 예약 상태를 보고, 상담 채팅으로 일정 조율을 요청할 수 있습니다."
+        eyebrow="Salon Intro"
+        title="미용실 소개"
+        description="매장 소개와 시술 정보를 확인하고, 바로 예약을 시작하거나 상담 채팅으로 일정 조율을 요청할 수 있습니다."
         showSidebarIntro={false}
         action={
           <>
@@ -55,10 +55,10 @@ export default function CustomerSpacePage() {
               예약하기
             </Link>
             <Link
-              href="/my-reservations"
+              href="/reservations"
               className="inline-flex items-center justify-center rounded-full border border-black/15 px-5 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
             >
-              내 예약 보기
+              예약 현황
             </Link>
           </>
         }
@@ -114,7 +114,7 @@ export default function CustomerSpacePage() {
           </section>
 
           <section className="rounded-2xl border border-black/12 bg-card p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-foreground">고객 공간 소개</h2>
+            <h2 className="text-lg font-semibold text-foreground">미용실 이용 안내</h2>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               {[
                 "예약 시작 전 시술/가격과 디자이너 정보를 먼저 볼 수 있습니다.",
