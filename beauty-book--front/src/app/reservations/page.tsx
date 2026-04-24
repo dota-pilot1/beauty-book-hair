@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CalendarDays } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
+import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
 import { useReservationsByDate, useMyReservations, useChangeReservationStatus } from "@/entities/reservation/model/useReservations";
 import type { Reservation, ReservationStatus } from "@/entities/reservation/model/types";
@@ -63,14 +64,13 @@ function ReservationsContent() {
   });
   const isLoading = showAll ? allQuery.isLoading : myQuery.isLoading;
 
+  const Shell = isAdmin ? AdminShell : CustomerShell;
+  const shellProps = isAdmin
+    ? { eyebrow: "ADMIN", title: "예약 현황", description: "전체 예약 현황을 날짜별로 확인하고 승인·관리합니다." }
+    : { eyebrow: "Reservations", title: "예약 현황", description: "내 예약 현황을 날짜별로 확인합니다.", showSidebarIntro: false as const, showHeader: false as const };
+
   return (
-    <CustomerShell
-      eyebrow="Reservations"
-      title="예약 현황"
-      description={showAll ? "전체 예약 현황을 날짜별로 확인하고 승인·관리합니다." : "내 예약 현황을 날짜별로 확인합니다."}
-      showSidebarIntro={false}
-      showHeader={false}
-    >
+    <Shell {...shellProps}>
       <div className="space-y-4">
         {/* 관리자 전체/나 토글 */}
         {isAdmin && (
@@ -152,7 +152,7 @@ function ReservationsContent() {
           </div>
         </section>
       </div>
-    </CustomerShell>
+    </Shell>
   );
 }
 
