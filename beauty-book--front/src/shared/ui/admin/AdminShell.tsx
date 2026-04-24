@@ -130,7 +130,7 @@ export function AdminShell({
                   className={cn(
                     "relative block rounded-2xl border px-4 py-3 transition-colors",
                     active
-                      ? "border-primary/30 bg-primary/10 text-primary"
+                      ? "border-primary/40 bg-primary/15 text-primary shadow-sm"
                       : "border-black/10 bg-background/60 hover:border-primary/20 hover:bg-primary/5"
                   )}
                 >

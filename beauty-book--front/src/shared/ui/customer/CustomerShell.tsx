@@ -128,12 +128,12 @@ export function CustomerShell({
                   className={cn(
                     "relative block rounded-2xl border px-4 py-3 transition-colors",
                     active
-                      ? "border-primary/30 bg-primary/10 text-primary"
+                      ? "border-primary/40 bg-primary/15 text-primary shadow-sm"
                       : "border-black/10 bg-background/60 hover:border-primary/20 hover:bg-primary/5"
                   )}
                 >
                   {active ? (
-                    <span className="absolute left-0 top-4 bottom-4 w-0.5 rounded-r-full bg-primary" />
+                    <span className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full bg-primary" />
                   ) : null}
                   <div className="flex items-start gap-3">
                     <span
@@ -145,7 +145,7 @@ export function CustomerShell({
                       <Icon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground">{label}</p>
+                      <p className={cn("text-sm text-foreground", active ? "font-semibold" : "font-medium")}>{label}</p>
                       <p
                         className={cn(
                           "mt-1 text-xs leading-5",
