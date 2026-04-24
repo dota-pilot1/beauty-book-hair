@@ -130,7 +130,7 @@ export function AdminShell({
                   className={cn(
                     "relative block rounded-2xl border px-4 py-3 transition-all",
                     active
-                      ? "border-transparent bg-foreground/80 text-background shadow-md"
+                      ? "border-transparent bg-foreground/80 text-white shadow-md"
                       : "border-black/8 bg-background/50 text-muted-foreground hover:border-black/15 hover:bg-background/80 hover:text-foreground"
                   )}
                 >
@@ -138,17 +138,17 @@ export function AdminShell({
                     <span
                       className={cn(
                         "mt-0.5 inline-flex rounded-xl p-2",
-                        active ? "bg-background/15 text-background" : "bg-muted/60 text-muted-foreground"
+                        active ? "bg-background/15 text-white" : "bg-muted/60 text-muted-foreground"
                       )}
                     >
                       <Icon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
-                      <p className={cn("text-sm font-semibold", active ? "text-background" : "text-foreground")}>{label}</p>
+                      <p className={cn("text-sm font-semibold", active ? "text-white" : "text-foreground")}>{label}</p>
                       <p
                         className={cn(
                           "mt-1 text-xs leading-5",
-                          active ? "text-background/80" : "text-muted-foreground"
+                          active ? "text-white/80" : "text-muted-foreground"
                         )}
                       >
                         {desc}
