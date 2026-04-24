@@ -94,8 +94,8 @@ export function CustomerShell({
               className={cn(
                 "block rounded-2xl border bg-background/70 p-4 transition-colors",
                 normalizedPathname === "/customer-space"
-                  ? "border-black/18 bg-accent/70"
-                  : "border-black/12 hover:border-black/20 hover:bg-accent"
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : "border-black/12 hover:border-primary/20 hover:bg-primary/5"
               )}
             >
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
@@ -128,8 +128,8 @@ export function CustomerShell({
                   className={cn(
                     "relative block rounded-2xl border px-4 py-3 transition-colors",
                     active
-                      ? "border-black/18 bg-accent/70 text-foreground"
-                      : "border-black/10 bg-background/60 hover:border-black/20 hover:bg-accent"
+                      ? "border-primary/30 bg-primary/10 text-primary"
+                      : "border-black/10 bg-background/60 hover:border-primary/20 hover:bg-primary/5"
                   )}
                 >
                   {active ? (
@@ -139,7 +139,7 @@ export function CustomerShell({
                     <span
                       className={cn(
                         "mt-0.5 inline-flex rounded-xl p-2",
-                        active ? "bg-primary/12 text-primary" : "bg-muted text-foreground"
+                        active ? "bg-primary/20 text-primary" : "bg-muted text-foreground"
                       )}
                     >
                       <Icon className="h-4 w-4" />
@@ -149,7 +149,7 @@ export function CustomerShell({
                       <p
                         className={cn(
                           "mt-1 text-xs leading-5",
-                          active ? "text-foreground/70" : "text-muted-foreground"
+                          active ? "text-primary/70" : "text-muted-foreground"
                         )}
                       >
                         {description}
