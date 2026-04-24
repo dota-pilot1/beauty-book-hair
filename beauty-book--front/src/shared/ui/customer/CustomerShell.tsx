@@ -126,9 +126,9 @@ export function CustomerShell({
                   href={href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "relative block rounded-2xl border px-4 py-3 transition-colors",
+                    "relative block rounded-2xl border px-4 py-3 transition-all",
                     active
-                      ? "border-primary/40 bg-primary/15 text-primary shadow-sm"
+                      ? "translate-x-0.5 border-primary/40 bg-primary/15 text-primary shadow-sm"
                       : "border-black/10 bg-background/60 hover:border-primary/20 hover:bg-primary/5"
                   )}
                 >
