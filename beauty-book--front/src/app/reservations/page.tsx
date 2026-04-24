@@ -51,6 +51,7 @@ function ReservationsContent() {
   const dateOptions = useMemo(() => getNextDateOptions(7), []);
   const [selectedDate, setSelectedDate] = useState(dateOptions[0].value);
   const [viewAll, setViewAll] = useState(true);
+  const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
 
   const showAll = isAdmin && viewAll;
 
@@ -117,37 +118,67 @@ function ReservationsContent() {
           ))}
         </section>
 
-        {/* 예약 목록 */}
+        {/* 예약 목록 / 전체 시간 */}
         <section className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <CalendarDays className="h-4 w-4" />
             {dateOptions.find((d) => d.value === selectedDate)?.shortLabel} 예약
-            <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               {reservations.length}건
             </span>
+            {isAdmin && (
+              <div className="ml-auto inline-flex rounded-lg border border-black/10 bg-muted/30 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("list")}
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                    viewMode === "list" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  목록
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("timeline")}
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                    viewMode === "timeline" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  전체 시간
+                </button>
+              </div>
+            )}
           </div>
 
-          <div className="mt-4 space-y-3">
+          <div className="mt-4">
             {isLoading ? (
-              Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted/50" />
-              ))
-            ) : reservations.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
-                해당 날짜에 예약이 없습니다.
-              </p>
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted/50" />
+                ))}
+              </div>
+            ) : viewMode === "list" ? (
+              <div className="space-y-3">
+                {reservations.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+                    해당 날짜에 예약이 없습니다.
+                  </p>
+                ) : (
+                  reservations.map((r) => (
+                    <ReservationCard
+                      key={r.id}
+                      reservation={r}
+                      isAdmin={isAdmin}
+                      onChangeStatus={(status, adminMemo) =>
+                        changeStatus.mutate({ id: r.id, status, adminMemo })
+                      }
+                      isPending={changeStatus.isPending}
+                    />
+                  ))
+                )}
+              </div>
             ) : (
-              reservations.map((r) => (
-                <ReservationCard
-                  key={r.id}
-                  reservation={r}
-                  isAdmin={isAdmin}
-                  onChangeStatus={(status, adminMemo) =>
-                    changeStatus.mutate({ id: r.id, status, adminMemo })
-                  }
-                  isPending={changeStatus.isPending}
-                />
-              ))
+              <TimelineView date={selectedDate} reservations={reservations} />
             )}
           </div>
         </section>
@@ -282,6 +313,85 @@ function ReservationCard({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+const SLOT_INTERVAL = 30;
+const DAY_START = 10 * 60;
+const DAY_END = 21 * 60;
+
+function generateSlots() {
+  const slots: { label: string; startMinutes: number; endMinutes: number }[] = [];
+  for (let m = DAY_START; m < DAY_END; m += SLOT_INTERVAL) {
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    const eh = Math.floor((m + SLOT_INTERVAL) / 60);
+    const emin = (m + SLOT_INTERVAL) % 60;
+    slots.push({
+      label: `${h}:${String(min).padStart(2, "0")} ~ ${eh}:${String(emin).padStart(2, "0")}`,
+      startMinutes: m,
+      endMinutes: m + SLOT_INTERVAL,
+    });
+  }
+  return slots;
+}
+
+function toMinutes(iso: string) {
+  const d = new Date(iso);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function TimelineView({ reservations }: { reservations: Reservation[] }) {
+  const slots = generateSlots();
+  const activeReservations = reservations.filter((r) =>
+    !["CANCELLED_BY_CUSTOMER", "CANCELLED_BY_ADMIN"].includes(r.status)
+  );
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-2">
+      {slots.map((slot) => {
+        const overlapping = activeReservations.filter((r) => {
+          const rs = toMinutes(r.startAt);
+          const re = toMinutes(r.endAt);
+          return rs < slot.endMinutes && re > slot.startMinutes;
+        });
+        const isBooked = overlapping.length > 0;
+
+        return (
+          <div
+            key={slot.startMinutes}
+            className={`rounded-xl border p-3 ${
+              isBooked
+                ? "border-foreground/20 bg-foreground/5"
+                : "border-black/8 bg-muted/20"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-muted-foreground">{slot.label}</span>
+              {isBooked ? (
+                <span className="rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold text-foreground">
+                  예약 {overlapping.length}건
+                </span>
+              ) : (
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 ring-1 ring-emerald-200">
+                  가능
+                </span>
+              )}
+            </div>
+            {isBooked && (
+              <div className="mt-2 space-y-1">
+                {overlapping.map((r) => (
+                  <div key={r.id} className="flex items-center gap-1 text-xs">
+                    <span className="font-semibold text-foreground truncate">{r.beautyServiceName}</span>
+                    <span className="text-muted-foreground shrink-0">· {r.staffName} · {r.customerName}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
