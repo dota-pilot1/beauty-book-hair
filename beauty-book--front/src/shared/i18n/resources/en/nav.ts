@@ -8,4 +8,10 @@ export const nav = {
   logout: "Logout",
   login: "Login",
   register: "Sign Up",
+  roles: {
+    ROLE_ADMIN: "Admin",
+    ROLE_MANAGER: "Manager",
+    ROLE_STYLIST: "Stylist",
+    ROLE_CUSTOMER: "Customer",
+  },
 };

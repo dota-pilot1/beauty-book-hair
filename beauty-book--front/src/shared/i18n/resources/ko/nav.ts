@@ -8,4 +8,10 @@ export const nav = {
   logout: "로그아웃",
   login: "로그인",
   register: "회원가입",
+  roles: {
+    ROLE_ADMIN: "관리자",
+    ROLE_MANAGER: "매니저",
+    ROLE_STYLIST: "스타일리스트",
+    ROLE_CUSTOMER: "고객",
+  },
 };

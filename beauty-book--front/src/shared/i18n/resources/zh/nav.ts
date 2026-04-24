@@ -8,4 +8,10 @@ export const nav = {
   logout: "退出登录",
   login: "登录",
   register: "注册",
+  roles: {
+    ROLE_ADMIN: "管理员",
+    ROLE_MANAGER: "经理",
+    ROLE_STYLIST: "造型师",
+    ROLE_CUSTOMER: "顾客",
+  },
 };

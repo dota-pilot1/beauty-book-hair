@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import type { RoleSummary } from "@/entities/user/model/types";
 
 const ROLE_STYLES: Record<string, string> = {
@@ -12,13 +13,15 @@ const ROLE_STYLES: Record<string, string> = {
 const DEFAULT_STYLE = "bg-muted text-muted-foreground";
 
 export function RoleBadge({ role }: { role: RoleSummary }) {
+  const { t } = useTranslation("nav");
   const style = ROLE_STYLES[role.code] ?? DEFAULT_STYLE;
+  const label = t(`roles.${role.code}`, { defaultValue: role.name });
   return (
     <span
       className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium leading-none ${style}`}
       title={role.code}
     >
-      {role.name}
+      {label}
     </span>
   );
 }

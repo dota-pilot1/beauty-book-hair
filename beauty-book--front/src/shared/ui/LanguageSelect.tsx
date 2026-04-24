@@ -12,7 +12,20 @@ import {
 export function LanguageSelect() {
   const { i18n } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (stored && SUPPORTED_LANGUAGES.some((l) => l.code === stored) && stored !== i18n.language) {
+        void i18n.changeLanguage(stored as LanguageCode);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   const currentCode = (i18n.language as LanguageCode) ?? "ko";
   const current =
@@ -49,8 +62,11 @@ export function LanguageSelect() {
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground ring-2 ring-background shadow-sm">
           <Globe className="h-3.5 w-3.5" />
         </span>
-        <span className="hidden sm:inline text-sm font-medium leading-none">
-          {current.short}
+        <span
+          className="hidden sm:inline text-sm font-medium leading-none"
+          suppressHydrationWarning
+        >
+          {mounted ? current.short : "KO"}
         </span>
       </button>
 
