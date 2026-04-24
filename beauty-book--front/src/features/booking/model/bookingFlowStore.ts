@@ -2,14 +2,20 @@
 
 import { Store, useStore } from "@tanstack/react-store";
 
-export type BookingStepKey = "service" | "designer" | "schedule" | "confirm";
+export type BookingStepKey = "service" | "designer" | "schedule";
 
 export type BookingFlowState = {
   hydrated: boolean;
   step: BookingStepKey;
-  selectedService: string;
+  selectedServiceId: number | null;
+  selectedDate: string;
+  selectedDesignerId: number | null;
   selectedDesigner: string;
+  selectedStartAt: string | null;
+  selectedEndAt: string | null;
   selectedSlot: string;
+  selectedSlotAvailableDesigners: Array<{ id: number; name: string }>;
+  selectedOccupiedUnitCount: number;
 };
 
 const STORAGE_KEY = "booking-flow-draft";
@@ -17,9 +23,15 @@ const STORAGE_KEY = "booking-flow-draft";
 const DEFAULT_STATE: BookingFlowState = {
   hydrated: false,
   step: "service",
-  selectedService: "레이어드 컷",
-  selectedDesigner: "수아 디자이너",
-  selectedSlot: "4월 29일 화요일 · 오전 10:30",
+  selectedServiceId: null,
+  selectedDate: formatDateInput(new Date()),
+  selectedDesignerId: null,
+  selectedDesigner: "선택 전",
+  selectedStartAt: null,
+  selectedEndAt: null,
+  selectedSlot: "선택 전",
+  selectedSlotAvailableDesigners: [],
+  selectedOccupiedUnitCount: 0,
 };
 
 export const bookingFlowStore = new Store<BookingFlowState>(DEFAULT_STATE);
@@ -31,9 +43,15 @@ function persist(next: BookingFlowState) {
       STORAGE_KEY,
       JSON.stringify({
         step: next.step,
-        selectedService: next.selectedService,
+        selectedServiceId: next.selectedServiceId,
+        selectedDate: next.selectedDate,
+        selectedDesignerId: next.selectedDesignerId,
         selectedDesigner: next.selectedDesigner,
+        selectedStartAt: next.selectedStartAt,
+        selectedEndAt: next.selectedEndAt,
         selectedSlot: next.selectedSlot,
+        selectedSlotAvailableDesigners: next.selectedSlotAvailableDesigners,
+        selectedOccupiedUnitCount: next.selectedOccupiedUnitCount,
       })
     );
   } catch {
@@ -56,13 +74,23 @@ export const bookingFlowActions = {
         return;
       }
 
-      const parsed = JSON.parse(stored) as Partial<BookingFlowState>;
+      const parsed = JSON.parse(stored) as Partial<BookingFlowState> & {
+        selectedService?: string;
+      };
       bookingFlowStore.setState({
         hydrated: true,
         step: parsed.step ?? DEFAULT_STATE.step,
-        selectedService: parsed.selectedService ?? DEFAULT_STATE.selectedService,
+        selectedServiceId: parsed.selectedServiceId ?? DEFAULT_STATE.selectedServiceId,
+        selectedDate: parsed.selectedDate ?? DEFAULT_STATE.selectedDate,
+        selectedDesignerId: parsed.selectedDesignerId ?? DEFAULT_STATE.selectedDesignerId,
         selectedDesigner: parsed.selectedDesigner ?? DEFAULT_STATE.selectedDesigner,
+        selectedStartAt: parsed.selectedStartAt ?? DEFAULT_STATE.selectedStartAt,
+        selectedEndAt: parsed.selectedEndAt ?? DEFAULT_STATE.selectedEndAt,
         selectedSlot: parsed.selectedSlot ?? DEFAULT_STATE.selectedSlot,
+        selectedSlotAvailableDesigners:
+          parsed.selectedSlotAvailableDesigners ?? DEFAULT_STATE.selectedSlotAvailableDesigners,
+        selectedOccupiedUnitCount:
+          parsed.selectedOccupiedUnitCount ?? DEFAULT_STATE.selectedOccupiedUnitCount,
       });
     } catch {
       bookingFlowStore.setState((prev) => ({ ...prev, hydrated: true }));
@@ -74,18 +102,78 @@ export const bookingFlowActions = {
     setState(next);
   },
 
-  setSelectedService(selectedService: string) {
-    const next = { ...bookingFlowStore.state, hydrated: true, selectedService };
+  setSelectedServiceId(selectedServiceId: number) {
+    const next = {
+      ...bookingFlowStore.state,
+      hydrated: true,
+      selectedServiceId,
+      selectedDesignerId: null,
+      selectedDesigner: "선택 전",
+      selectedStartAt: null,
+      selectedEndAt: null,
+      selectedSlot: "선택 전",
+      selectedSlotAvailableDesigners: [],
+      selectedOccupiedUnitCount: 0,
+    };
     setState(next);
   },
 
-  setSelectedDesigner(selectedDesigner: string) {
-    const next = { ...bookingFlowStore.state, hydrated: true, selectedDesigner };
+  setSelectedDate(selectedDate: string) {
+    const next = {
+      ...bookingFlowStore.state,
+      hydrated: true,
+      selectedDate,
+      selectedStartAt: null,
+      selectedEndAt: null,
+      selectedSlot: "선택 전",
+      selectedSlotAvailableDesigners: [],
+      selectedOccupiedUnitCount: 0,
+    };
     setState(next);
   },
 
-  setSelectedSlot(selectedSlot: string) {
-    const next = { ...bookingFlowStore.state, hydrated: true, selectedSlot };
+  setSelectedDesigner(selectedDesignerId: number, selectedDesigner: string) {
+    const next = {
+      ...bookingFlowStore.state,
+      hydrated: true,
+      selectedDesignerId,
+      selectedDesigner,
+      selectedStartAt: null,
+      selectedEndAt: null,
+      selectedSlot: "선택 전",
+      selectedSlotAvailableDesigners: [],
+      selectedOccupiedUnitCount: 0,
+    };
+    setState(next);
+  },
+
+  setSelectedSlot(slot: {
+    label: string;
+    startAt: string;
+    endAt: string;
+    availableStaff: Array<{ id: number; name: string }>;
+    occupiedUnitCount: number;
+  }) {
+    const autoDesigner = slot.availableStaff.length === 1 ? slot.availableStaff[0] : null;
+    const currentDesignerStillAvailable =
+      bookingFlowStore.state.selectedDesignerId != null &&
+      slot.availableStaff.some((s) => s.id === bookingFlowStore.state.selectedDesignerId);
+
+    const next = {
+      ...bookingFlowStore.state,
+      hydrated: true,
+      selectedStartAt: slot.startAt,
+      selectedEndAt: slot.endAt,
+      selectedSlot: slot.label,
+      selectedSlotAvailableDesigners: slot.availableStaff,
+      selectedOccupiedUnitCount: slot.occupiedUnitCount,
+      selectedDesignerId: currentDesignerStillAvailable
+        ? bookingFlowStore.state.selectedDesignerId
+        : autoDesigner?.id ?? null,
+      selectedDesigner: currentDesignerStillAvailable
+        ? bookingFlowStore.state.selectedDesigner
+        : autoDesigner?.name ?? "선택 전",
+    };
     setState(next);
   },
 
@@ -102,4 +190,11 @@ export const bookingFlowActions = {
 
 export function useBookingFlow() {
   return useStore(bookingFlowStore);
+}
+
+function formatDateInput(date: Date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
