@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { AlertCircle, LogIn } from "lucide-react";
+import { AlertCircle, LogIn, ShieldCheck, UserRound } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { loginSchema, type LoginFormValues } from "@/shared/lib/validation/auth.schema";
 import { authActions } from "@/entities/user/model/authStore";
 import { getApiError } from "@/shared/api/errors";
+import { getDefaultHomePath } from "@/shared/lib/routing/defaultHome";
 import { FormField } from "@/shared/ui/FormField";
 import { TextInput } from "@/shared/ui/TextInput";
 import { PasswordInput } from "@/shared/ui/PasswordInput";
@@ -23,16 +24,31 @@ export function LoginForm({ nextPath }: LoginFormProps) {
   const router = useRouter();
   const { t } = useTranslation("auth");
   const [formError, setFormError] = useState<string | null>(null);
+  const devAccounts = [
+    {
+      label: "관리자",
+      email: "terecal@daum.net",
+      password: "password123",
+      icon: ShieldCheck,
+    },
+    {
+      label: "고객",
+      email: "customer@daum.net",
+      password: "password123",
+      icon: UserRound,
+    },
+  ] as const;
 
   const safePath =
     nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
       ? nextPath
-      : "/dashboard";
+      : null;
 
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -46,9 +62,9 @@ export function LoginForm({ nextPath }: LoginFormProps) {
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
-      await authActions.login(values.email, values.password);
+      const user = await authActions.login(values.email, values.password);
       toast.success(t("loginSuccess"));
-      router.replace(safePath);
+      router.replace(safePath ?? getDefaultHomePath(user.role.code));
     } catch (e) {
       const apiError = getApiError(e);
       if (apiError?.code === "AUTH_003") {
@@ -63,6 +79,27 @@ export function LoginForm({ nextPath }: LoginFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4" noValidate>
+      <div className="rounded-md border border-border/70 bg-muted/30 p-3">
+        <div className="mb-2 text-xs font-medium text-muted-foreground">개발용 빠른 세팅</div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {devAccounts.map(({ label, email, password, icon: Icon }) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => {
+                setFormError(null);
+                setValue("email", email, { shouldDirty: true });
+                setValue("password", password, { shouldDirty: true });
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {formError && (
         <div
           role="alert"

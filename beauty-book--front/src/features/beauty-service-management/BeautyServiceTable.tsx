@@ -1,0 +1,266 @@
+"use client";
+
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ImagePlus, LayoutGrid, Plus, Table2 } from "lucide-react";
+import { beautyServiceApi } from "@/entities/beauty-service/api/beautyServiceApi";
+import type { BeautyService, BeautyServiceCategory } from "@/entities/beauty-service/model/types";
+import { toast, toastError } from "@/shared/lib/toast";
+import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { BeautyServiceFormDialog } from "./BeautyServiceFormDialog";
+
+type Props = {
+  selectedCategoryId: number | null;
+  selectedCategory?: BeautyServiceCategory | null;
+};
+
+export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Props) {
+  const qc = useQueryClient();
+  const [formTarget, setFormTarget] = useState<BeautyService | null | "new">(null);
+  const [deleteTarget, setDeleteTarget] = useState<BeautyService | null>(null);
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
+
+  const { data: services, isLoading, isError } = useQuery({
+    queryKey: ["beauty-services", selectedCategoryId],
+    queryFn: () => beautyServiceApi.list(selectedCategoryId ? { categoryId: selectedCategoryId } : undefined),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => beautyServiceApi.delete(id),
+    onSuccess: () => {
+      toast.success("시술이 삭제되었습니다.");
+      qc.invalidateQueries({ queryKey: ["beauty-services"] });
+      setDeleteTarget(null);
+    },
+    onError: (e) => toastError(e, "삭제에 실패했습니다."),
+  });
+
+  if (isLoading) return <p className="text-sm text-muted-foreground">로딩 중...</p>;
+  if (isError) return <p className="text-sm text-destructive">데이터를 불러오지 못했습니다.</p>;
+
+  return (
+    <section className="min-w-0 rounded-md border border-border bg-background shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-border px-5 py-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold tracking-tight">
+            {selectedCategory ? `${selectedCategory.name} 시술` : "시술 목록"}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {selectedCategory ? selectedCategory.description || "선택한 카테고리의 시술입니다." : "전체 시술을 관리합니다."}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-md border border-border bg-muted/40 p-1">
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded ${viewMode === "table" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              aria-label="테이블 보기"
+              title="테이블 보기"
+            >
+              <Table2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("card")}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded ${viewMode === "card" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              aria-label="카드 보기"
+              title="카드 보기"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          </div>
+          <button
+            onClick={() => setFormTarget("new")}
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            시술 등록
+          </button>
+        </div>
+      </div>
+
+      {viewMode === "table" ? (
+        <div className="m-5 overflow-x-auto rounded-md border border-border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/40">
+                <Th>이름</Th>
+                <Th>코드</Th>
+                <Th>카테고리</Th>
+                <Th>소요 시간</Th>
+                <Th>가격</Th>
+                <Th>대상</Th>
+                <Th>노출</Th>
+                <Th className="text-right">액션</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {services?.length === 0 ? (
+                <tr>
+                  <Td colSpan={8} className="py-10 text-center text-muted-foreground">
+                    등록된 시술이 없습니다.
+                  </Td>
+                </tr>
+              ) : null}
+              {services?.map((service) => (
+                <tr key={service.id} className="border-b border-border last:border-0 hover:bg-muted/20">
+                  <Td className="font-medium">{service.name}</Td>
+                  <Td><span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{service.code}</span></Td>
+                  <Td>{service.category.name}</Td>
+                  <Td>{service.durationMinutes}분</Td>
+                  <Td>{Number(service.price).toLocaleString()}원</Td>
+                  <Td>{genderLabel(service.targetGender)}</Td>
+                  <Td>{service.visible ? "노출" : "숨김"}</Td>
+                  <Td className="text-right">
+                    <ServiceActions
+                      service={service}
+                      onEdit={setFormTarget}
+                      onDelete={setDeleteTarget}
+                    />
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="grid gap-4 p-5 md:grid-cols-2 xl:grid-cols-3">
+          {services?.length === 0 ? (
+            <div className="rounded-md border border-dashed border-border bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground md:col-span-2 xl:col-span-3">
+              등록된 시술이 없습니다.
+            </div>
+          ) : null}
+          {services?.map((service) => (
+            <article key={service.id} className="overflow-hidden rounded-md border border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+              <div className="relative flex aspect-[16/9] items-center justify-center border-b border-border bg-muted/50">
+                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-border bg-background shadow-sm">
+                    <ImagePlus className="h-5 w-5" />
+                  </span>
+                  <span className="text-xs">이미지 입력 예정</span>
+                </div>
+                <span className="absolute right-3 top-3 rounded-sm bg-background/90 px-2 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+                  {service.visible ? "노출" : "숨김"}
+                </span>
+              </div>
+
+              <div className="p-4">
+                <div className="min-w-0">
+                  <h3 className="truncate text-base font-semibold">{service.name}</h3>
+                  <p className="mt-1 font-mono text-xs text-muted-foreground">{service.code}</p>
+                </div>
+
+                {service.description ? (
+                  <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                    {service.description}
+                  </p>
+                ) : (
+                  <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                    시술 설명 입력 예정
+                  </p>
+                )}
+
+                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                  <Metric label="카테고리" value={service.category.name} />
+                  <Metric label="대상" value={genderLabel(service.targetGender)} />
+                  <Metric label="소요 시간" value={`${service.durationMinutes}분`} />
+                  <Metric label="가격" value={`${Number(service.price).toLocaleString()}원`} />
+                </div>
+
+                <div className="mt-4 flex justify-end">
+                  <ServiceActions
+                    service={service}
+                    onEdit={setFormTarget}
+                    onDelete={setDeleteTarget}
+                  />
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      <BeautyServiceFormDialog
+        open={formTarget !== null}
+        beautyService={formTarget === "new" ? null : formTarget}
+        defaultCategoryId={selectedCategoryId}
+        onClose={() => setFormTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={`'${deleteTarget?.name}' 시술을 삭제하시겠습니까?`}
+        description="고객 예약 화면에서 이 시술이 더 이상 보이지 않게 됩니다."
+        variant="destructive"
+        confirmText="삭제"
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+        onCancel={() => setDeleteTarget(null)}
+      />
+    </section>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-sm border border-border/60 bg-muted/30 px-3 py-2">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate font-medium">{value}</p>
+    </div>
+  );
+}
+
+function ServiceActions({
+  service,
+  onEdit,
+  onDelete,
+}: {
+  service: BeautyService;
+  onEdit: (service: BeautyService) => void;
+  onDelete: (service: BeautyService) => void;
+}) {
+  return (
+    <div className="inline-flex justify-end gap-2">
+      <button
+        onClick={() => onEdit(service)}
+        className="rounded-sm border border-input bg-background px-2 py-0.5 text-xs shadow-sm hover:bg-accent"
+      >
+        수정
+      </button>
+      <button
+        onClick={() => onDelete(service)}
+        className="rounded-sm border border-destructive/50 bg-background px-2 py-0.5 text-xs text-destructive shadow-sm hover:bg-destructive/10"
+      >
+        삭제
+      </button>
+    </div>
+  );
+}
+
+function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <th className={`px-4 py-2.5 text-left text-xs font-medium text-muted-foreground ${className}`}>{children}</th>;
+}
+
+function Td({
+  children,
+  className = "",
+  colSpan,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  colSpan?: number;
+}) {
+  return <td colSpan={colSpan} className={`px-4 py-2.5 ${className}`}>{children}</td>;
+}
+
+function genderLabel(value: BeautyService["targetGender"]) {
+  switch (value) {
+    case "WOMEN":
+      return "여성";
+    case "MEN":
+      return "남성";
+    default:
+      return "전체";
+  }
+}
