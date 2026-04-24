@@ -17,4 +17,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     );
 
     List<Reservation> findByCustomerPhoneOrderByStartAtDesc(String customerPhone);
+
+    List<Reservation> findByCustomerIdOrderByStartAtDesc(Long customerId);
+
+    List<Reservation> findByStartAtBetweenOrderByStartAtAsc(Instant from, Instant to);
 }

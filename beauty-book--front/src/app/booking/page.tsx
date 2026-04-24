@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -22,6 +23,7 @@ import {
   type BookingStepKey,
   useBookingFlow,
 } from "@/features/booking/model/bookingFlowStore";
+import { useCreateReservation } from "@/entities/reservation/model/useReservations";
 
 const steps: Array<{
   key: BookingStepKey;
@@ -104,6 +106,9 @@ function BookingFlowPage() {
   const dateOptions = useMemo(() => getNextDateOptions(7), []);
 
   const { data: staffList = [], isLoading: staffLoading } = useStaffByService(selectedServiceId);
+  const createReservation = useCreateReservation();
+  const router = useRouter();
+  const [phoneInput, setPhoneInput] = useState("");
 
   const {
     data: reservationSlots = [],
@@ -183,7 +188,28 @@ function BookingFlowPage() {
           selectedDesigner={selectedDesignerId ? selectedDesigner : null}
           selectedSlot={selectedStartAt ? selectedSlot : null}
           selectedService={selectedService}
+          phoneInput={phoneInput}
+          onPhoneChange={setPhoneInput}
+          isPending={createReservation.isPending}
           onReset={bookingFlowActions.reset}
+          onSubmit={() => {
+            if (!selectedServiceId || !selectedDesignerId || !selectedStartAt || !selectedEndAt) return;
+            createReservation.mutate(
+              {
+                beautyServiceId: selectedServiceId,
+                staffId: selectedDesignerId,
+                startAt: selectedStartAt,
+                endAt: selectedEndAt,
+                customerPhone: phoneInput,
+              },
+              {
+                onSuccess: () => {
+                  bookingFlowActions.reset();
+                  router.push("/reservations");
+                },
+              }
+            );
+          }}
         />
       }
     >
@@ -491,13 +517,21 @@ function BookingStatusPanel({
   selectedDesigner,
   selectedSlot,
   selectedService,
+  phoneInput,
+  onPhoneChange,
+  isPending,
   onReset,
+  onSubmit,
 }: {
   selectedServiceName: string;
   selectedDesigner: string | null;
   selectedSlot: string | null;
   selectedService: BeautyService | null;
+  phoneInput: string;
+  onPhoneChange: (v: string) => void;
+  isPending: boolean;
   onReset: () => void;
+  onSubmit: () => void;
 }) {
   const allSelected = !!selectedDesigner && !!selectedSlot;
 
@@ -539,11 +573,20 @@ function BookingStatusPanel({
           <p className="mt-1 text-sm text-emerald-900">
             {selectedDesigner} · {selectedSlot}
           </p>
+          <input
+            type="tel"
+            placeholder="연락처 (010-0000-0000)"
+            value={phoneInput}
+            onChange={(e) => onPhoneChange(e.target.value)}
+            className="mt-3 w-full rounded-xl border border-black/15 bg-white px-3 py-2 text-sm outline-none focus:border-primary"
+          />
           <button
             type="button"
-            className="mt-3 w-full rounded-xl bg-primary py-2.5 text-sm font-medium text-primary-foreground"
+            onClick={onSubmit}
+            disabled={isPending || !phoneInput.trim()}
+            className="mt-2 w-full rounded-xl bg-primary py-2.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
-            예약 요청 보내기
+            {isPending ? "요청 중..." : "예약 요청 보내기"}
           </button>
         </div>
       ) : (
