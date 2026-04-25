@@ -22,6 +22,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@SQLRestriction("deleted_at IS NULL")
 @Table(
         name = "reservations",
         indexes = {
@@ -96,6 +98,9 @@ public class Reservation {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @Column
+    private Instant deletedAt;
+
     public static Reservation create(
             User customer,
             String customerName,
@@ -131,5 +136,9 @@ public class Reservation {
     public void changeStatus(ReservationStatus status, String adminMemo) {
         this.status = status;
         if (adminMemo != null) this.adminMemo = adminMemo;
+    }
+
+    public void softDelete() {
+        this.deletedAt = Instant.now();
     }
 }

@@ -6,6 +6,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   CalendarDays,
   CalendarRange,
+  CalendarX2,
   ChartNoAxesColumn,
   CircleUserRound,
   LayoutDashboard,
@@ -33,6 +34,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "예약 현황",
     description: "날짜별 전체 예약을 조회하고 승인합니다.",
     icon: CalendarDays,
+  },
+  {
+    href: "/admin/reservations/deleted",
+    label: "예약 현황 (삭제)",
+    description: "삭제된 예약 이력을 날짜별로 확인합니다.",
+    icon: CalendarX2,
   },
   {
     href: "/users",

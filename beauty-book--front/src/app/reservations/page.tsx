@@ -1,12 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Trash2 } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
-import { useReservationsByDate, useMyReservations, useChangeReservationStatus } from "@/entities/reservation/model/useReservations";
+import { useReservationsByDate, useMyReservations, useChangeReservationStatus, useDeleteReservation } from "@/entities/reservation/model/useReservations";
 import type { Reservation, ReservationStatus } from "@/entities/reservation/model/types";
+
+const DELETABLE_STATUSES: ReservationStatus[] = [
+  "CANCELLED_BY_CUSTOMER",
+  "CANCELLED_BY_ADMIN",
+  "COMPLETED",
+  "NO_SHOW",
+];
 import { useStore } from "@tanstack/react-store";
 import { authStore } from "@/entities/user/model/authStore";
 
@@ -60,6 +67,7 @@ function ReservationsContent() {
   const allQuery = useReservationsByDate(selectedDate);
   const myQuery = useMyReservations();
   const changeStatus = useChangeReservationStatus();
+  const deleteReservation = useDeleteReservation();
 
   const myIdSet = useMemo(
     () => new Set((myQuery.data ?? []).map((r) => r.id)),
@@ -180,7 +188,8 @@ function ReservationsContent() {
                       onChangeStatus={(status, adminMemo) =>
                         changeStatus.mutate({ id: r.id, status, adminMemo })
                       }
-                      isPending={changeStatus.isPending}
+                      onDelete={() => deleteReservation.mutate(r.id)}
+                      isPending={changeStatus.isPending || deleteReservation.isPending}
                     />
                   ))
                 )}
@@ -208,16 +217,19 @@ function ReservationCard({
   isAdmin,
   isMine = false,
   onChangeStatus,
+  onDelete,
   isPending,
 }: {
   reservation: Reservation;
   isAdmin: boolean;
   isMine?: boolean;
   onChangeStatus: (status: string, adminMemo?: string) => void;
+  onDelete: () => void;
   isPending: boolean;
 }) {
   const [cancelMemo, setCancelMemo] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleAdminCancel = () => {
     onChangeStatus("CANCELLED_BY_ADMIN", cancelMemo || undefined);
@@ -226,20 +238,54 @@ function ReservationCard({
   };
 
   const isActive = ["REQUESTED", "CONFIRMED"].includes(r.status);
+  const isDeletable = isAdmin && DELETABLE_STATUSES.includes(r.status);
 
   return (
     <div className={`rounded-2xl border p-4 ${isMine ? "border-primary/40 bg-primary/5" : "border-black/10 bg-background"}`}>
-      <div className="flex items-start gap-4">
+      {/* 카드 헤더: 시간 + 삭제 버튼 */}
+      <div className="flex items-center gap-2">
+        <p className="text-xs text-muted-foreground">
+          {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
+        </p>
+        {isMine && (
+          <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">내 예약</span>
+        )}
+        {isDeletable && !showDeleteConfirm && (
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => setShowDeleteConfirm(true)}
+            className="ml-auto inline-flex items-center gap-1 rounded-lg border border-red-200 px-2 py-0.5 text-xs text-red-500 hover:bg-red-50 disabled:opacity-40"
+          >
+            <Trash2 className="h-3 w-3" />
+            삭제
+          </button>
+        )}
+        {showDeleteConfirm && (
+          <div className="ml-auto flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1">
+            <p className="text-xs text-red-600">삭제할까요?</p>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => { onDelete(); setShowDeleteConfirm(false); }}
+              className="rounded-md bg-red-500 px-2 py-0.5 text-xs font-medium text-white disabled:opacity-50"
+            >
+              확인
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="rounded-md border border-black/10 px-2 py-0.5 text-xs font-medium text-muted-foreground"
+            >
+              취소
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-2 flex items-start gap-4">
         {/* 예약 정보 */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-muted-foreground">
-              {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
-            </p>
-            {isMine && (
-              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">내 예약</span>
-            )}
-          </div>
           {(() => {
             const items = r.items?.length ? r.items : [{ id: null, beautyServiceId: r.beautyServiceId, beautyServiceName: r.beautyServiceName, durationMinutes: 0, price: 0, displayOrder: 0 }];
             const main = items[0];

@@ -148,6 +148,14 @@ public class ReservationService {
             throw new BusinessException(ErrorCode.RESERVATION_INVALID_STATUS);
         }
 
-        reservationRepository.delete(reservation);
+        reservation.softDelete();
+        reservationRepository.save(reservation);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Reservation> findDeletedByDate(LocalDate date) {
+        Instant from = date.atStartOfDay(STORE_ZONE).toInstant();
+        Instant to = date.plusDays(1).atStartOfDay(STORE_ZONE).toInstant();
+        return reservationRepository.findDeletedByStartAtBetween(from, to);
     }
 }

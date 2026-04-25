@@ -20,7 +20,8 @@ public record ReservationResponse(
         ReservationStatus status,
         String customerMemo,
         String adminMemo,
-        Instant createdAt
+        Instant createdAt,
+        Instant deletedAt
 ) {
     public static ReservationResponse from(Reservation r) {
         return from(r, true);
@@ -55,7 +56,8 @@ public record ReservationResponse(
                 r.getStatus(),
                 includePii ? r.getCustomerMemo() : null,
                 includePii ? r.getAdminMemo() : null,
-                r.getCreatedAt()
+                r.getCreatedAt(),
+                r.getDeletedAt()
         );
     }
 }

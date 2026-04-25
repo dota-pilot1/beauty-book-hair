@@ -1,6 +1,8 @@
 package com.cj.beautybook.reservation.presentation;
 
 import com.cj.beautybook.auth.security.UserPrincipal;
+import com.cj.beautybook.common.exception.BusinessException;
+import com.cj.beautybook.common.exception.ErrorCode;
 import com.cj.beautybook.reservation.application.ReservationService;
 import com.cj.beautybook.reservation.domain.ReservationStatus;
 import com.cj.beautybook.reservation.presentation.dto.ChangeReservationStatusRequest;
@@ -75,6 +77,23 @@ public class ReservationController {
         return ReservationResponse.from(
                 reservationService.changeStatus(id, req, principal)
         );
+    }
+
+    @GetMapping("/deleted")
+    public List<ReservationResponse> listDeleted(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        boolean isAdmin = "ROLE_ADMIN".equals(principal.getRoleCode())
+                || "ROLE_MANAGER".equals(principal.getRoleCode());
+        if (!isAdmin) {
+            throw new com.cj.beautybook.common.exception.BusinessException(
+                    com.cj.beautybook.common.exception.ErrorCode.FORBIDDEN);
+        }
+        return reservationService.findDeletedByDate(date)
+                .stream()
+                .map(ReservationResponse::from)
+                .toList();
     }
 
     @DeleteMapping("/{id}")

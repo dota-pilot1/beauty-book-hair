@@ -33,6 +33,7 @@ export type Reservation = {
   customerMemo: string | null;
   adminMemo: string | null;
   createdAt: string;
+  deletedAt: string | null;
 };
 
 export type AvailableStaff = {
