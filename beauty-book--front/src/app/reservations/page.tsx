@@ -55,7 +55,7 @@ function ReservationsContent() {
 
   const showAll = isAdmin && viewAll;
 
-  const allQuery = useReservationsByDate(selectedDate);
+  const allQuery = useReservationsByDate(selectedDate, isAdmin);
   const myQuery = useMyReservations();
   const changeStatus = useChangeReservationStatus();
 
@@ -178,7 +178,7 @@ function ReservationsContent() {
                 )}
               </div>
             ) : (
-              <TimelineView date={selectedDate} reservations={reservations} />
+              <TimelineView reservations={reservations} />
             )}
           </div>
         </section>

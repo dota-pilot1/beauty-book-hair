@@ -11,10 +11,11 @@ export function useMyReservations() {
   });
 }
 
-export function useReservationsByDate(date: string) {
+export function useReservationsByDate(date: string, enabled: boolean = true) {
   return useQuery({
     queryKey: ["reservations", "date", date],
     queryFn: () => reservationApi.listByDate(date),
+    enabled,
   });
 }
 
