@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { RequireRole } from "@/widgets/guards/RequireRole";
+import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { beautyServiceCategoryApi } from "@/entities/beauty-service-category/api/beautyServiceCategoryApi";
 import { BeautyServiceCategorySidebar } from "@/features/beauty-service-management/BeautyServiceCategorySidebar";
 import { BeautyServiceTable } from "@/features/beauty-service-management/BeautyServiceTable";
@@ -29,18 +30,12 @@ function BeautyServicesAdminPage() {
   );
 
   return (
-    <main className="min-h-[calc(100vh-3.5rem)] bg-muted/20 px-4 py-4">
-      <header className="mx-auto mb-3 flex w-full max-w-[1600px] items-center justify-between rounded-md border border-border bg-background px-4 py-3 shadow-sm">
-        <div>
-          <p className="text-[11px] font-bold uppercase text-primary">BeautyBook</p>
-          <h1 className="text-lg font-semibold">시술 관리</h1>
-        </div>
-        <p className="hidden text-sm text-muted-foreground md:block">
-          카테고리별 시술 가격과 소요 시간을 관리합니다.
-        </p>
-      </header>
-
-      <section className="mx-auto grid min-h-[calc(100vh-8rem)] w-full max-w-[1600px] items-start gap-3 lg:grid-cols-[248px_minmax(0,1fr)]">
+    <AdminShell
+      eyebrow="Admin"
+      title="시술 관리"
+      description="카테고리별 시술 가격과 소요 시간을 관리합니다."
+    >
+      <section className="grid min-h-[calc(100vh-12rem)] items-start gap-3 lg:grid-cols-[248px_minmax(0,1fr)]">
         <BeautyServiceCategorySidebar
           selectedCategoryId={selectedCategoryId}
           onSelectCategory={setSelectedCategoryId}
@@ -50,6 +45,6 @@ function BeautyServicesAdminPage() {
           selectedCategory={selectedCategory}
         />
       </section>
-    </main>
+    </AdminShell>
   );
 }

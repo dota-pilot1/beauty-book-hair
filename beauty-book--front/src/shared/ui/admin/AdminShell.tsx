@@ -56,7 +56,7 @@ const adminNavItems: AdminNavItem[] = [
     icon: UserRoundSearch,
   },
   {
-    href: "/services",
+    href: "/beauty-services",
     label: "시술/가격",
     description: "서비스 목록과 가격 정보를 관리합니다.",
     icon: Scissors,

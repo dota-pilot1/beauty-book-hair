@@ -19,8 +19,9 @@ export type ReservationItem = {
 
 export type Reservation = {
   id: number;
-  customerName: string;
-  customerPhone: string;
+  /** 비-관리자에겐 마스킹되어 null. 본인 예약은 /me 에서만 채워짐. */
+  customerName: string | null;
+  customerPhone: string | null;
   staffId: number;
   staffName: string;
   beautyServiceId: number;

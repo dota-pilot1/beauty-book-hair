@@ -10,18 +10,19 @@ import type { BeautyServiceCategory } from "@/entities/beauty-service/model/type
 import { toast, toastError } from "@/shared/lib/toast";
 
 const createSchema = z.object({
-  code: z.string().min(1, "코드를 입력해주세요.").regex(/^[A-Z][A-Z0-9_]*$/, "대문자/숫자/언더스코어 형식이어야 합니다."),
+  code: z.string().min(1, "코드를 입력해주세요.").regex(/^[A-Z][A-Z0-9_]*$/, "대문자/숫자/언더스코어 형식이어야 합니다.").optional(),
   name: z.string().min(1, "이름을 입력해주세요.").max(80),
   description: z.string().max(255).optional(),
   visible: z.boolean(),
-  displayOrder: z.coerce.number().min(0).optional(),
+  displayOrder: z.number().min(0).optional(),
 });
 
 const updateSchema = z.object({
+  code: z.string().optional(),
   name: z.string().min(1, "이름을 입력해주세요.").max(80),
   description: z.string().max(255).optional(),
   visible: z.boolean(),
-  displayOrder: z.coerce.number().min(0),
+  displayOrder: z.number().min(0).optional(),
 });
 
 type CategoryFormValues = {

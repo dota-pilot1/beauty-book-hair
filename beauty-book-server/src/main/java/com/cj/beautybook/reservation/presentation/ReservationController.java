@@ -10,7 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,13 +53,15 @@ public class ReservationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public List<ReservationResponse> listByDate(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal UserPrincipal principal
     ) {
+        boolean isAdmin = "ROLE_ADMIN".equals(principal.getRoleCode())
+                || "ROLE_MANAGER".equals(principal.getRoleCode());
         return reservationService.findByDate(date)
                 .stream()
-                .map(ReservationResponse::from)
+                .map(r -> ReservationResponse.from(r, isAdmin))
                 .toList();
     }
 

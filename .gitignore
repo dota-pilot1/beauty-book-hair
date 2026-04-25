@@ -18,6 +18,11 @@ twilio-callcenter-front/.next/
 .env*.local
 twilio-callcenter-server/.env
 
+# Secrets / keys
+*.pem
+*.key
+배포 가이드/
+
 # Claude Code
 .claude/
 

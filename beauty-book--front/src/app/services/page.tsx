@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { Clock3, Scissors, WalletCards } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
@@ -15,6 +16,19 @@ export default function ServicesPage() {
 
 function ServicesContent() {
   const { data: services = [], isLoading, isError } = useVisibleBeautyServices("services-page");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const categories = useMemo(() => {
+    const seen = new Set<string>();
+    return services
+      .map((s) => s.category)
+      .filter((c) => { if (seen.has(c.code)) return false; seen.add(c.code); return true; })
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  }, [services]);
+
+  const filtered = selectedCategory
+    ? services.filter((s) => s.category.code === selectedCategory)
+    : services;
 
   return (
     <CustomerShell
@@ -33,8 +47,40 @@ function ServicesContent() {
           공개된 시술이 없습니다.
         </p>
       ) : null}
+
+      {/* 카테고리 필터 탭 */}
+      {!isLoading && !isError && categories.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory(null)}
+            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+              selectedCategory === null
+                ? "border-black/25 bg-primary text-primary-foreground"
+                : "border-black/10 bg-card text-muted-foreground hover:bg-accent"
+            }`}
+          >
+            전체
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.code}
+              type="button"
+              onClick={() => setSelectedCategory(cat.code)}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                selectedCategory === cat.code
+                  ? "border-black/25 bg-primary text-primary-foreground"
+                  : "border-black/10 bg-card text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      )}
+
       <section className="grid gap-4 lg:grid-cols-3">
-        {services.map((service) => (
+        {filtered.map((service) => (
           <article key={service.id} className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
             {service.imageUrls?.[0] ? (
               <div
@@ -44,8 +90,13 @@ function ServicesContent() {
               />
             ) : null}
             <div className="p-5">
-              <div className="inline-flex rounded-2xl bg-primary/10 p-3 text-primary">
-                <Scissors className="h-5 w-5" />
+              <div className="flex items-center justify-between">
+                <div className="inline-flex rounded-2xl bg-primary/10 p-3 text-primary">
+                  <Scissors className="h-5 w-5" />
+                </div>
+                <span className="rounded-full border border-black/10 bg-muted/40 px-2.5 py-0.5 text-xs text-muted-foreground">
+                  {service.category.name}
+                </span>
               </div>
               <h2 className="mt-4 text-lg font-semibold">{service.name}</h2>
               {service.description ? (

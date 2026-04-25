@@ -63,18 +63,15 @@ public class ScheduleReservationSeeder implements ApplicationRunner {
     }
 
     private void seedBusinessHours() {
+        // 기본값: 모든 요일 영업 (10:00~20:00). 실제 휴무는 운영자가 관리자 화면에서 설정.
         for (DayOfWeek dayOfWeek : DayOfWeek.values()) {
-            boolean sunday = dayOfWeek == DayOfWeek.SUNDAY;
             BusinessHour businessHour = businessHourRepository.findByDayOfWeek(dayOfWeek)
-                    .orElseGet(() -> BusinessHour.create(dayOfWeek, null, null, sunday));
-
-            businessHour.update(
-                    sunday ? null : LocalTime.of(10, 0),
-                    sunday ? null : LocalTime.of(20, 0),
-                    sunday
-            );
-            businessHourRepository.save(businessHour);
-            log.info("Seeded business hour: {}", dayOfWeek);
+                    .orElseGet(() -> BusinessHour.create(dayOfWeek, LocalTime.of(10, 0), LocalTime.of(20, 0), false));
+            // 기존에 닫혀있던 row는 덮어쓰지 않음 (운영자 설정 보존). 신규 row만 위 create로 영업.
+            if (businessHour.getId() == null) {
+                businessHourRepository.save(businessHour);
+                log.info("Seeded business hour: {}", dayOfWeek);
+            }
         }
     }
 

@@ -7,6 +7,7 @@ import * as Switch from "@radix-ui/react-switch";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDown, X, UserCircle2 } from "lucide-react";
 import { RequireRole } from "@/widgets/guards/RequireRole";
+import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { api } from "@/shared/api/axios";
 
 type StaffRole = "DESIGNER" | "STAFF" | "DESK";
@@ -85,6 +86,7 @@ function StaffAdminPage() {
   const qc = useQueryClient();
   const [roleFilter, setRoleFilter] = useState<StaffRole | "ALL">("ALL");
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StaffMember | null>(null);
   const [form, setForm] = useState<StaffForm>(EMPTY_FORM);
@@ -147,20 +149,13 @@ function StaffAdminPage() {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <main className="min-h-[calc(100vh-3.5rem)] bg-muted/20 px-4 py-4">
-      <header className="mx-auto mb-3 flex w-full max-w-[1600px] items-center justify-between rounded-md border border-border bg-background px-4 py-3 shadow-sm">
-        <div>
-          <p className="text-[11px] font-bold uppercase text-primary">BeautyBook</p>
-          <h1 className="text-lg font-semibold">직원 관리</h1>
-        </div>
-        <p className="hidden text-sm text-muted-foreground md:block">
-          디자이너, 스탭, 데스크 직원을 관리합니다.
-        </p>
-      </header>
-
-      <section className="mx-auto grid w-full max-w-[1600px] items-start gap-3 lg:grid-cols-2">
-        {/* 왼쪽: 테이블 */}
-        <div className="rounded-md border border-border bg-background p-4 shadow-sm">
+    <AdminShell
+      eyebrow="Admin"
+      title="직원 관리"
+      description="디자이너, 스탭, 데스크 직원을 관리합니다."
+    >
+      <section className="rounded-2xl border border-black/8 bg-card shadow-sm">
+        <div className="p-4">
           <div className="mb-4 flex items-center justify-between">
             <div className="flex gap-2">
               {(["ALL", "DESIGNER", "STAFF", "DESK"] as const).map((role) => (
@@ -211,7 +206,7 @@ function StaffAdminPage() {
                   filtered.map((staff) => (
                     <tr
                       key={staff.id}
-                      onClick={() => setSelectedStaff(staff)}
+                      onClick={() => { setSelectedStaff(staff); setDetailOpen(true); }}
                       className={`cursor-pointer border-b border-border/50 last:border-0 transition-colors hover:bg-muted/40 ${
                         selectedStaff?.id === staff.id ? "bg-muted/60" : ""
                       }`}
@@ -250,20 +245,23 @@ function StaffAdminPage() {
             </table>
           </div>
         </div>
-
-        {/* 오른쪽: 상세 패널 */}
-        {selectedStaff ? (
-          <StaffDetailPanel
-            staff={selectedStaff}
-            onEdit={() => openEdit(selectedStaff)}
-            onClose={() => setSelectedStaff(null)}
-          />
-        ) : (
-          <div className="flex items-center justify-center rounded-md border border-dashed border-border bg-background p-8 text-sm text-muted-foreground shadow-sm">
-            직원을 선택하면 상세 정보가 표시됩니다.
-          </div>
-        )}
       </section>
+
+      {/* 상세 다이얼로그 */}
+      <Dialog.Root open={detailOpen} onOpenChange={(open) => { if (!open) { setDetailOpen(false); setSelectedStaff(null); } }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-background p-6 shadow-lg">
+            {selectedStaff && (
+              <StaffDetailPanel
+                staff={selectedStaff}
+                onEdit={() => { setDetailOpen(false); openEdit(selectedStaff); }}
+                onClose={() => { setDetailOpen(false); setSelectedStaff(null); }}
+              />
+            )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       {/* 등록/수정 다이얼로그 */}
       <Dialog.Root open={dialogOpen} onOpenChange={(open) => !open && closeDialog()}>
@@ -379,7 +377,7 @@ function StaffAdminPage() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-    </main>
+    </AdminShell>
   );
 }
 

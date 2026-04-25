@@ -335,7 +335,7 @@ export function MenuTreeTab() {
     onSuccess: (data: MenuRecord[]) => setLocalFlat(data),
   } as any);
 
-  const flat: MenuRecord[] = localFlat ?? serverMenus;
+  const flat: MenuRecord[] = (localFlat as MenuRecord[]) ?? serverMenus;
   const tree = useMemo(() => buildTree(flat), [flat]);
 
   const sensors = useSensors(

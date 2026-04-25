@@ -30,7 +30,10 @@ public class MenuSeeder implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         List<MenuDef> defs = List.of(
                 new MenuDef("DASHBOARD",             null,    "대시보드",      "nav.dashboard",        "/dashboard",        "LayoutDashboard", null,                    0),
-                new MenuDef("ADMIN",                 null,    "관리",          "nav.admin",            null,                "Settings",        RoleSeeder.ROLE_ADMIN,   1),
+                new MenuDef("CUSTOMER_SPACE",        null,    "미용실 소개",   null,                   "/customer-space",   "Sparkles",        null,                    1),
+                new MenuDef("BOOKING",               null,    "예약하기",      null,                   "/booking",          "CalendarPlus",    null,                    2),
+                new MenuDef("RESERVATIONS",          null,    "예약 현황",     null,                   "/reservations",     "CalendarCheck",   null,                    3),
+                new MenuDef("ADMIN",                 null,    "관리",          "nav.admin",            null,                "Settings",        RoleSeeder.ROLE_ADMIN,   10),
                 new MenuDef("ADMIN_USERS",           "ADMIN", "유저 관리",     "nav.users",            "/users",            "Users",           RoleSeeder.ROLE_ADMIN,   0),
                 new MenuDef("ADMIN_ROLE_PERMISSIONS","ADMIN", "역할-권한 매핑","nav.rolePermissions",  "/role-permissions", "ShieldCheck",     RoleSeeder.ROLE_ADMIN,   1),
                 new MenuDef("ADMIN_BEAUTY_SERVICES", "ADMIN", "시술 관리",     null,                   "/beauty-services",  "Scissors",        RoleSeeder.ROLE_ADMIN,   2),

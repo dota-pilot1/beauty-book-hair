@@ -23,6 +23,14 @@ public record ReservationResponse(
         Instant createdAt
 ) {
     public static ReservationResponse from(Reservation r) {
+        return from(r, true);
+    }
+
+    /**
+     * includePii=false 일 때 customerName, customerPhone, customerMemo, adminMemo는 null로 마스킹된다.
+     * 일반 사용자에게 일정 표시용으로 노출할 때 사용.
+     */
+    public static ReservationResponse from(Reservation r, boolean includePii) {
         List<ReservationItemResponse> itemResponses = r.getItems().isEmpty()
                 ? List.of(new ReservationItemResponse(
                         null,
@@ -35,8 +43,8 @@ public record ReservationResponse(
                 : r.getItems().stream().map(ReservationItemResponse::from).toList();
         return new ReservationResponse(
                 r.getId(),
-                r.getCustomerName(),
-                r.getCustomerPhone(),
+                includePii ? r.getCustomerName() : null,
+                includePii ? r.getCustomerPhone() : null,
                 r.getStaff().getId(),
                 r.getStaff().getName(),
                 r.getBeautyService().getId(),
@@ -45,8 +53,8 @@ public record ReservationResponse(
                 r.getStartAt(),
                 r.getEndAt(),
                 r.getStatus(),
-                r.getCustomerMemo(),
-                r.getAdminMemo(),
+                includePii ? r.getCustomerMemo() : null,
+                includePii ? r.getAdminMemo() : null,
                 r.getCreatedAt()
         );
     }

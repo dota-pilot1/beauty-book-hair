@@ -53,11 +53,18 @@ function ReservationsContent() {
   const [viewAll, setViewAll] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
 
-  const showAll = isAdmin && viewAll;
+  // 관리자: '전체' 토글 시 admin API. '나' 토글 시 본인 예약만.
+  // 일반 사용자: 항상 전체 일정 노출 (PII 마스킹된 채 백엔드에서 내려옴) + 본인 예약은 강조.
+  const showAll = isAdmin ? viewAll : true;
 
-  const allQuery = useReservationsByDate(selectedDate, isAdmin);
+  const allQuery = useReservationsByDate(selectedDate);
   const myQuery = useMyReservations();
   const changeStatus = useChangeReservationStatus();
+
+  const myIdSet = useMemo(
+    () => new Set((myQuery.data ?? []).map((r) => r.id)),
+    [myQuery.data]
+  );
 
   const reservations = showAll ? (allQuery.data ?? []) : (myQuery.data ?? []).filter((r) => {
     const kst = new Date(r.startAt).toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
@@ -169,6 +176,7 @@ function ReservationsContent() {
                       key={r.id}
                       reservation={r}
                       isAdmin={isAdmin}
+                      isMine={myIdSet.has(r.id)}
                       onChangeStatus={(status, adminMemo) =>
                         changeStatus.mutate({ id: r.id, status, adminMemo })
                       }
@@ -198,11 +206,13 @@ const ADMIN_STATUS_BUTTONS = [
 function ReservationCard({
   reservation: r,
   isAdmin,
+  isMine = false,
   onChangeStatus,
   isPending,
 }: {
   reservation: Reservation;
   isAdmin: boolean;
+  isMine?: boolean;
   onChangeStatus: (status: string, adminMemo?: string) => void;
   isPending: boolean;
 }) {
@@ -218,13 +228,18 @@ function ReservationCard({
   const isActive = ["REQUESTED", "CONFIRMED"].includes(r.status);
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-background p-4">
+    <div className={`rounded-2xl border p-4 ${isMine ? "border-primary/40 bg-primary/5" : "border-black/10 bg-background"}`}>
       <div className="flex items-start gap-4">
         {/* 예약 정보 */}
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground">
-            {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs text-muted-foreground">
+              {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
+            </p>
+            {isMine && (
+              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">내 예약</span>
+            )}
+          </div>
           {(() => {
             const items = r.items?.length ? r.items : [{ id: null, beautyServiceId: r.beautyServiceId, beautyServiceName: r.beautyServiceName, durationMinutes: 0, price: 0, displayOrder: 0 }];
             const main = items[0];
@@ -247,7 +262,7 @@ function ReservationCard({
           })()}
           <p className="mt-0.5 text-sm text-muted-foreground">
             {r.staffName}
-            {isAdmin && ` · ${r.customerName} (${r.customerPhone})`}
+            {isAdmin && r.customerName && ` · ${r.customerName} (${r.customerPhone ?? "-"})`}
           </p>
           {r.adminMemo && (
             <p className="mt-1 text-xs text-muted-foreground">메모: {r.adminMemo}</p>

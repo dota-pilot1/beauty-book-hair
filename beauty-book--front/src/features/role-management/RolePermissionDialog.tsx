@@ -61,7 +61,9 @@ export function RolePermissionDialog({ role, onClose }: Props) {
   const isLoading = allLoading || roleLoading;
 
   const grouped = allPermissions?.reduce<Record<string, Permission[]>>((acc, p) => {
-    (acc[p.category] = acc[p.category] ?? []).push(p);
+    if (!p.category) return acc;
+    const categoryKey = p.category.name || String(p.category);
+    (acc[categoryKey] = acc[categoryKey] ?? []).push(p);
     return acc;
   }, {});
 
