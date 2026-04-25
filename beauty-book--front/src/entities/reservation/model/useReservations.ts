@@ -40,3 +40,13 @@ export function useChangeReservationStatus() {
     },
   });
 }
+
+export function useDeleteReservation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => reservationApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reservations"] });
+    },
+  });
+}

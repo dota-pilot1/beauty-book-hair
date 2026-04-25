@@ -22,4 +22,7 @@ export const reservationApi = {
 
   changeStatus: (id: number, status: string, adminMemo?: string) =>
     api.patch<Reservation>(`/api/reservations/${id}/status`, { status, adminMemo }).then((r) => r.data),
+
+  delete: (id: number) =>
+    api.delete(`/api/reservations/${id}`),
 };

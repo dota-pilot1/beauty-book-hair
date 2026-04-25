@@ -125,4 +125,29 @@ public class ReservationService {
         reservation.changeStatus(status, req.adminMemo());
         return reservationRepository.save(reservation);
     }
+
+    private static final List<ReservationStatus> DELETABLE_STATUSES = List.of(
+            ReservationStatus.CANCELLED_BY_CUSTOMER,
+            ReservationStatus.CANCELLED_BY_ADMIN,
+            ReservationStatus.COMPLETED,
+            ReservationStatus.NO_SHOW
+    );
+
+    @Transactional
+    public void delete(Long id, UserPrincipal principal) {
+        boolean isAdmin = "ROLE_ADMIN".equals(principal.getRoleCode())
+                || "ROLE_MANAGER".equals(principal.getRoleCode());
+        if (!isAdmin) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESERVATION_NOT_FOUND));
+
+        if (!DELETABLE_STATUSES.contains(reservation.getStatus())) {
+            throw new BusinessException(ErrorCode.RESERVATION_INVALID_STATUS);
+        }
+
+        reservationRepository.delete(reservation);
+    }
 }

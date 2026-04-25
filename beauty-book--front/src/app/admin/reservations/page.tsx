@@ -1,9 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarDays } from "lucide-react";
-import { useReservationsByDate, useChangeReservationStatus } from "@/entities/reservation/model/useReservations";
+import { CalendarDays, Trash2 } from "lucide-react";
+import { useReservationsByDate, useChangeReservationStatus, useDeleteReservation } from "@/entities/reservation/model/useReservations";
 import type { Reservation, ReservationStatus } from "@/entities/reservation/model/types";
+
+const DELETABLE_STATUSES: ReservationStatus[] = [
+  "CANCELLED_BY_CUSTOMER",
+  "CANCELLED_BY_ADMIN",
+  "COMPLETED",
+  "NO_SHOW",
+];
 
 const STATUS_META: Record<ReservationStatus, { label: string; className: string }> = {
   REQUESTED:            { label: "승인 대기",   className: "bg-amber-50 text-amber-700 ring-1 ring-amber-200" },
@@ -45,6 +52,7 @@ export default function AdminReservationsPage() {
 
   const { data: reservations = [], isLoading } = useReservationsByDate(selectedDate);
   const changeStatus = useChangeReservationStatus();
+  const deleteReservation = useDeleteReservation();
 
   return (
     <div className="space-y-6">
@@ -106,7 +114,8 @@ export default function AdminReservationsPage() {
                   onChangeStatus={(status, adminMemo) =>
                     changeStatus.mutate({ id: r.id, status, adminMemo })
                   }
-                  isPending={changeStatus.isPending}
+                  onDelete={() => deleteReservation.mutate(r.id)}
+                  isPending={changeStatus.isPending || deleteReservation.isPending}
                 />
               ))
             )}
@@ -120,14 +129,19 @@ export default function AdminReservationsPage() {
 function ReservationCard({
   reservation: r,
   onChangeStatus,
+  onDelete,
   isPending,
 }: {
   reservation: Reservation;
   onChangeStatus: (status: string, adminMemo?: string) => void;
+  onDelete: () => void;
   isPending: boolean;
 }) {
   const [cancelMemo, setCancelMemo] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const isDeletable = DELETABLE_STATUSES.includes(r.status);
 
   const handleAdminCancel = () => {
     onChangeStatus("CANCELLED_BY_ADMIN", cancelMemo || undefined);
@@ -137,12 +151,50 @@ function ReservationCard({
 
   return (
     <div className="rounded-2xl border border-black/10 bg-background p-4">
-      <div className="flex items-start gap-4">
+      {/* 카드 헤더: 시간 + 삭제 버튼 */}
+      <div className="flex items-center gap-2">
+        <p className="text-xs text-muted-foreground">
+          {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
+        </p>
+        <div className="ml-auto flex items-center gap-1.5">
+          {isDeletable && !showDeleteConfirm && (
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => setShowDeleteConfirm(true)}
+              className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2 py-0.5 text-xs text-red-500 hover:bg-red-50 disabled:opacity-40"
+            >
+              <Trash2 className="h-3 w-3" />
+              삭제
+            </button>
+          )}
+          {showDeleteConfirm && (
+            <div className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1">
+              <p className="text-xs text-red-600">삭제할까요?</p>
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => { onDelete(); setShowDeleteConfirm(false); }}
+                className="rounded-md bg-red-500 px-2 py-0.5 text-xs font-medium text-white disabled:opacity-50"
+              >
+                확인
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="rounded-md border border-black/10 px-2 py-0.5 text-xs font-medium text-muted-foreground"
+              >
+                취소
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 카드 바디 */}
+      <div className="mt-1 flex items-start gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground">
-            {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
-          </p>
-          <h3 className="mt-1 text-base font-semibold text-foreground">{r.beautyServiceName}</h3>
+          <h3 className="text-base font-semibold text-foreground">{r.beautyServiceName}</h3>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {r.staffName} · {r.customerName} ({r.customerPhone})
           </p>
