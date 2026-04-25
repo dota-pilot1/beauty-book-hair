@@ -121,15 +121,36 @@ function BookingFlowPage() {
   const [serviceViewMode, setServiceViewMode] = useState<"card" | "table">("card");
   const [serviceQuery, setServiceQuery] = useState("");
   const [appliedServiceQuery, setAppliedServiceQuery] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
+
+  // 서비스 목록에서 카테고리 추출 (중복 제거 + displayOrder 정렬)
+  const categoryOptions = useMemo(() => {
+    const map = new Map<number, { id: number; name: string; displayOrder: number }>();
+    for (const s of services) {
+      if (s.category && !map.has(s.category.id)) {
+        map.set(s.category.id, {
+          id: s.category.id,
+          name: s.category.name,
+          displayOrder: s.category.displayOrder ?? 0,
+        });
+      }
+    }
+    return Array.from(map.values()).sort(
+      (a, b) => a.displayOrder - b.displayOrder || a.name.localeCompare(b.name)
+    );
+  }, [services]);
 
   const filteredServices = useMemo(() => {
     const q = appliedServiceQuery.trim().toLowerCase();
-    if (!q) return services;
-    return services.filter((s) =>
-      s.name.toLowerCase().includes(q) ||
-      (s.description ?? "").toLowerCase().includes(q)
-    );
-  }, [services, appliedServiceQuery]);
+    return services.filter((s) => {
+      if (selectedCategoryId !== "all" && s.category?.id !== selectedCategoryId) return false;
+      if (!q) return true;
+      return (
+        s.name.toLowerCase().includes(q) ||
+        (s.description ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [services, appliedServiceQuery, selectedCategoryId]);
 
   const {
     data: reservationSlots = [],
@@ -289,6 +310,25 @@ function BookingFlowPage() {
                 <p className="text-sm text-muted-foreground">등록된 시술이 없습니다. 관리자 화면에서 먼저 시술을 등록해주세요.</p>
               ) : (
                 <>
+                  {/* 카테고리 칩 */}
+                  {categoryOptions.length > 0 && (
+                    <div className="mb-3 flex flex-wrap gap-2">
+                      <CategoryChip
+                        label="전체"
+                        active={selectedCategoryId === "all"}
+                        onClick={() => setSelectedCategoryId("all")}
+                      />
+                      {categoryOptions.map((c) => (
+                        <CategoryChip
+                          key={c.id}
+                          label={c.name}
+                          active={selectedCategoryId === c.id}
+                          onClick={() => setSelectedCategoryId(c.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                   {/* 검색 + 뷰 토글 */}
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                     <form
@@ -637,6 +677,30 @@ function ServiceSelectableCard({
           </p>
         </div>
       </div>
+    </button>
+  );
+}
+
+function CategoryChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+        active
+          ? "bg-foreground text-background"
+          : "border border-black/10 bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
+      }`}
+    >
+      {label}
     </button>
   );
 }
