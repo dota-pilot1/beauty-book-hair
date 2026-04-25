@@ -79,13 +79,13 @@ function ReservationsContent() {
   const pendingQuery = usePendingReservations();
 
   const myIdSet = useMemo(
-    () => new Set((myQuery.data ?? []).map((r) => r.id)),
+    () => new Set((Array.isArray(myQuery.data) ? myQuery.data : []).map((r) => r.id)),
     [myQuery.data]
   );
 
   const reservations = isAdmin
-    ? (allQuery.data ?? [])
-    : (myQuery.data ?? []).filter((r) => {
+    ? (Array.isArray(allQuery.data) ? allQuery.data : [])
+    : (Array.isArray(myQuery.data) ? myQuery.data : []).filter((r) => {
         const kst = new Date(r.startAt).toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
         return kst === selectedDate;
       });
@@ -148,7 +148,7 @@ function ReservationsContent() {
 
   const isPending = changeStatus.isPending || deleteReservation.isPending;
 
-  const pendingList = pendingQuery.data ?? [];
+  const pendingList = Array.isArray(pendingQuery.data) ? pendingQuery.data : [];
 
   const innerContent = (
     <div className="space-y-4">
@@ -389,7 +389,7 @@ function ReservationsContent() {
               </div>
             ) : (
               <HistoryView
-                deletedData={allDeletedQuery.data ?? []}
+                deletedData={Array.isArray(allDeletedQuery.data) ? allDeletedQuery.data : []}
                 isLoading={allDeletedQuery.isLoading}
               />
             )}

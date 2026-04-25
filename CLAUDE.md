@@ -44,6 +44,10 @@ ssh -i "배포 가이드/hibot-d-server-key.pem" ubuntu@13.124.117.243 \
 
 ### 프론트엔드
 ```bash
+# ⚠️ 빌드 전 .env.production 파일 필수 (gitignore 대상 — 수동 생성)
+# beauty-book--front/.env.production 내용:
+#   NEXT_PUBLIC_API_BASE_URL=http://13.124.117.243:4101
+
 cd beauty-book--front && npm run build
 aws s3 sync out/ s3://beauty-book-hair-front --delete
 aws cloudfront create-invalidation --distribution-id E11NF3HMOB52NI --paths "/*"
