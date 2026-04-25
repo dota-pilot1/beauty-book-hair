@@ -8,6 +8,15 @@ export type ReservationStatus =
   | "COMPLETED"
   | "NO_SHOW";
 
+export type ReservationItem = {
+  id: number | null;
+  beautyServiceId: number;
+  beautyServiceName: string;
+  durationMinutes: number;
+  price: number | string;
+  displayOrder: number;
+};
+
 export type Reservation = {
   id: number;
   customerName: string;
@@ -16,6 +25,7 @@ export type Reservation = {
   staffName: string;
   beautyServiceId: number;
   beautyServiceName: string;
+  items: ReservationItem[];
   startAt: string;
   endAt: string;
   status: ReservationStatus;

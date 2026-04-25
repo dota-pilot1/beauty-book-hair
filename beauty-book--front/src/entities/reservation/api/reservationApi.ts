@@ -2,7 +2,7 @@ import { api } from "@/shared/api/axios";
 import type { Reservation } from "../model/types";
 
 export type CreateReservationBody = {
-  beautyServiceId: number;
+  beautyServiceIds: number[];
   staffId: number;
   startAt: string;
   endAt: string;

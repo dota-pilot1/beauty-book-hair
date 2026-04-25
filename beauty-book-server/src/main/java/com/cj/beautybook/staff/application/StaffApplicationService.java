@@ -31,13 +31,23 @@ public class StaffApplicationService {
     @Transactional(readOnly = true)
     public List<Staff> findDesigners(Long beautyServiceId) {
         if (beautyServiceId == null) {
+            return findDesigners(List.of());
+        }
+        return findDesigners(List.of(beautyServiceId));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Staff> findDesigners(List<Long> beautyServiceIds) {
+        if (beautyServiceIds == null || beautyServiceIds.isEmpty()) {
             return staffRepository.findByActiveTrueOrderByDisplayOrderAscNameAsc()
                     .stream()
                     .filter(s -> s.getRole() == StaffRole.DESIGNER)
                     .toList();
         }
 
-        return staffServiceRepository.findByBeautyServiceIdAndActiveTrue(beautyServiceId)
+        // 메인 시술(첫 번째)만 디자이너 자격 기준으로 사용한다.
+        Long mainServiceId = beautyServiceIds.get(0);
+        return staffServiceRepository.findByBeautyServiceIdAndActiveTrue(mainServiceId)
                 .stream()
                 .map(StaffService::getStaff)
                 .filter(s -> s.isActive() && s.getRole() == StaffRole.DESIGNER)

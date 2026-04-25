@@ -225,7 +225,26 @@ function ReservationCard({
           <p className="text-xs text-muted-foreground">
             {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
           </p>
-          <h3 className="mt-1 text-base font-semibold text-foreground">{r.beautyServiceName}</h3>
+          {(() => {
+            const items = r.items?.length ? r.items : [{ id: null, beautyServiceId: r.beautyServiceId, beautyServiceName: r.beautyServiceName, durationMinutes: 0, price: 0, displayOrder: 0 }];
+            const main = items[0];
+            const options = items.slice(1);
+            return (
+              <>
+                <div className="mt-1 flex items-center gap-2">
+                  {options.length > 0 && (
+                    <span className="inline-flex shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">메인</span>
+                  )}
+                  <h3 className="truncate text-base font-semibold text-foreground">{main.beautyServiceName}</h3>
+                </div>
+                {options.length > 0 && (
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    + 옵션 {options.map((o) => o.beautyServiceName).join(", ")}
+                  </p>
+                )}
+              </>
+            );
+          })()}
           <p className="mt-0.5 text-sm text-muted-foreground">
             {r.staffName}
             {isAdmin && ` · ${r.customerName} (${r.customerPhone})`}
@@ -381,12 +400,19 @@ function TimelineView({ reservations }: { reservations: Reservation[] }) {
             </div>
             {isBooked && (
               <div className="mt-2 space-y-1">
-                {overlapping.map((r) => (
-                  <div key={r.id} className="flex items-center gap-1 text-xs">
-                    <span className="font-semibold text-foreground truncate">{r.beautyServiceName}</span>
-                    <span className="text-muted-foreground shrink-0">· {r.staffName} · {r.customerName}</span>
-                  </div>
-                ))}
+                {overlapping.map((r) => {
+                  const items = r.items?.length ? r.items : null;
+                  const mainName = items ? items[0].beautyServiceName : r.beautyServiceName;
+                  const optionCount = items ? Math.max(items.length - 1, 0) : 0;
+                  return (
+                    <div key={r.id} className="flex items-center gap-1 text-xs">
+                      <span className="font-semibold text-foreground truncate">
+                        {mainName}{optionCount > 0 ? ` +${optionCount}` : ""}
+                      </span>
+                      <span className="text-muted-foreground shrink-0">· {r.staffName} · {r.customerName}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

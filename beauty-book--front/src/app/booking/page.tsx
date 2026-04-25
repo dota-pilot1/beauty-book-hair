@@ -9,6 +9,7 @@ import {
   Clock3,
   Scissors,
   UserRound,
+  X,
 } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
@@ -89,23 +90,28 @@ function BookingFlowPage() {
   const {
     hydrated,
     step,
-    selectedServiceId,
+    selectedServiceIds,
     selectedDate,
     selectedDesignerId,
     selectedDesigner,
     selectedStartAt,
     selectedEndAt,
     selectedSlot,
-    selectedSlotAvailableDesigners,
-    selectedOccupiedUnitCount,
   } = useBookingFlow();
 
   const { data: services = [], isLoading: servicesLoading } = useVisibleBeautyServices("booking");
-  const selectedService = services.find((service) => service.id === selectedServiceId) ?? null;
-  const selectedServiceName = selectedService?.name ?? "선택 전";
+  const selectedServices = useMemo(
+    () => selectedServiceIds.map((id) => services.find((s) => s.id === id)).filter(Boolean) as BeautyService[],
+    [selectedServiceIds, services]
+  );
+  const totalDuration = selectedServices.reduce((sum, s) => sum + (s.durationMinutes ?? 0), 0);
+  const totalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price ?? 0), 0);
   const dateOptions = useMemo(() => getNextDateOptions(7), []);
 
-  const { data: staffList = [], isLoading: staffLoading } = useStaffByService(selectedServiceId);
+  const mainServiceId = selectedServiceIds[0] ?? null;
+  const mainService = selectedServices[0] ?? null;
+  const optionServices = selectedServices.slice(1);
+  const { data: staffList = [], isLoading: staffLoading } = useStaffByService(mainServiceId);
   const createReservation = useCreateReservation();
   const router = useRouter();
   const [phoneInput, setPhoneInput] = useState("");
@@ -115,7 +121,7 @@ function BookingFlowPage() {
     isLoading: slotsLoading,
     isError: slotsError,
   } = useReservationSlots({
-    beautyServiceId: selectedServiceId,
+    beautyServiceIds: selectedServiceIds,
     date: selectedDate,
     staffId: selectedDesignerId ?? undefined,
   });
@@ -123,14 +129,6 @@ function BookingFlowPage() {
   useEffect(() => {
     bookingFlowActions.hydrate();
   }, []);
-
-  useEffect(() => {
-    if (!hydrated || services.length === 0) return;
-    const exists = services.some((service) => service.id === selectedServiceId);
-    if (!exists) {
-      bookingFlowActions.setSelectedServiceId(services[0].id);
-    }
-  }, [hydrated, services, selectedServiceId]);
 
   const currentIndex = steps.findIndex((item) => item.key === step);
 
@@ -155,6 +153,12 @@ function BookingFlowPage() {
       occupiedUnitCount: slot.occupiedUnitCount,
     });
   };
+
+  const canGoNext = step === "service"
+    ? selectedServiceIds.length > 0
+    : step === "designer"
+      ? selectedDesignerId != null
+      : true;
 
   if (!hydrated) return null;
 
@@ -184,19 +188,23 @@ function BookingFlowPage() {
       }
       aside={
         <BookingStatusPanel
-          selectedServiceName={selectedServiceName}
+          mainService={mainService}
+          optionServices={optionServices}
+          totalDuration={totalDuration}
+          totalPrice={totalPrice}
           selectedDesigner={selectedDesignerId ? selectedDesigner : null}
           selectedSlot={selectedStartAt ? selectedSlot : null}
-          selectedService={selectedService}
           phoneInput={phoneInput}
           onPhoneChange={setPhoneInput}
           isPending={createReservation.isPending}
           onReset={bookingFlowActions.reset}
+          onRemoveService={(id) => bookingFlowActions.toggleService(id)}
+          onPromoteToMain={(id) => bookingFlowActions.promoteToMain(id)}
           onSubmit={() => {
-            if (!selectedServiceId || !selectedDesignerId || !selectedStartAt || !selectedEndAt) return;
+            if (selectedServiceIds.length === 0 || !selectedDesignerId || !selectedStartAt || !selectedEndAt) return;
             createReservation.mutate(
               {
-                beautyServiceId: selectedServiceId,
+                beautyServiceIds: selectedServiceIds,
                 staffId: selectedDesignerId,
                 startAt: selectedStartAt,
                 endAt: selectedEndAt,
@@ -258,7 +266,7 @@ function BookingFlowPage() {
             <StepSection
               icon={Scissors}
               title="시술 선택"
-              description=""
+              description="가장 먼저 선택한 시술이 메인이 되고, 이어 선택한 시술은 옵션으로 함께 진행됩니다."
             >
               {servicesLoading ? (
                 <p className="text-sm text-muted-foreground">시술 목록을 불러오는 중...</p>
@@ -266,14 +274,19 @@ function BookingFlowPage() {
                 <p className="text-sm text-muted-foreground">등록된 시술이 없습니다. 관리자 화면에서 먼저 시술을 등록해주세요.</p>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-                  {services.map((service) => (
-                    <ServiceSelectableCard
-                      key={service.id}
-                      service={service}
-                      selected={selectedServiceId === service.id}
-                      onClick={() => bookingFlowActions.setSelectedServiceId(service.id)}
-                    />
-                  ))}
+                  {services.map((service) => {
+                    const idx = selectedServiceIds.indexOf(service.id);
+                    const role = idx === -1 ? "none" : idx === 0 ? "main" : "option";
+                    return (
+                      <ServiceSelectableCard
+                        key={service.id}
+                        service={service}
+                        role={role}
+                        optionOrder={idx > 0 ? idx : null}
+                        onClick={() => bookingFlowActions.toggleService(service.id)}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </StepSection>
@@ -283,12 +296,16 @@ function BookingFlowPage() {
             <StepSection
               icon={UserRound}
               title="디자이너 선택"
-              description={`${selectedServiceName} 시술이 가능한 디자이너를 선택합니다.`}
+              description={mainService
+                ? `메인 시술 "${mainService.name}"을 진행할 수 있는 디자이너입니다.${optionServices.length > 0 ? ` 옵션 ${optionServices.length}개는 같은 디자이너가 함께 진행합니다.` : ""}`
+                : "먼저 시술을 선택해주세요."}
             >
-              {staffLoading ? (
+              {selectedServiceIds.length === 0 ? (
+                <p className="text-sm text-muted-foreground">시술을 먼저 1개 이상 선택해주세요.</p>
+              ) : staffLoading ? (
                 <p className="text-sm text-muted-foreground">디자이너 목록을 불러오는 중...</p>
               ) : staffList.length === 0 ? (
-                <p className="text-sm text-muted-foreground">해당 시술이 가능한 디자이너가 없습니다.</p>
+                <p className="text-sm text-muted-foreground">메인 시술을 진행할 수 있는 디자이너가 없습니다. 메인 시술을 변경해주세요.</p>
               ) : (
                 <div className="grid gap-3 md:grid-cols-2">
                   {staffList.map((staff) => (
@@ -308,7 +325,9 @@ function BookingFlowPage() {
             <StepSection
               icon={CalendarDays}
               title={selectedDesigner !== "선택 전" ? `${selectedDesigner}의 예약 가능한 시간` : "날짜/시간 선택"}
-              description={selectedDesigner !== "선택 전" ? `${selectedServiceName} · ${selectedDesigner}` : "디자이너를 먼저 선택해주세요."}
+              description={mainService
+                ? `${mainService.name}${optionServices.length > 0 ? ` + 옵션 ${optionServices.length}개` : ""} · 총 ${totalDuration}분`
+                : "디자이너를 먼저 선택해주세요."}
             >
               {/* 날짜 선택 */}
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
@@ -331,7 +350,9 @@ function BookingFlowPage() {
 
               {/* 슬롯 목록 */}
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {slotsLoading ? (
+                {selectedServiceIds.length === 0 ? (
+                  <p className="col-span-2 text-sm text-muted-foreground">시술을 먼저 선택해주세요.</p>
+                ) : slotsLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className="h-28 animate-pulse rounded-2xl bg-muted/50" />
                   ))
@@ -364,7 +385,8 @@ function BookingFlowPage() {
               <button
                 type="button"
                 onClick={goNext}
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                disabled={!canGoNext}
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
               >
                 다음 단계
                 <ChevronRight className="h-4 w-4" />
@@ -461,21 +483,39 @@ function StepSection({
 
 function ServiceSelectableCard({
   service,
-  selected,
+  role,
+  optionOrder,
   onClick,
 }: {
   service: BeautyService;
-  selected: boolean;
+  role: "none" | "main" | "option";
+  optionOrder: number | null;
   onClick: () => void;
 }) {
+  const selected = role !== "none";
+  const ringClass = role === "main"
+    ? "border-primary ring-2 ring-primary/40 bg-primary/5"
+    : role === "option"
+      ? "border-primary/60 ring-1 ring-primary/20 bg-primary/[0.03]"
+      : "border-black/12 bg-background hover:bg-accent";
+
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`overflow-hidden rounded-2xl border text-left transition-colors ${
-        selected ? "border-black/25 bg-primary/10" : "border-black/12 bg-background hover:bg-accent"
-      }`}
+      className={`relative overflow-hidden rounded-2xl border text-left transition-colors ${ringClass}`}
     >
+      {selected ? (
+        <span
+          className={`absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${
+            role === "main"
+              ? "bg-primary text-primary-foreground"
+              : "bg-white/95 text-primary ring-1 ring-primary/40"
+          }`}
+        >
+          {role === "main" ? "메인" : `옵션 ${optionOrder}`}
+        </span>
+      ) : null}
       {service.imageUrls?.[0] ? (
         <div
           className="aspect-[16/10] bg-cover bg-center bg-no-repeat"
@@ -490,11 +530,16 @@ function ServiceSelectableCard({
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-base font-semibold text-foreground">{service.name}</h3>
-          {selected ? (
-            <span className="inline-flex shrink-0 rounded-full bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
-              선택됨
-            </span>
-          ) : null}
+          <span
+            className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold ${
+              selected
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-black/20 bg-background text-transparent"
+            }`}
+            aria-hidden
+          >
+            ✓
+          </span>
         </div>
         {service.description ? (
           <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
@@ -513,27 +558,36 @@ function ServiceSelectableCard({
 }
 
 function BookingStatusPanel({
-  selectedServiceName,
+  mainService,
+  optionServices,
+  totalDuration,
+  totalPrice,
   selectedDesigner,
   selectedSlot,
-  selectedService,
   phoneInput,
   onPhoneChange,
   isPending,
   onReset,
+  onRemoveService,
+  onPromoteToMain,
   onSubmit,
 }: {
-  selectedServiceName: string;
+  mainService: BeautyService | null;
+  optionServices: BeautyService[];
+  totalDuration: number;
+  totalPrice: number;
   selectedDesigner: string | null;
   selectedSlot: string | null;
-  selectedService: BeautyService | null;
   phoneInput: string;
   onPhoneChange: (v: string) => void;
   isPending: boolean;
   onReset: () => void;
+  onRemoveService: (id: number) => void;
+  onPromoteToMain: (id: number) => void;
   onSubmit: () => void;
 }) {
-  const allSelected = !!selectedDesigner && !!selectedSlot;
+  const totalCount = (mainService ? 1 : 0) + optionServices.length;
+  const allSelected = !!mainService && !!selectedDesigner && !!selectedSlot;
 
   return (
     <article className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
@@ -549,12 +603,80 @@ function BookingStatusPanel({
       </div>
 
       <div className="mt-4 space-y-3">
-        <StatusItem
-          label="시술"
-          value={selectedServiceName}
-          done={selectedServiceName !== "선택 전"}
-          detail={selectedService ? `${selectedService.durationMinutes}분 · ${Number(selectedService.price).toLocaleString()}원` : undefined}
-        />
+        <div className="rounded-xl border border-black/12 bg-background px-4 py-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">시술</p>
+            {totalCount > 0 && (
+              <span className="text-[11px] text-muted-foreground">{totalCount}개</span>
+            )}
+          </div>
+
+          {!mainService ? (
+            <p className="mt-1 text-sm text-muted-foreground">선택 전</p>
+          ) : (
+            <div className="mt-2 space-y-2">
+              {/* 메인 */}
+              <div className="flex items-center justify-between gap-2 rounded-lg bg-primary/5 px-2.5 py-2 ring-1 ring-primary/20">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-flex shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">메인</span>
+                    <p className="truncate text-sm font-medium text-foreground">{mainService.name}</p>
+                  </div>
+                  <p className="mt-0.5 pl-[34px] text-[11px] text-muted-foreground">
+                    {mainService.durationMinutes}분 · {Number(mainService.price).toLocaleString()}원
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onRemoveService(mainService.id)}
+                  className="shrink-0 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label={`${mainService.name} 제거`}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {/* 옵션 */}
+              {optionServices.map((s, i) => (
+                <div key={s.id} className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 hover:bg-muted/40">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="inline-flex shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground">옵션 {i + 1}</span>
+                      <p className="truncate text-sm font-medium text-foreground">{s.name}</p>
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-2 pl-[44px] text-[11px] text-muted-foreground">
+                      <span>{s.durationMinutes}분 · {Number(s.price).toLocaleString()}원</span>
+                      <button
+                        type="button"
+                        onClick={() => onPromoteToMain(s.id)}
+                        className="text-primary hover:underline"
+                      >
+                        메인으로
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveService(s.id)}
+                    className="shrink-0 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    aria-label={`${s.name} 제거`}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {totalCount > 0 && (
+            <div className="mt-3 flex items-center justify-between border-t border-black/10 pt-2 text-xs">
+              <span className="text-muted-foreground">합계</span>
+              <span className="font-semibold text-foreground">
+                {totalDuration}분 · {totalPrice.toLocaleString()}원
+              </span>
+            </div>
+          )}
+        </div>
         <StatusItem
           label="디자이너"
           value={selectedDesigner ?? "선택 전"}
@@ -747,4 +869,3 @@ function formatTimeRangeFromIso(startAt: string | null, endAt: string | null) {
   });
   return `${formatter.format(new Date(startAt))} ~ ${formatter.format(new Date(endAt))}`;
 }
-

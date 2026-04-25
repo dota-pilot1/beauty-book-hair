@@ -12,6 +12,7 @@ import com.cj.beautybook.reservation.presentation.dto.ChangeReservationStatusReq
 import com.cj.beautybook.reservation.presentation.dto.CreateReservationRequest;
 import com.cj.beautybook.staff.domain.Staff;
 import com.cj.beautybook.staff.infrastructure.StaffRepository;
+import com.cj.beautybook.staff.infrastructure.StaffServiceRepository;
 import com.cj.beautybook.user.domain.User;
 import com.cj.beautybook.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +41,7 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final BeautyServiceRepository beautyServiceRepository;
     private final StaffRepository staffRepository;
+    private final StaffServiceRepository staffServiceRepository;
     private final UserRepository userRepository;
 
     @Transactional
@@ -42,11 +49,30 @@ public class ReservationService {
         User user = userRepository.findById(principal.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
-        BeautyService beautyService = beautyServiceRepository.findById(req.beautyServiceId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.BEAUTY_SERVICE_NOT_FOUND));
+        List<Long> orderedServiceIds = new ArrayList<>(new LinkedHashSet<>(req.beautyServiceIds()));
+        if (orderedServiceIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.BEAUTY_SERVICE_NOT_FOUND);
+        }
+
+        Map<Long, BeautyService> serviceMap = beautyServiceRepository.findAllById(orderedServiceIds).stream()
+                .collect(Collectors.toMap(BeautyService::getId, Function.identity()));
+        if (serviceMap.size() != orderedServiceIds.size()) {
+            throw new BusinessException(ErrorCode.BEAUTY_SERVICE_NOT_FOUND);
+        }
+        List<BeautyService> beautyServices = orderedServiceIds.stream()
+                .map(serviceMap::get)
+                .toList();
 
         Staff staff = staffRepository.findById(req.staffId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.STAFF_NOT_FOUND));
+
+        // 메인 시술(첫 번째)만 디자이너 자격을 검증한다. 옵션 시술은 메인 디자이너가 함께 진행한다.
+        Long mainServiceId = orderedServiceIds.get(0);
+        boolean canPerformMain = staffServiceRepository
+                .existsByStaffIdAndBeautyServiceIdAndActiveTrue(staff.getId(), mainServiceId);
+        if (!canPerformMain) {
+            throw new BusinessException(ErrorCode.STAFF_SERVICE_NOT_FOUND);
+        }
 
         boolean conflict = !reservationRepository
                 .findByStaffIdAndStartAtLessThanAndEndAtGreaterThanAndStatusIn(
@@ -61,7 +87,7 @@ public class ReservationService {
                 user.getUsername(),
                 req.customerPhone(),
                 staff,
-                beautyService,
+                beautyServices,
                 req.startAt(),
                 req.endAt(),
                 ReservationStatus.REQUESTED,

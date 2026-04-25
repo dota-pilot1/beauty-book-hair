@@ -20,8 +20,14 @@ public class StaffController {
     private final StaffApplicationService staffApplicationService;
 
     @GetMapping
-    public List<StaffResponse> list(@RequestParam(required = false) Long beautyServiceId) {
-        return staffApplicationService.findDesigners(beautyServiceId)
+    public List<StaffResponse> list(
+            @RequestParam(required = false) Long beautyServiceId,
+            @RequestParam(name = "beautyServiceIds", required = false) List<Long> beautyServiceIds
+    ) {
+        List<Long> ids = beautyServiceIds != null && !beautyServiceIds.isEmpty()
+                ? beautyServiceIds
+                : (beautyServiceId != null ? List.of(beautyServiceId) : List.of());
+        return staffApplicationService.findDesigners(ids)
                 .stream()
                 .map(StaffResponse::from)
                 .toList();

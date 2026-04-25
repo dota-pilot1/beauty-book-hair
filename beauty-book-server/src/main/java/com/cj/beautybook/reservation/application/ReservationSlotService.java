@@ -28,9 +28,11 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,11 +59,22 @@ public class ReservationSlotService {
     private final ReservationRepository reservationRepository;
 
     @Transactional(readOnly = true)
-    public List<ReservationSlotResponse> findSlots(Long beautyServiceId, LocalDate date, Long staffId) {
-        BeautyService beautyService = beautyServiceRepository.findById(beautyServiceId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.BEAUTY_SERVICE_NOT_FOUND));
+    public List<ReservationSlotResponse> findSlots(List<Long> beautyServiceIds, LocalDate date, Long staffId) {
+        if (beautyServiceIds == null || beautyServiceIds.isEmpty()) {
+            throw new BusinessException(ErrorCode.BEAUTY_SERVICE_NOT_FOUND);
+        }
+        List<Long> orderedServiceIds = new ArrayList<>(new LinkedHashSet<>(beautyServiceIds));
 
-        List<Staff> staffList = findCandidateStaff(beautyServiceId, staffId);
+        Map<Long, BeautyService> serviceMap = beautyServiceRepository.findAllById(orderedServiceIds).stream()
+                .collect(Collectors.toMap(BeautyService::getId, Function.identity()));
+        if (serviceMap.size() != orderedServiceIds.size()) {
+            throw new BusinessException(ErrorCode.BEAUTY_SERVICE_NOT_FOUND);
+        }
+        int durationMinutes = orderedServiceIds.stream()
+                .mapToInt(id -> serviceMap.get(id).getDurationMinutes())
+                .sum();
+
+        List<Staff> staffList = findCandidateStaff(orderedServiceIds, staffId);
         if (staffList.isEmpty()) {
             return List.of();
         }
@@ -99,12 +112,11 @@ public class ReservationSlotService {
                         )
                 ));
 
-        int durationMinutes = beautyService.getDurationMinutes();
         int occupiedUnitCount = (int) Math.ceil((double) durationMinutes / SLOT_UNIT_MINUTES);
         LocalDateTime cursor = date.atTime(businessHour.getOpenTime());
         LocalDateTime closeAt = date.atTime(businessHour.getCloseTime());
 
-        List<ReservationSlotResponse> responses = new java.util.ArrayList<>();
+        List<ReservationSlotResponse> responses = new ArrayList<>();
         while (!cursor.plusMinutes(durationMinutes).isAfter(closeAt)) {
             LocalDateTime startLocalDateTime = cursor;
             LocalDateTime endLocalDateTime = startLocalDateTime.plusMinutes(durationMinutes);
@@ -148,19 +160,22 @@ public class ReservationSlotService {
         return responses;
     }
 
-    private List<Staff> findCandidateStaff(Long beautyServiceId, Long staffId) {
+    private List<Staff> findCandidateStaff(List<Long> beautyServiceIds, Long staffId) {
+        // 메인 시술(첫 번째)만 디자이너 자격에 사용한다. 옵션 시술은 메인 디자이너가 함께 진행한다.
+        Long mainServiceId = beautyServiceIds.get(0);
+
         if (staffId != null) {
             Staff staff = staffRepository.findById(staffId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.STAFF_NOT_FOUND));
-            boolean canPerform = staffServiceRepository
-                    .existsByStaffIdAndBeautyServiceIdAndActiveTrue(staffId, beautyServiceId);
-            if (!staff.isActive() || !canPerform) {
+            boolean canPerformMain = staffServiceRepository
+                    .existsByStaffIdAndBeautyServiceIdAndActiveTrue(staffId, mainServiceId);
+            if (!staff.isActive() || !canPerformMain) {
                 throw new BusinessException(ErrorCode.STAFF_SERVICE_NOT_FOUND);
             }
             return List.of(staff);
         }
 
-        return staffServiceRepository.findByBeautyServiceIdAndActiveTrue(beautyServiceId)
+        return staffServiceRepository.findByBeautyServiceIdAndActiveTrue(mainServiceId)
                 .stream()
                 .map(StaffService::getStaff)
                 .filter(Staff::isActive)

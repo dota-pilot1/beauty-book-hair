@@ -3,6 +3,7 @@ package com.cj.beautybook.reservation.domain;
 import com.cj.beautybook.beauty_service.domain.BeautyService;
 import com.cj.beautybook.staff.domain.Staff;
 import com.cj.beautybook.user.domain.User;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,6 +15,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -22,6 +25,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(
@@ -55,9 +60,17 @@ public class Reservation {
     @JoinColumn(name = "staff_id", nullable = false)
     private Staff staff;
 
+    /**
+     * 대표 시술. 다중 시술 도입 이전 row 호환과 빠른 조회를 위해 유지하며,
+     * 신규 예약에서는 항상 items[0]의 시술과 동일하다.
+     */
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "beauty_service_id", nullable = false)
     private BeautyService beautyService;
+
+    @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("displayOrder ASC, id ASC")
+    private List<ReservationItem> items = new ArrayList<>();
 
     @Column(nullable = false)
     private Instant startAt;
@@ -88,24 +101,30 @@ public class Reservation {
             String customerName,
             String customerPhone,
             Staff staff,
-            BeautyService beautyService,
+            List<BeautyService> beautyServices,
             Instant startAt,
             Instant endAt,
             ReservationStatus status,
             String customerMemo,
             String adminMemo
     ) {
+        if (beautyServices == null || beautyServices.isEmpty()) {
+            throw new IllegalArgumentException("beautyServices must not be empty");
+        }
         Reservation reservation = new Reservation();
         reservation.customer = customer;
         reservation.customerName = customerName;
         reservation.customerPhone = customerPhone;
         reservation.staff = staff;
-        reservation.beautyService = beautyService;
+        reservation.beautyService = beautyServices.get(0);
         reservation.startAt = startAt;
         reservation.endAt = endAt;
         reservation.status = status;
         reservation.customerMemo = customerMemo;
         reservation.adminMemo = adminMemo;
+        for (int i = 0; i < beautyServices.size(); i++) {
+            reservation.items.add(ReservationItem.create(reservation, beautyServices.get(i), i));
+        }
         return reservation;
     }
 

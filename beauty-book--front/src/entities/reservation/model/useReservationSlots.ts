@@ -4,20 +4,21 @@ import { useQuery } from "@tanstack/react-query";
 import { reservationSlotApi } from "../api/reservationSlotApi";
 
 export function useReservationSlots(params: {
-  beautyServiceId: number | null;
+  beautyServiceIds: number[];
   date: string;
   staffId?: number | null;
 }) {
-  const { beautyServiceId, date, staffId } = params;
+  const { beautyServiceIds, date, staffId } = params;
+  const enabled = beautyServiceIds.length > 0;
 
   return useQuery({
-    queryKey: ["reservation-slots", { beautyServiceId, date, staffId }],
+    queryKey: ["reservation-slots", { beautyServiceIds, date, staffId }],
     queryFn: () =>
       reservationSlotApi.list({
-        beautyServiceId: beautyServiceId as number,
+        beautyServiceIds,
         date,
         staffId,
       }),
-    enabled: beautyServiceId != null,
+    enabled,
   });
 }

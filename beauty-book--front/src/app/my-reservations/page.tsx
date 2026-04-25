@@ -114,11 +114,25 @@ function MyReservationCard({
 }) {
   const meta = STATUS_META[r.status];
 
+  const items = r.items?.length ? r.items : [{ id: null, beautyServiceId: r.beautyServiceId, beautyServiceName: r.beautyServiceName, durationMinutes: 0, price: 0, displayOrder: 0 }];
+  const main = items[0];
+  const options = items.slice(1);
+
   return (
     <div className="rounded-2xl border border-black/10 bg-card p-4">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="text-base font-semibold text-foreground">{r.beautyServiceName}</h3>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            {options.length > 0 && (
+              <span className="inline-flex shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">메인</span>
+            )}
+            <h3 className="truncate text-base font-semibold text-foreground">{main.beautyServiceName}</h3>
+          </div>
+          {options.length > 0 && (
+            <p className="mt-1 text-xs text-muted-foreground">
+              + 옵션 {options.map((o) => o.beautyServiceName).join(", ")}
+            </p>
+          )}
           <p className="mt-1 text-sm text-muted-foreground">
             {r.staffName} · {formatDateTime(r.startAt)}
           </p>

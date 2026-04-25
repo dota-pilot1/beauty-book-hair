@@ -23,10 +23,10 @@ public class ReservationSlotController {
 
     @GetMapping
     public List<ReservationSlotResponse> list(
-            @RequestParam Long beautyServiceId,
+            @RequestParam(name = "beautyServiceIds") List<Long> beautyServiceIds,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) Long staffId
     ) {
-        return reservationSlotService.findSlots(beautyServiceId, date, staffId);
+        return reservationSlotService.findSlots(beautyServiceIds, date, staffId);
     }
 }

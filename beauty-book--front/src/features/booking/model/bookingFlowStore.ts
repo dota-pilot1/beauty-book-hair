@@ -7,7 +7,7 @@ export type BookingStepKey = "service" | "designer" | "schedule";
 export type BookingFlowState = {
   hydrated: boolean;
   step: BookingStepKey;
-  selectedServiceId: number | null;
+  selectedServiceIds: number[];
   selectedDate: string;
   selectedDesignerId: number | null;
   selectedDesigner: string;
@@ -23,7 +23,7 @@ const STORAGE_KEY = "booking-flow-draft";
 const DEFAULT_STATE: BookingFlowState = {
   hydrated: false,
   step: "service",
-  selectedServiceId: null,
+  selectedServiceIds: [],
   selectedDate: formatDateInput(new Date()),
   selectedDesignerId: null,
   selectedDesigner: "선택 전",
@@ -43,7 +43,7 @@ function persist(next: BookingFlowState) {
       STORAGE_KEY,
       JSON.stringify({
         step: next.step,
-        selectedServiceId: next.selectedServiceId,
+        selectedServiceIds: next.selectedServiceIds,
         selectedDate: next.selectedDate,
         selectedDesignerId: next.selectedDesignerId,
         selectedDesigner: next.selectedDesigner,
@@ -64,6 +64,19 @@ function setState(next: BookingFlowState) {
   persist(next);
 }
 
+function clearScheduleAndDesigner(prev: BookingFlowState): BookingFlowState {
+  return {
+    ...prev,
+    selectedDesignerId: null,
+    selectedDesigner: "선택 전",
+    selectedStartAt: null,
+    selectedEndAt: null,
+    selectedSlot: "선택 전",
+    selectedSlotAvailableDesigners: [],
+    selectedOccupiedUnitCount: 0,
+  };
+}
+
 export const bookingFlowActions = {
   hydrate() {
     if (typeof window === "undefined") return;
@@ -76,11 +89,19 @@ export const bookingFlowActions = {
 
       const parsed = JSON.parse(stored) as Partial<BookingFlowState> & {
         selectedService?: string;
+        selectedServiceId?: number | null;
       };
+
+      const restoredIds = Array.isArray(parsed.selectedServiceIds)
+        ? parsed.selectedServiceIds.filter((v): v is number => typeof v === "number")
+        : parsed.selectedServiceId != null
+          ? [parsed.selectedServiceId]
+          : DEFAULT_STATE.selectedServiceIds;
+
       bookingFlowStore.setState({
         hydrated: true,
         step: parsed.step ?? DEFAULT_STATE.step,
-        selectedServiceId: parsed.selectedServiceId ?? DEFAULT_STATE.selectedServiceId,
+        selectedServiceIds: restoredIds,
         selectedDate: parsed.selectedDate ?? DEFAULT_STATE.selectedDate,
         selectedDesignerId: parsed.selectedDesignerId ?? DEFAULT_STATE.selectedDesignerId,
         selectedDesigner: parsed.selectedDesigner ?? DEFAULT_STATE.selectedDesigner,
@@ -98,42 +119,54 @@ export const bookingFlowActions = {
   },
 
   setStep(step: BookingStepKey) {
-    const next = { ...bookingFlowStore.state, hydrated: true, step };
-    setState(next);
+    setState({ ...bookingFlowStore.state, hydrated: true, step });
   },
 
-  setSelectedServiceId(selectedServiceId: number) {
-    const next = {
-      ...bookingFlowStore.state,
-      hydrated: true,
-      selectedServiceId,
-      selectedDesignerId: null,
-      selectedDesigner: "선택 전",
-      selectedStartAt: null,
-      selectedEndAt: null,
-      selectedSlot: "선택 전",
-      selectedSlotAvailableDesigners: [],
-      selectedOccupiedUnitCount: 0,
-    };
-    setState(next);
+  toggleService(serviceId: number) {
+    const current = bookingFlowStore.state.selectedServiceIds;
+    const exists = current.includes(serviceId);
+    const next = exists
+      ? current.filter((id) => id !== serviceId)
+      : [...current, serviceId];
+    setState({
+      ...clearScheduleAndDesigner({ ...bookingFlowStore.state, hydrated: true }),
+      selectedServiceIds: next,
+    });
+  },
+
+  setSelectedServiceIds(selectedServiceIds: number[]) {
+    setState({
+      ...clearScheduleAndDesigner({ ...bookingFlowStore.state, hydrated: true }),
+      selectedServiceIds,
+    });
+  },
+
+  clearServices() {
+    setState({
+      ...clearScheduleAndDesigner({ ...bookingFlowStore.state, hydrated: true }),
+      selectedServiceIds: [],
+    });
+  },
+
+  promoteToMain(serviceId: number) {
+    const current = bookingFlowStore.state.selectedServiceIds;
+    if (!current.includes(serviceId) || current[0] === serviceId) return;
+    const next = [serviceId, ...current.filter((id) => id !== serviceId)];
+    setState({
+      ...clearScheduleAndDesigner({ ...bookingFlowStore.state, hydrated: true }),
+      selectedServiceIds: next,
+    });
   },
 
   setSelectedDate(selectedDate: string) {
-    const next = {
-      ...bookingFlowStore.state,
-      hydrated: true,
+    setState({
+      ...clearScheduleAndDesigner({ ...bookingFlowStore.state, hydrated: true }),
       selectedDate,
-      selectedStartAt: null,
-      selectedEndAt: null,
-      selectedSlot: "선택 전",
-      selectedSlotAvailableDesigners: [],
-      selectedOccupiedUnitCount: 0,
-    };
-    setState(next);
+    });
   },
 
   setSelectedDesigner(selectedDesignerId: number, selectedDesigner: string) {
-    const next = {
+    setState({
       ...bookingFlowStore.state,
       hydrated: true,
       selectedDesignerId,
@@ -143,8 +176,7 @@ export const bookingFlowActions = {
       selectedSlot: "선택 전",
       selectedSlotAvailableDesigners: [],
       selectedOccupiedUnitCount: 0,
-    };
-    setState(next);
+    });
   },
 
   setSelectedSlot(slot: {
@@ -159,7 +191,7 @@ export const bookingFlowActions = {
       bookingFlowStore.state.selectedDesignerId != null &&
       slot.availableStaff.some((s) => s.id === bookingFlowStore.state.selectedDesignerId);
 
-    const next = {
+    setState({
       ...bookingFlowStore.state,
       hydrated: true,
       selectedStartAt: slot.startAt,
@@ -173,8 +205,7 @@ export const bookingFlowActions = {
       selectedDesigner: currentDesignerStillAvailable
         ? bookingFlowStore.state.selectedDesigner
         : autoDesigner?.name ?? "선택 전",
-    };
-    setState(next);
+    });
   },
 
   reset() {

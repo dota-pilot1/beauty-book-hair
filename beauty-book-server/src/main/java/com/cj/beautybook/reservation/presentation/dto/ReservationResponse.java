@@ -4,6 +4,7 @@ import com.cj.beautybook.reservation.domain.Reservation;
 import com.cj.beautybook.reservation.domain.ReservationStatus;
 
 import java.time.Instant;
+import java.util.List;
 
 public record ReservationResponse(
         Long id,
@@ -13,6 +14,7 @@ public record ReservationResponse(
         String staffName,
         Long beautyServiceId,
         String beautyServiceName,
+        List<ReservationItemResponse> items,
         Instant startAt,
         Instant endAt,
         ReservationStatus status,
@@ -21,6 +23,16 @@ public record ReservationResponse(
         Instant createdAt
 ) {
     public static ReservationResponse from(Reservation r) {
+        List<ReservationItemResponse> itemResponses = r.getItems().isEmpty()
+                ? List.of(new ReservationItemResponse(
+                        null,
+                        r.getBeautyService().getId(),
+                        r.getBeautyService().getName(),
+                        r.getBeautyService().getDurationMinutes(),
+                        r.getBeautyService().getPrice(),
+                        0
+                ))
+                : r.getItems().stream().map(ReservationItemResponse::from).toList();
         return new ReservationResponse(
                 r.getId(),
                 r.getCustomerName(),
@@ -29,6 +41,7 @@ public record ReservationResponse(
                 r.getStaff().getName(),
                 r.getBeautyService().getId(),
                 r.getBeautyService().getName(),
+                itemResponses,
                 r.getStartAt(),
                 r.getEndAt(),
                 r.getStatus(),
