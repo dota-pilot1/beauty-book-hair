@@ -4,5 +4,6 @@ public enum ReservationSlotStatus {
     AVAILABLE,
     REQUESTED,
     RESERVED,
-    BLOCKED
+    BLOCKED,
+    PAST
 }

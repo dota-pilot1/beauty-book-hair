@@ -35,6 +35,7 @@ public enum ErrorCode {
     BEAUTY_SERVICE_CATEGORY_IN_USE(HttpStatus.CONFLICT, "BSVC_CAT_003", "해당 카테고리를 사용 중인 시술이 있어 삭제할 수 없습니다."),
     BEAUTY_SERVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "BSVC_001", "시술 정보를 찾을 수 없습니다."),
     BEAUTY_SERVICE_CODE_DUPLICATE(HttpStatus.CONFLICT, "BSVC_002", "이미 존재하는 시술 코드입니다."),
+    BEAUTY_SERVICE_HAS_ACTIVE_RESERVATIONS(HttpStatus.CONFLICT, "BSVC_003", "활성 예약이 있는 시술은 삭제할 수 없습니다."),
     STAFF_NOT_FOUND(HttpStatus.NOT_FOUND, "STFF_001", "직원을 찾을 수 없습니다."),
     STAFF_SERVICE_NOT_FOUND(HttpStatus.NOT_FOUND, "STFF_002", "직원 시술 매핑을 찾을 수 없습니다."),
     BUSINESS_HOUR_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHD_001", "영업시간을 찾을 수 없습니다."),

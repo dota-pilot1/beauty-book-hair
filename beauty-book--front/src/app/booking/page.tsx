@@ -28,6 +28,7 @@ import {
   useBookingFlow,
 } from "@/features/booking/model/bookingFlowStore";
 import { useCreateReservation } from "@/entities/reservation/model/useReservations";
+import { useBusinessHours } from "@/entities/schedule/model/useBusinessHours";
 
 const steps: Array<{
   key: BookingStepKey;
@@ -78,6 +79,12 @@ const slotStatusMeta: Record<
     description: "근무 외 시간 또는 매장 차단 시간입니다.",
     className: "border-black/10 bg-muted/30 text-muted-foreground",
     badgeClassName: "bg-muted text-muted-foreground",
+  },
+  PAST: {
+    label: "지난 시간",
+    description: "이미 지난 시간입니다.",
+    className: "border-black/6 bg-muted/20 text-muted-foreground/50 opacity-50",
+    badgeClassName: "bg-muted/60 text-muted-foreground/60",
   },
 };
 
@@ -161,6 +168,16 @@ function BookingFlowPage() {
     date: selectedDate,
     staffId: selectedDesignerId ?? undefined,
   });
+
+  const { data: businessHours = [] } = useBusinessHours();
+
+  const isSelectedDateClosed = useMemo(() => {
+    if (!selectedDate || businessHours.length === 0) return false;
+    const dayNames = ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"] as const;
+    const dow = dayNames[new Date(selectedDate + "T00:00:00").getDay()];
+    const bh = businessHours.find((h) => h.dayOfWeek === dow);
+    return bh?.closed ?? false;
+  }, [selectedDate, businessHours]);
 
   useEffect(() => {
     bookingFlowActions.hydrate();
@@ -483,7 +500,11 @@ function BookingFlowPage() {
                 ) : slotsError ? (
                   <p className="col-span-2 text-sm text-muted-foreground">가능한 시간을 불러오지 못했습니다.</p>
                 ) : reservationSlots.length === 0 ? (
-                  <p className="col-span-2 text-sm text-muted-foreground">선택한 날짜에 표시할 시간이 없습니다.</p>
+                  <p className="col-span-2 text-sm text-muted-foreground">
+                    {isSelectedDateClosed
+                      ? "휴무일입니다. 다른 날짜를 선택해주세요."
+                      : "선택한 날짜에 예약 가능한 시간이 없습니다."}
+                  </p>
                 ) : reservationSlots.map((slot) => (
                   <SlotSelectableCard
                     key={slot.slotId}

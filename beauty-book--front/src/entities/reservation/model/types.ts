@@ -1,4 +1,4 @@
-export type ReservationSlotStatus = "AVAILABLE" | "REQUESTED" | "RESERVED" | "BLOCKED";
+export type ReservationSlotStatus = "AVAILABLE" | "REQUESTED" | "RESERVED" | "BLOCKED" | "PAST";
 
 export type ReservationStatus =
   | "REQUESTED"

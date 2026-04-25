@@ -9,11 +9,14 @@ import com.cj.beautybook.beauty_service.presentation.dto.CreateBeautyServiceRequ
 import com.cj.beautybook.beauty_service.presentation.dto.UpdateBeautyServiceRequest;
 import com.cj.beautybook.common.exception.BusinessException;
 import com.cj.beautybook.common.exception.ErrorCode;
+import com.cj.beautybook.reservation.domain.ReservationStatus;
+import com.cj.beautybook.reservation.infrastructure.ReservationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +24,10 @@ public class BeautyServiceService {
 
     private final BeautyServiceRepository beautyServiceRepository;
     private final BeautyServiceCategoryRepository beautyServiceCategoryRepository;
+    private final ReservationRepository reservationRepository;
+
+    private static final List<ReservationStatus> ACTIVE_STATUSES =
+            List.of(ReservationStatus.REQUESTED, ReservationStatus.CONFIRMED);
 
     @Transactional(readOnly = true)
     public List<BeautyService> findAll(
@@ -36,6 +43,16 @@ public class BeautyServiceService {
                         || service.getTargetGender() == BeautyServiceTargetGender.ALL)
                 .filter(service -> visible == null || service.isVisible() == visible)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Set<Long> findServiceIdsWithActiveReservations() {
+        return reservationRepository.findServiceIdsWithActiveReservations(ACTIVE_STATUSES);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasActiveReservations(Long serviceId) {
+        return reservationRepository.findServiceIdsWithActiveReservations(ACTIVE_STATUSES).contains(serviceId);
     }
 
     @Transactional(readOnly = true)
@@ -86,7 +103,19 @@ public class BeautyServiceService {
 
     @Transactional
     public void delete(Long id) {
+        if (hasActiveReservations(id)) {
+            throw new BusinessException(ErrorCode.BEAUTY_SERVICE_HAS_ACTIVE_RESERVATIONS);
+        }
         BeautyService service = getById(id);
         beautyServiceRepository.delete(service);
+    }
+
+    @Transactional
+    public void deleteBatch(List<Long> ids) {
+        Set<Long> blockedIds = reservationRepository.findServiceIdsWithActiveReservations(ACTIVE_STATUSES);
+        ids.stream()
+                .filter(id -> !blockedIds.contains(id))
+                .forEach(id -> beautyServiceRepository.findByIdWithCategory(id)
+                        .ifPresent(beautyServiceRepository::delete));
     }
 }

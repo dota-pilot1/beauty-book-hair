@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Switch from "@radix-ui/react-switch";
 import * as Select from "@radix-ui/react-select";
-import { ChevronDown, X, UserCircle2 } from "lucide-react";
+import { ChevronDown, X, UserCircle2, CalendarClock } from "lucide-react";
 import { RequireRole } from "@/widgets/guards/RequireRole";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { api } from "@/shared/api/axios";
@@ -52,6 +52,29 @@ const ROLE_BADGE_CLASS: Record<StaffRole, string> = {
   DESK: "border border-border text-muted-foreground",
 };
 
+type DayOfWeek = "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
+
+type WorkingHour = {
+  id: number;
+  staffId: number;
+  dayOfWeek: DayOfWeek;
+  startTime: string | null;
+  endTime: string | null;
+  working: boolean;
+};
+
+const DAY_LABELS: Record<DayOfWeek, string> = {
+  MONDAY: "월",
+  TUESDAY: "화",
+  WEDNESDAY: "수",
+  THURSDAY: "목",
+  FRIDAY: "금",
+  SATURDAY: "토",
+  SUNDAY: "일",
+};
+
+const ALL_DAYS: DayOfWeek[] = ["MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY","SUNDAY"];
+
 const staffApi = {
   listAll: () => api.get<StaffMember[]>("/api/admin/staff").then((r) => r.data),
   create: (data: StaffForm) => api.post<StaffMember>("/api/admin/staff", data).then((r) => r.data),
@@ -63,6 +86,10 @@ const staffApi = {
     api
       .put<StaffServiceItem[]>(`/api/admin/staff/${staffId}/services`, { beautyServiceIds })
       .then((r) => r.data),
+  listWorkingHours: (staffId: number) =>
+    api.get<WorkingHour[]>(`/api/admin/schedules/staff/${staffId}/working-hours`).then((r) => r.data),
+  replaceWorkingHours: (staffId: number, workingHours: { dayOfWeek: DayOfWeek; startTime: string | null; endTime: string | null; working: boolean }[]) =>
+    api.put<WorkingHour[]>(`/api/admin/schedules/staff/${staffId}/working-hours`, { workingHours }).then((r) => r.data),
 };
 
 const EMPTY_FORM: StaffForm = {
@@ -90,6 +117,8 @@ function StaffAdminPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StaffMember | null>(null);
   const [form, setForm] = useState<StaffForm>(EMPTY_FORM);
+  const [scheduleTarget, setScheduleTarget] = useState<StaffMember | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   const { data: staffList = [] } = useQuery({
     queryKey: ["admin-staff"],
@@ -231,12 +260,21 @@ function StaffAdminPage() {
                         </Switch.Root>
                       </td>
                       <td className="py-3">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); openEdit(staff); }}
-                          className="rounded border border-border px-2 py-1 text-xs hover:bg-muted"
-                        >
-                          수정
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openEdit(staff); }}
+                            className="rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setScheduleTarget(staff); setScheduleOpen(true); }}
+                            className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+                          >
+                            <CalendarClock className="h-3 w-3" />
+                            스케쥴
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -257,6 +295,22 @@ function StaffAdminPage() {
                 staff={selectedStaff}
                 onEdit={() => { setDetailOpen(false); openEdit(selectedStaff); }}
                 onClose={() => { setDetailOpen(false); setSelectedStaff(null); }}
+              />
+            )}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* 스케쥴 다이얼로그 */}
+      <Dialog.Root open={scheduleOpen} onOpenChange={(open) => { if (!open) { setScheduleOpen(false); setScheduleTarget(null); } }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-background p-6 shadow-lg max-h-[90vh] overflow-y-auto">
+            <Dialog.Title className="sr-only">근무 시간 설정</Dialog.Title>
+            {scheduleTarget && (
+              <StaffScheduleModal
+                staff={scheduleTarget}
+                onClose={() => { setScheduleOpen(false); setScheduleTarget(null); }}
               />
             )}
           </Dialog.Content>
@@ -494,6 +548,158 @@ function StaffDetailPanel({
             ))}
           </ul>
         )}
+      </div>
+    </div>
+  );
+}
+
+type WorkingHourRow = {
+  dayOfWeek: DayOfWeek;
+  working: boolean;
+  startTime: string;
+  endTime: string;
+};
+
+function StaffScheduleModal({ staff, onClose }: { staff: StaffMember; onClose: () => void }) {
+  const qc = useQueryClient();
+
+  const { data: workingHours = [], isLoading } = useQuery({
+    queryKey: ["admin-staff-working-hours", staff.id],
+    queryFn: () => staffApi.listWorkingHours(staff.id),
+  });
+
+  const [rows, setRows] = useState<WorkingHourRow[] | null>(null);
+
+  const effectiveRows: WorkingHourRow[] = rows ?? (
+    workingHours.length > 0
+      ? ALL_DAYS.map((day) => {
+          const found = workingHours.find((wh) => wh.dayOfWeek === day);
+          return {
+            dayOfWeek: day,
+            working: found?.working ?? false,
+            startTime: found?.startTime ?? "10:00",
+            endTime: found?.endTime ?? "20:00",
+          };
+        })
+      : ALL_DAYS.map((day) => ({ dayOfWeek: day, working: false, startTime: "10:00", endTime: "20:00" }))
+  );
+
+  function updateRow(day: DayOfWeek, patch: Partial<WorkingHourRow>) {
+    setRows(effectiveRows.map((r) => r.dayOfWeek === day ? { ...r, ...patch } : r));
+  }
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      staffApi.replaceWorkingHours(
+        staff.id,
+        effectiveRows.map((r) => ({
+          dayOfWeek: r.dayOfWeek,
+          working: r.working,
+          startTime: r.working ? r.startTime : null,
+          endTime: r.working ? r.endTime : null,
+        }))
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-staff-working-hours", staff.id] });
+      onClose();
+    },
+  });
+
+  return (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <p className="text-base font-semibold">{staff.name} 근무 시간 설정</p>
+          <p className="text-xs text-muted-foreground">요일별 근무 여부와 시간을 설정합니다.</p>
+        </div>
+        <button onClick={onClose} className="rounded p-1 hover:bg-muted">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="h-10 animate-pulse rounded-lg bg-muted/50" />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {effectiveRows.map((row) => (
+            <div key={row.dayOfWeek} className="rounded-lg border border-border/50 px-3 py-2">
+              <div className="flex items-center gap-3">
+                <span className="w-5 text-center text-sm font-medium text-muted-foreground">
+                  {DAY_LABELS[row.dayOfWeek]}
+                </span>
+                <Switch.Root
+                  checked={row.working}
+                  onCheckedChange={(v) => updateRow(row.dayOfWeek, { working: v })}
+                  className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full bg-muted data-[state=checked]:bg-primary"
+                >
+                  <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
+                </Switch.Root>
+                {row.working ? (
+                  <>
+                    {/* 프리셋 칩 */}
+                    {[
+                      { label: "전일", start: "10:00", end: "20:00" },
+                      { label: "오전반차", start: "14:00", end: "20:00" },
+                      { label: "오후반차", start: "10:00", end: "14:00" },
+                    ].map((preset) => {
+                      const active = row.startTime === preset.start && row.endTime === preset.end;
+                      return (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => updateRow(row.dayOfWeek, { startTime: preset.start, endTime: preset.end })}
+                          className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+                            active
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">휴무</span>
+                )}
+              </div>
+              {row.working && (
+                <div className="mt-2 flex items-center gap-2 pl-8">
+                  <input
+                    type="time"
+                    value={row.startTime}
+                    onChange={(e) => updateRow(row.dayOfWeek, { startTime: e.target.value })}
+                    className="rounded border border-border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                  <span className="text-xs text-muted-foreground">~</span>
+                  <input
+                    type="time"
+                    value={row.endTime}
+                    onChange={(e) => updateRow(row.dayOfWeek, { endTime: e.target.value })}
+                    className="rounded border border-border bg-background px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-5 flex justify-end gap-2">
+        <button onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted">
+          취소
+        </button>
+        <button
+          onClick={() => saveMutation.mutate()}
+          disabled={saveMutation.isPending || isLoading}
+          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+        >
+          {saveMutation.isPending ? "저장 중..." : "저장"}
+        </button>
       </div>
     </div>
   );

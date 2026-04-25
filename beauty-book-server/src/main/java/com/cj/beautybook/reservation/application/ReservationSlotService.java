@@ -115,6 +115,7 @@ public class ReservationSlotService {
         int occupiedUnitCount = (int) Math.ceil((double) durationMinutes / SLOT_UNIT_MINUTES);
         LocalDateTime cursor = date.atTime(businessHour.getOpenTime());
         LocalDateTime closeAt = date.atTime(businessHour.getCloseTime());
+        Instant now = Instant.now();
 
         List<ReservationSlotResponse> responses = new ArrayList<>();
         while (!cursor.plusMinutes(durationMinutes).isAfter(closeAt)) {
@@ -122,6 +123,16 @@ public class ReservationSlotService {
             LocalDateTime endLocalDateTime = startLocalDateTime.plusMinutes(durationMinutes);
             Instant startAt = startLocalDateTime.atZone(STORE_ZONE).toInstant();
             Instant endAt = endLocalDateTime.atZone(STORE_ZONE).toInstant();
+
+            if (startAt.isBefore(now)) {
+                responses.add(new ReservationSlotResponse(
+                        startAt.toString(), startAt, endAt, durationMinutes,
+                        SLOT_UNIT_MINUTES, occupiedUnitCount,
+                        ReservationSlotStatus.PAST, false, List.of(), "지난 시간입니다."
+                ));
+                cursor = cursor.plusMinutes(SLOT_UNIT_MINUTES);
+                continue;
+            }
 
             List<Staff> availableStaff = staffList.stream()
                     .filter(staff -> isAvailable(
@@ -259,6 +270,7 @@ public class ReservationSlotService {
             case REQUESTED -> "승인 대기 예약과 겹칩니다.";
             case RESERVED -> "확정 예약과 겹칩니다.";
             case BLOCKED -> "근무 외 시간 또는 예약 불가 시간입니다.";
+            case PAST -> "지난 시간입니다.";
         };
     }
 }

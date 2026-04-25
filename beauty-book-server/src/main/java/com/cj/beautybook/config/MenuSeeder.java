@@ -29,7 +29,7 @@ public class MenuSeeder implements ApplicationRunner {
     @Transactional
     public void run(ApplicationArguments args) {
         List<MenuDef> defs = List.of(
-                new MenuDef("DASHBOARD",             null,    "대시보드",      "nav.dashboard",        "/dashboard",        "LayoutDashboard", null,                    0),
+                new MenuDef("DASHBOARD",             null,    "대시보드",      "nav.dashboard",        "/dashboard",        "LayoutDashboard", RoleSeeder.ROLE_ADMIN,   0),
                 new MenuDef("CUSTOMER_SPACE",        null,    "미용실 소개",   null,                   "/customer-space",   "Sparkles",        null,                    1),
                 new MenuDef("BOOKING",               null,    "예약하기",      null,                   "/booking",          "CalendarPlus",    null,                    2),
                 new MenuDef("RESERVATIONS",          null,    "예약 현황",     null,                   "/reservations",     "CalendarCheck",   null,                    3),

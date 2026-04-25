@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, LayoutGrid, Plus, Table2 } from "lucide-react";
+import { ImagePlus, LayoutGrid, Plus, Table2, Trash2 } from "lucide-react";
 import { beautyServiceApi } from "@/entities/beauty-service/api/beautyServiceApi";
 import type { BeautyService, BeautyServiceCategory } from "@/entities/beauty-service/model/types";
 import { toast, toastError } from "@/shared/lib/toast";
@@ -19,6 +19,8 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
   const [formTarget, setFormTarget] = useState<BeautyService | null | "new">(null);
   const [deleteTarget, setDeleteTarget] = useState<BeautyService | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "card">("card");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
 
   const { data: services, isLoading, isError } = useQuery({
     queryKey: ["beauty-services", selectedCategoryId],
@@ -33,6 +35,17 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
       setDeleteTarget(null);
     },
     onError: (e) => toastError(e, "삭제에 실패했습니다."),
+  });
+
+  const batchDeleteMutation = useMutation({
+    mutationFn: (ids: number[]) => beautyServiceApi.deleteBatch(ids),
+    onSuccess: () => {
+      toast.success("선택한 시술이 삭제되었습니다.");
+      qc.invalidateQueries({ queryKey: ["beauty-services"] });
+      setSelectedIds(new Set());
+      setBatchDeleteOpen(false);
+    },
+    onError: (e) => toastError(e, "일괄 삭제에 실패했습니다."),
   });
 
   const visibilityMutation = useMutation({
@@ -68,7 +81,16 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
             {selectedCategory ? selectedCategory.description || "선택한 카테고리의 시술입니다." : "전체 시술을 관리합니다."}
           </p>
         </div>
-        <div className="flex items-center justify-end">
+        <div className="flex items-center gap-2">
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setBatchDeleteOpen(true)}
+              className="inline-flex items-center gap-2 rounded-md border border-destructive/50 bg-background px-3 py-2 text-sm font-medium text-destructive shadow-sm hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+              {selectedIds.size}개 삭제
+            </button>
+          )}
           <button
             onClick={() => setFormTarget("new")}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90"
@@ -107,13 +129,30 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/40">
+                <Th className="w-10">
+                  <input
+                    type="checkbox"
+                    className="rounded border-border"
+                    checked={
+                      (services?.length ?? 0) > 0 &&
+                      services?.filter((s) => !s.hasActiveReservations).every((s) => selectedIds.has(s.id))
+                    }
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(new Set(services?.filter((s) => !s.hasActiveReservations).map((s) => s.id)));
+                      } else {
+                        setSelectedIds(new Set());
+                      }
+                    }}
+                  />
+                </Th>
                 <Th>이름</Th>
-                <Th>코드</Th>
                 <Th>카테고리</Th>
                 <Th>소요 시간</Th>
                 <Th>가격</Th>
                 <Th>대상</Th>
                 <Th>노출</Th>
+                <Th>예약</Th>
                 <Th className="text-right">액션</Th>
               </tr>
             </thead>
@@ -127,13 +166,39 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
               ) : null}
               {services?.map((service) => (
                 <tr key={service.id} className="border-b border-border last:border-0 hover:bg-muted/20">
+                  <Td>
+                    {service.hasActiveReservations ? (
+                      <span title="활성 예약 있음" className="inline-block h-4 w-4 rounded border border-border bg-muted/40 cursor-not-allowed" />
+                    ) : (
+                      <input
+                        type="checkbox"
+                        className="rounded border-border"
+                        checked={selectedIds.has(service.id)}
+                        onChange={(e) => {
+                          const next = new Set(selectedIds);
+                          e.target.checked ? next.add(service.id) : next.delete(service.id);
+                          setSelectedIds(next);
+                        }}
+                      />
+                    )}
+                  </Td>
                   <Td className="font-medium">{service.name}</Td>
-                  <Td><span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">{service.code}</span></Td>
                   <Td>{service.category.name}</Td>
                   <Td>{service.durationMinutes}분</Td>
                   <Td>{Number(service.price).toLocaleString()}원</Td>
                   <Td>{genderLabel(service.targetGender)}</Td>
                   <Td>{service.visible ? "노출" : "숨김"}</Td>
+                  <Td>
+                    {service.hasActiveReservations ? (
+                      <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-600/20">
+                        예약 있음
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
+                        없음
+                      </span>
+                    )}
+                  </Td>
                   <Td className="text-right">
                     <ServiceActions
                       service={service}
@@ -237,6 +302,17 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
         onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      <ConfirmDialog
+        open={batchDeleteOpen}
+        title={`${selectedIds.size}개 시술을 삭제하시겠습니까?`}
+        description="활성 예약이 있는 시술은 제외하고 삭제됩니다."
+        variant="destructive"
+        confirmText="삭제"
+        loading={batchDeleteMutation.isPending}
+        onConfirm={() => batchDeleteMutation.mutate(Array.from(selectedIds))}
+        onCancel={() => setBatchDeleteOpen(false)}
+      />
     </section>
   );
 }
@@ -268,8 +344,14 @@ function ServiceActions({
         수정
       </button>
       <button
-        onClick={() => onDelete(service)}
-        className="rounded-sm border border-destructive/50 bg-background px-2 py-0.5 text-xs text-destructive shadow-sm hover:bg-destructive/10"
+        onClick={() => !service.hasActiveReservations && onDelete(service)}
+        disabled={service.hasActiveReservations}
+        title={service.hasActiveReservations ? "활성 예약이 있어 삭제할 수 없습니다" : undefined}
+        className={
+          service.hasActiveReservations
+            ? "rounded-sm border border-border bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground cursor-not-allowed opacity-50"
+            : "rounded-sm border border-destructive/50 bg-background px-2 py-0.5 text-xs text-destructive shadow-sm hover:bg-destructive/10"
+        }
       >
         삭제
       </button>

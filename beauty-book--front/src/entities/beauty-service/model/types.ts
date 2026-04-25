@@ -23,4 +23,5 @@ export type BeautyService = {
   displayOrder: number;
   imageUrls: string[];
   createdAt: string;
+  hasActiveReservations: boolean;
 };

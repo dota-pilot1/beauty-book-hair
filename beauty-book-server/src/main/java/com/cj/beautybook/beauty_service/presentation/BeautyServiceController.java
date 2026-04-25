@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @Tag(name = "시술 정보 관리")
 @RestController
@@ -28,22 +29,26 @@ public class BeautyServiceController {
             @RequestParam(required = false) BeautyServiceTargetGender targetGender,
             @RequestParam(required = false) Boolean visible
     ) {
+        Set<Long> activeIds = beautyServiceService.findServiceIdsWithActiveReservations();
         return beautyServiceService.findAll(categoryId, targetGender, visible)
                 .stream()
-                .map(BeautyServiceResponse::from)
+                .map(s -> BeautyServiceResponse.from(s, activeIds.contains(s.getId())))
                 .toList();
     }
 
     @GetMapping("/{id}")
     public BeautyServiceResponse get(@PathVariable Long id) {
-        return BeautyServiceResponse.from(beautyServiceService.getById(id));
+        return BeautyServiceResponse.from(
+            beautyServiceService.getById(id),
+            beautyServiceService.hasActiveReservations(id)
+        );
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public BeautyServiceResponse create(@Valid @RequestBody CreateBeautyServiceRequest request) {
-        return BeautyServiceResponse.from(beautyServiceService.create(request));
+        return BeautyServiceResponse.from(beautyServiceService.create(request), false);
     }
 
     @PatchMapping("/{id}")
@@ -52,7 +57,14 @@ public class BeautyServiceController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateBeautyServiceRequest request
     ) {
-        return BeautyServiceResponse.from(beautyServiceService.update(id, request));
+        return BeautyServiceResponse.from(beautyServiceService.update(id, request), beautyServiceService.hasActiveReservations(id));
+    }
+
+    @DeleteMapping("/batch")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteBatch(@RequestBody List<Long> ids) {
+        beautyServiceService.deleteBatch(ids);
     }
 
     @DeleteMapping("/{id}")

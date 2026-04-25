@@ -19,9 +19,10 @@ public record BeautyServiceResponse(
         boolean visible,
         Integer displayOrder,
         List<String> imageUrls,
-        Instant createdAt
+        Instant createdAt,
+        boolean hasActiveReservations
 ) {
-    public static BeautyServiceResponse from(BeautyService service) {
+    public static BeautyServiceResponse from(BeautyService service, boolean hasActiveReservations) {
         return new BeautyServiceResponse(
             service.getId(),
             service.getCode(),
@@ -30,11 +31,12 @@ public record BeautyServiceResponse(
             service.getDescription(),
             service.getDurationMinutes(),
             service.getPrice(),
-                service.getTargetGender(),
-                service.isVisible(),
-                service.getDisplayOrder(),
-                service.getImageUrls(),
-                service.getCreatedAt()
+            service.getTargetGender(),
+            service.isVisible(),
+            service.getDisplayOrder(),
+            service.getImageUrls(),
+            service.getCreatedAt(),
+            hasActiveReservations
         );
     }
 }

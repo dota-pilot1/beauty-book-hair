@@ -56,6 +56,19 @@ public class ReservationController {
                 .toList();
     }
 
+    @GetMapping("/pending")
+    public List<ReservationResponse> listPending(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        boolean isAdmin = "ROLE_ADMIN".equals(principal.getRoleCode())
+                || "ROLE_MANAGER".equals(principal.getRoleCode());
+        if (!isAdmin) throw new BusinessException(ErrorCode.FORBIDDEN);
+        return reservationService.findPending()
+                .stream()
+                .map(r -> ReservationResponse.from(r, true))
+                .toList();
+    }
+
     @GetMapping
     public List<ReservationResponse> listByDate(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,

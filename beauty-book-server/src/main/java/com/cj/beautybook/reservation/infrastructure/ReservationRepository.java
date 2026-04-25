@@ -33,4 +33,12 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Query("SELECT r FROM Reservation r WHERE r.id = :id AND r.deletedAt IS NULL")
     Optional<Reservation> findActiveById(@Param("id") Long id);
+
+    @Query("SELECT i.beautyService.id FROM Reservation r JOIN r.items i WHERE r.status IN :statuses")
+    java.util.Set<Long> findServiceIdsWithActiveReservations(@Param("statuses") java.util.Collection<ReservationStatus> statuses);
+
+    List<Reservation> findByStatusOrderByStartAtAsc(ReservationStatus status);
+
+    @Query("SELECT r FROM Reservation r WHERE r.status IN :statuses AND r.endAt < :now ORDER BY r.startAt ASC")
+    List<Reservation> findPastUnprocessed(@Param("statuses") Collection<ReservationStatus> statuses, @Param("now") Instant now);
 }

@@ -65,3 +65,11 @@ export function useAllDeletedReservations() {
     queryFn: reservationApi.listAllDeleted,
   });
 }
+
+export function usePendingReservations() {
+  return useQuery({
+    queryKey: ["reservations", "pending"],
+    queryFn: reservationApi.listPending,
+    refetchInterval: 30_000,
+  });
+}

@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
-import { useReservationsByDate, useMyReservations, useChangeReservationStatus, useDeleteReservation, useAllDeletedReservations } from "@/entities/reservation/model/useReservations";
+import { useReservationsByDate, useMyReservations, useChangeReservationStatus, useDeleteReservation, useAllDeletedReservations, usePendingReservations } from "@/entities/reservation/model/useReservations";
 import type { Reservation, ReservationStatus } from "@/entities/reservation/model/types";
 import { useStore } from "@tanstack/react-store";
 import { authStore } from "@/entities/user/model/authStore";
@@ -68,6 +68,7 @@ function ReservationsContent() {
   const [viewMode, setViewMode] = useState<"list" | "history">("list");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
+  const [showPastDeleteConfirm, setShowPastDeleteConfirm] = useState(false);
   const [staffFilter, setStaffFilter] = useState<string | null>(null);
 
   const allQuery = useReservationsByDate(selectedDate);
@@ -75,6 +76,7 @@ function ReservationsContent() {
   const changeStatus = useChangeReservationStatus();
   const deleteReservation = useDeleteReservation();
   const allDeletedQuery = useAllDeletedReservations();
+  const pendingQuery = usePendingReservations();
 
   const myIdSet = useMemo(
     () => new Set((myQuery.data ?? []).map((r) => r.id)),
@@ -101,6 +103,7 @@ function ReservationsContent() {
     setSelectedDate(date);
     setSelectedIds(new Set());
     setShowBulkConfirm(false);
+    setShowPastDeleteConfirm(false);
     setStaffFilter(null);
   };
 
@@ -111,6 +114,16 @@ function ReservationsContent() {
       return next;
     });
     setShowBulkConfirm(false);
+  };
+
+  const isToday = selectedDate === dateOptions[0].value;
+  const pastDeletable = isToday
+    ? filteredReservations.filter((r) => new Date(r.endAt) < new Date())
+    : [];
+
+  const handlePastDelete = () => {
+    pastDeletable.forEach((r) => deleteReservation.mutate(r.id));
+    setShowPastDeleteConfirm(false);
   };
 
   const deletableReservations = filteredReservations.filter((r) => DELETABLE_STATUSES.includes(r.status));
@@ -135,8 +148,43 @@ function ReservationsContent() {
 
   const isPending = changeStatus.isPending || deleteReservation.isPending;
 
+  const pendingList = pendingQuery.data ?? [];
+
   const innerContent = (
     <div className="space-y-4">
+        {/* 승인 대기 섹션 (관리자 전용, 항상 노출) */}
+        {isAdmin && (
+          <section className="overflow-hidden rounded-2xl border border-amber-200 bg-amber-50/60 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-amber-200/70 px-4 py-3">
+              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              <span className="text-sm font-semibold text-amber-800">승인 대기</span>
+              <span className="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-white">
+                {pendingList.length}
+              </span>
+              <span className="ml-1 text-xs text-amber-600">시간이 지난 미처리 예약</span>
+            </div>
+            <div className="p-4">
+              {pendingQuery.isLoading ? (
+                <div className="h-16 animate-pulse rounded-xl bg-amber-100/60" />
+              ) : pendingList.length === 0 ? (
+                <p className="text-sm text-amber-700/60">시간이 지난 미처리 예약이 없습니다.</p>
+              ) : (
+                <div className="space-y-2">
+                  {pendingList.map((r) => (
+                    <PastUnprocessedCard
+                      key={r.id}
+                      reservation={r}
+                      onChangeStatus={(status) => changeStatus.mutate({ id: r.id, status })}
+                      onDelete={() => deleteReservation.mutate(r.id)}
+                      isPending={isPending}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* 날짜 탭 */}
         <section className="grid grid-cols-4 gap-2 sm:grid-cols-7">
           {dateOptions.map((opt) => (
@@ -200,6 +248,40 @@ function ReservationsContent() {
                   >
                     {allDeletableSelected ? "전체 해제" : "전체 선택"}
                   </button>
+                </>
+              )}
+              {isAdmin && pastDeletable.length > 0 && viewMode === "list" && (
+                <>
+                  <span className="h-4 w-px bg-black/10" />
+                  {!showPastDeleteConfirm ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowPastDeleteConfirm(true)}
+                      className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-100"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      지난 예약 {pastDeletable.length}건 삭제
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1.5 rounded-full border border-red-200 bg-white px-2.5 py-1">
+                      <span className="text-xs font-medium text-red-600">{pastDeletable.length}건 삭제할까요?</span>
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={handlePastDelete}
+                        className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-medium text-white disabled:opacity-50"
+                      >
+                        확인
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowPastDeleteConfirm(false)}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -339,6 +421,7 @@ function ReservationCard({
   onChangeStatus,
   onDelete,
   isPending,
+  forceDeletable = false,
 }: {
   reservation: Reservation;
   isAdmin: boolean;
@@ -348,13 +431,14 @@ function ReservationCard({
   onChangeStatus: (status: string, adminMemo?: string) => void;
   onDelete: () => void;
   isPending: boolean;
+  forceDeletable?: boolean;
 }) {
   const [cancelMemo, setCancelMemo] = useState("");
   const [showCancelInput, setShowCancelInput] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const isActive = ["REQUESTED", "CONFIRMED"].includes(r.status);
-  const isDeletable = isAdmin && DELETABLE_STATUSES.includes(r.status);
+  const isDeletable = isAdmin && (forceDeletable || DELETABLE_STATUSES.includes(r.status));
   const meta = STATUS_META[r.status];
 
   const handleAdminCancel = () => {
@@ -639,6 +723,100 @@ function HistoryView({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function PastUnprocessedCard({
+  reservation: r,
+  onChangeStatus,
+  onDelete,
+  isPending,
+}: {
+  reservation: Reservation;
+  onChangeStatus: (status: string) => void;
+  onDelete: () => void;
+  isPending: boolean;
+}) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const meta = STATUS_META[r.status];
+  const items = r.items?.length ? r.items : [{ beautyServiceName: r.beautyServiceName, displayOrder: 0 }];
+  const main = items[0];
+  const options = items.slice(1);
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-amber-200/60 bg-white px-4 py-3">
+      {/* 시간 + 시술 정보 */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.badgeClass}`}>
+            {meta.label}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
+          </span>
+        </div>
+        <p className="mt-1 truncate text-sm font-semibold text-foreground">
+          {main.beautyServiceName}
+          {options.length > 0 && (
+            <span className="ml-1 text-xs font-normal text-muted-foreground">
+              +옵션 {options.map((o) => o.beautyServiceName).join(", ")}
+            </span>
+          )}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {r.staffName}{r.customerName ? ` · ${r.customerName} (${r.customerPhone ?? "-"})` : ""}
+        </p>
+      </div>
+
+      {/* 액션 버튼들 */}
+      <div className="flex shrink-0 items-center gap-1.5">
+        <button
+          type="button"
+          disabled={isPending || r.status === "COMPLETED"}
+          onClick={() => onChangeStatus("COMPLETED")}
+          className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:cursor-default disabled:opacity-40"
+        >
+          완료
+        </button>
+        <button
+          type="button"
+          disabled={isPending || r.status === "NO_SHOW"}
+          onClick={() => onChangeStatus("NO_SHOW")}
+          className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100 disabled:cursor-default disabled:opacity-40"
+        >
+          노쇼
+        </button>
+        {!showDeleteConfirm ? (
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() => setShowDeleteConfirm(true)}
+            className="rounded-lg border border-black/10 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:bg-muted disabled:opacity-40"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        ) : (
+          <div className="flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2 py-1">
+            <span className="text-xs text-red-600">삭제?</span>
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={() => { onDelete(); setShowDeleteConfirm(false); }}
+              className="rounded bg-red-500 px-1.5 py-0.5 text-xs font-medium text-white disabled:opacity-50"
+            >
+              확인
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              className="text-xs text-muted-foreground"
+            >
+              취소
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

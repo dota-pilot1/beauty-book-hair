@@ -31,4 +31,7 @@ export const reservationApi = {
 
   listAllDeleted: () =>
     api.get<Reservation[]>("/api/reservations/deleted").then((r) => r.data),
+
+  listPending: () =>
+    api.get<Reservation[]>("/api/reservations/pending").then((r) => r.data),
 };

@@ -38,4 +38,7 @@ export const beautyServiceApi = {
 
   delete: (id: number) =>
     api.delete(`/api/beauty-services/${id}`).then((r) => r.data),
+
+  deleteBatch: (ids: number[]) =>
+    api.delete("/api/beauty-services/batch", { data: ids }).then((r) => r.data),
 };
