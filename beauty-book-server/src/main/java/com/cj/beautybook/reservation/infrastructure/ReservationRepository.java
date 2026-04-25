@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     List<Reservation> findByStaffIdAndStartAtLessThanAndEndAtGreaterThanAndStatusIn(
@@ -24,7 +25,12 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     List<Reservation> findByStartAtBetweenOrderByStartAtAsc(Instant from, Instant to);
 
-    // @SQLRestriction을 우회하기 위해 네이티브 쿼리 사용
-    @Query(value = "SELECT * FROM reservations WHERE start_at >= :from AND start_at < :to AND deleted_at IS NOT NULL ORDER BY start_at ASC", nativeQuery = true)
-    List<Reservation> findDeletedByStartAtBetween(@Param("from") Instant from, @Param("to") Instant to);
+    @Query("SELECT r FROM Reservation r WHERE r.deletedAt IS NOT NULL ORDER BY r.deletedAt DESC")
+    List<Reservation> findAllDeleted();
+
+    @Query("SELECT r FROM Reservation r WHERE r.deletedAt IS NOT NULL AND r.startAt >= :from AND r.startAt < :to ORDER BY r.deletedAt DESC")
+    List<Reservation> findDeletedByDateRange(@Param("from") Instant from, @Param("to") Instant to);
+
+    @Query("SELECT r FROM Reservation r WHERE r.id = :id AND r.deletedAt IS NULL")
+    Optional<Reservation> findActiveById(@Param("id") Long id);
 }

@@ -28,4 +28,7 @@ export const reservationApi = {
 
   listDeleted: (date: string) =>
     api.get<Reservation[]>("/api/reservations/deleted", { params: { date } }).then((r) => r.data),
+
+  listAllDeleted: () =>
+    api.get<Reservation[]>("/api/reservations/deleted").then((r) => r.data),
 };

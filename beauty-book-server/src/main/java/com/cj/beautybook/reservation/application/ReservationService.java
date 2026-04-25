@@ -134,15 +134,16 @@ public class ReservationService {
     );
 
     @Transactional
-    public void delete(Long id, UserPrincipal principal) {
+    public void softDelete(Long id, UserPrincipal principal) {
+        Reservation reservation = reservationRepository.findActiveById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RESERVATION_NOT_FOUND));
+
         boolean isAdmin = "ROLE_ADMIN".equals(principal.getRoleCode())
                 || "ROLE_MANAGER".equals(principal.getRoleCode());
-        if (!isAdmin) {
+
+        if (!isAdmin && !reservation.getCustomer().getId().equals(principal.getId())) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
-
-        Reservation reservation = reservationRepository.findById(id)
-                .orElseThrow(() -> new BusinessException(ErrorCode.RESERVATION_NOT_FOUND));
 
         if (!DELETABLE_STATUSES.contains(reservation.getStatus())) {
             throw new BusinessException(ErrorCode.RESERVATION_INVALID_STATUS);
@@ -153,9 +154,14 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
+    public List<Reservation> findAllDeleted() {
+        return reservationRepository.findAllDeleted();
+    }
+
+    @Transactional(readOnly = true)
     public List<Reservation> findDeletedByDate(LocalDate date) {
         Instant from = date.atStartOfDay(STORE_ZONE).toInstant();
         Instant to = date.plusDays(1).atStartOfDay(STORE_ZONE).toInstant();
-        return reservationRepository.findDeletedByStartAtBetween(from, to);
+        return reservationRepository.findDeletedByDateRange(from, to);
     }
 }

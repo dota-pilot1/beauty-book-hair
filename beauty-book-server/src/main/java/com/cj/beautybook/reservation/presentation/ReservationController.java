@@ -4,6 +4,7 @@ import com.cj.beautybook.auth.security.UserPrincipal;
 import com.cj.beautybook.common.exception.BusinessException;
 import com.cj.beautybook.common.exception.ErrorCode;
 import com.cj.beautybook.reservation.application.ReservationService;
+import com.cj.beautybook.reservation.domain.Reservation;
 import com.cj.beautybook.reservation.domain.ReservationStatus;
 import com.cj.beautybook.reservation.presentation.dto.ChangeReservationStatusRequest;
 import com.cj.beautybook.reservation.presentation.dto.CreateReservationRequest;
@@ -79,29 +80,30 @@ public class ReservationController {
         );
     }
 
-    @GetMapping("/deleted")
-    public List<ReservationResponse> listDeleted(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
-            @AuthenticationPrincipal UserPrincipal principal
-    ) {
-        boolean isAdmin = "ROLE_ADMIN".equals(principal.getRoleCode())
-                || "ROLE_MANAGER".equals(principal.getRoleCode());
-        if (!isAdmin) {
-            throw new com.cj.beautybook.common.exception.BusinessException(
-                    com.cj.beautybook.common.exception.ErrorCode.FORBIDDEN);
-        }
-        return reservationService.findDeletedByDate(date)
-                .stream()
-                .map(ReservationResponse::from)
-                .toList();
-    }
-
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
-        reservationService.delete(id, principal);
+        reservationService.softDelete(id, principal);
+    }
+
+    @GetMapping("/deleted")
+    public List<ReservationResponse> listDeleted(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        boolean isAdmin = "ROLE_ADMIN".equals(principal.getRoleCode())
+                || "ROLE_MANAGER".equals(principal.getRoleCode());
+        if (!isAdmin) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        List<Reservation> results = date != null
+                ? reservationService.findDeletedByDate(date)
+                : reservationService.findAllDeleted();
+        return results.stream()
+                .map(ReservationResponse::from)
+                .toList();
     }
 }

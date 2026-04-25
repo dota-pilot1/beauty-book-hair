@@ -1,12 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarDays, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
-import { useReservationsByDate, useMyReservations, useChangeReservationStatus, useDeleteReservation } from "@/entities/reservation/model/useReservations";
+import { useReservationsByDate, useMyReservations, useChangeReservationStatus, useDeleteReservation, useAllDeletedReservations } from "@/entities/reservation/model/useReservations";
 import type { Reservation, ReservationStatus } from "@/entities/reservation/model/types";
+import { useStore } from "@tanstack/react-store";
+import { authStore } from "@/entities/user/model/authStore";
 
 const DELETABLE_STATUSES: ReservationStatus[] = [
   "CANCELLED_BY_CUSTOMER",
@@ -14,17 +16,23 @@ const DELETABLE_STATUSES: ReservationStatus[] = [
   "COMPLETED",
   "NO_SHOW",
 ];
-import { useStore } from "@tanstack/react-store";
-import { authStore } from "@/entities/user/model/authStore";
 
-const STATUS_META: Record<ReservationStatus, { label: string; className: string }> = {
-  REQUESTED:            { label: "승인 대기",   className: "bg-amber-50 text-amber-700 ring-1 ring-amber-200" },
-  CONFIRMED:            { label: "예약 확정",   className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" },
-  CANCELLED_BY_CUSTOMER:{ label: "고객 취소",   className: "bg-muted text-muted-foreground" },
-  CANCELLED_BY_ADMIN:   { label: "관리자 취소", className: "bg-muted text-muted-foreground" },
-  COMPLETED:            { label: "완료",        className: "bg-blue-50 text-blue-700 ring-1 ring-blue-200" },
-  NO_SHOW:              { label: "노쇼",        className: "bg-rose-50 text-rose-700 ring-1 ring-rose-200" },
+const STATUS_META: Record<ReservationStatus, { label: string; badgeClass: string; headerClass: string; legacyClass: string; borderClass: string }> = {
+  REQUESTED:            { label: "승인 대기",   badgeClass: "bg-amber-100 text-amber-700",     headerClass: "bg-amber-50/60 border-b border-amber-200",   legacyClass: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",   borderClass: "border-l-amber-400 bg-amber-50/40" },
+  CONFIRMED:            { label: "예약 확정",   badgeClass: "bg-emerald-100 text-emerald-700", headerClass: "bg-emerald-50/60 border-b border-emerald-200", legacyClass: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200", borderClass: "border-l-emerald-400 bg-emerald-50/40" },
+  CANCELLED_BY_CUSTOMER:{ label: "고객 취소",   badgeClass: "bg-slate-100 text-slate-500",     headerClass: "bg-slate-50/60 border-b border-slate-200",   legacyClass: "bg-muted text-muted-foreground",                     borderClass: "border-l-slate-300 bg-slate-50/40" },
+  CANCELLED_BY_ADMIN:   { label: "관리자 취소", badgeClass: "bg-slate-100 text-slate-500",     headerClass: "bg-slate-50/60 border-b border-slate-200",   legacyClass: "bg-muted text-muted-foreground",                     borderClass: "border-l-slate-300 bg-slate-50/40" },
+  COMPLETED:            { label: "완료",        badgeClass: "bg-blue-100 text-blue-700",       headerClass: "bg-blue-50/60 border-b border-blue-200",     legacyClass: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",      borderClass: "border-l-blue-400 bg-blue-50/40" },
+  NO_SHOW:              { label: "노쇼",        badgeClass: "bg-rose-100 text-rose-700",       headerClass: "bg-rose-50/60 border-b border-rose-200",     legacyClass: "bg-rose-50 text-rose-700 ring-1 ring-rose-200",      borderClass: "border-l-rose-400 bg-rose-50/40" },
 };
+
+const ADMIN_STATUS_BUTTONS = [
+  { status: "REQUESTED",          label: "승인 대기", className: "border-amber-300 bg-amber-50 text-amber-700" },
+  { status: "CONFIRMED",          label: "예약 확정", className: "border-emerald-300 bg-emerald-50 text-emerald-700" },
+  { status: "COMPLETED",          label: "완료",      className: "border-blue-300 bg-blue-50 text-blue-700" },
+  { status: "NO_SHOW",            label: "노쇼",      className: "border-rose-300 bg-rose-50 text-rose-700" },
+  { status: "CANCELLED_BY_ADMIN", label: "취소",      className: "border-black/15 bg-muted text-muted-foreground" },
+] as const;
 
 function getNextDateOptions(days: number) {
   return Array.from({ length: days }).map((_, i) => {
@@ -57,70 +65,85 @@ function ReservationsContent() {
 
   const dateOptions = useMemo(() => getNextDateOptions(7), []);
   const [selectedDate, setSelectedDate] = useState(dateOptions[0].value);
-  const [viewAll, setViewAll] = useState(true);
-  const [viewMode, setViewMode] = useState<"list" | "timeline">("list");
-
-  // 관리자: '전체' 토글 시 admin API. '나' 토글 시 본인 예약만.
-  // 일반 사용자: 항상 전체 일정 노출 (PII 마스킹된 채 백엔드에서 내려옴) + 본인 예약은 강조.
-  const showAll = isAdmin ? viewAll : true;
+  const [viewMode, setViewMode] = useState<"list" | "history">("list");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [showBulkConfirm, setShowBulkConfirm] = useState(false);
+  const [staffFilter, setStaffFilter] = useState<string | null>(null);
 
   const allQuery = useReservationsByDate(selectedDate);
   const myQuery = useMyReservations();
   const changeStatus = useChangeReservationStatus();
   const deleteReservation = useDeleteReservation();
+  const allDeletedQuery = useAllDeletedReservations();
 
   const myIdSet = useMemo(
     () => new Set((myQuery.data ?? []).map((r) => r.id)),
     [myQuery.data]
   );
 
-  const reservations = showAll ? (allQuery.data ?? []) : (myQuery.data ?? []).filter((r) => {
-    const kst = new Date(r.startAt).toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
-    return kst === selectedDate;
-  });
-  const isLoading = showAll ? allQuery.isLoading : myQuery.isLoading;
+  const reservations = isAdmin
+    ? (allQuery.data ?? [])
+    : (myQuery.data ?? []).filter((r) => {
+        const kst = new Date(r.startAt).toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+        return kst === selectedDate;
+      });
+  const isLoading = isAdmin ? allQuery.isLoading : myQuery.isLoading;
 
-  const Shell = isAdmin ? AdminShell : CustomerShell;
-  const shellProps = isAdmin
-    ? { eyebrow: "ADMIN", title: "예약 현황", description: "전체 예약 현황을 날짜별로 확인하고 승인·관리합니다." }
-    : { eyebrow: "Reservations", title: "예약 현황", description: "내 예약 현황을 날짜별로 확인합니다.", showSidebarIntro: false as const, showHeader: false as const };
+  const staffList = useMemo(
+    () => Array.from(new Set(reservations.map((r) => r.staffName))).sort(),
+    [reservations]
+  );
+  const filteredReservations = staffFilter
+    ? reservations.filter((r) => r.staffName === staffFilter)
+    : reservations;
 
-  return (
-    <Shell {...shellProps}>
-      <div className="space-y-4">
-        {/* 관리자 전체/나 토글 */}
-        {isAdmin && (
-          <div className="flex">
-            <div className="inline-flex rounded-xl border border-black/10 bg-muted/30 p-1">
-              <button
-                type="button"
-                onClick={() => setViewAll(true)}
-                className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
-                  viewAll ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                전체
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewAll(false)}
-                className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors ${
-                  !viewAll ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                나
-              </button>
-            </div>
-          </div>
-        )}
+  const handleDateChange = (date: string) => {
+    setSelectedDate(date);
+    setSelectedIds(new Set());
+    setShowBulkConfirm(false);
+    setStaffFilter(null);
+  };
 
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+    setShowBulkConfirm(false);
+  };
+
+  const deletableReservations = filteredReservations.filter((r) => DELETABLE_STATUSES.includes(r.status));
+  const allDeletableSelected =
+    deletableReservations.length > 0 &&
+    deletableReservations.every((r) => selectedIds.has(r.id));
+
+  const toggleSelectAll = () => {
+    if (allDeletableSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(deletableReservations.map((r) => r.id)));
+    }
+    setShowBulkConfirm(false);
+  };
+
+  const handleBulkDelete = () => {
+    selectedIds.forEach((id) => deleteReservation.mutate(id));
+    setSelectedIds(new Set());
+    setShowBulkConfirm(false);
+  };
+
+  const isPending = changeStatus.isPending || deleteReservation.isPending;
+
+  const innerContent = (
+    <div className="space-y-4">
         {/* 날짜 탭 */}
         <section className="grid grid-cols-4 gap-2 sm:grid-cols-7">
           {dateOptions.map((opt) => (
             <button
               key={opt.value}
               type="button"
-              onClick={() => setSelectedDate(opt.value)}
+              onClick={() => handleDateChange(opt.value)}
               className={`rounded-xl border px-2 py-2.5 text-center transition-colors ${
                 selectedDate === opt.value
                   ? "border-black/25 bg-primary text-primary-foreground"
@@ -133,14 +156,54 @@ function ReservationsContent() {
           ))}
         </section>
 
-        {/* 예약 목록 / 전체 시간 */}
-        <section className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <CalendarDays className="h-4 w-4" />
-            {dateOptions.find((d) => d.value === selectedDate)?.shortLabel} 예약
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-              {reservations.length}건
-            </span>
+        {/* 예약 목록 섹션 */}
+        <section className="overflow-hidden rounded-2xl border border-black/12 bg-card shadow-sm">
+          {/* 섹션 헤더: 디자이너 필터 + 전체선택 + 뷰 토글 */}
+          <div className="flex flex-wrap items-center gap-2 border-b border-black/8 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setStaffFilter(null)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  staffFilter === null
+                    ? "bg-foreground text-background"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                전체 <span className="ml-0.5 opacity-70">{reservations.length}</span>
+              </button>
+              {staffList.map((name) => {
+                const count = reservations.filter((r) => r.staffName === name).length;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => setStaffFilter(name)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      staffFilter === name
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {name} <span className="ml-0.5 opacity-70">{count}</span>
+                  </button>
+                );
+              })}
+
+              {isAdmin && deletableReservations.length > 0 && viewMode === "list" && (
+                <>
+                  <span className="h-4 w-px bg-black/10" />
+                  <button
+                    type="button"
+                    onClick={toggleSelectAll}
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    {allDeletableSelected ? "전체 해제" : "전체 선택"}
+                  </button>
+                </>
+              )}
+            </div>
+
             {isAdmin && (
               <div className="ml-auto inline-flex rounded-lg border border-black/10 bg-muted/30 p-0.5">
                 <button
@@ -154,68 +217,125 @@ function ReservationsContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setViewMode("timeline")}
+                  onClick={() => setViewMode("history")}
                   className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                    viewMode === "timeline" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                    viewMode === "history" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  전체 시간
+                  삭제 이력
                 </button>
               </div>
             )}
           </div>
 
-          <div className="mt-4">
+          {/* 일괄 삭제 액션바 */}
+          {isAdmin && selectedIds.size > 0 && (
+            <div className="flex items-center gap-3 border-b border-red-200 bg-red-50 px-5 py-3">
+              <span className="text-sm font-medium text-red-700">{selectedIds.size}건 선택됨</span>
+              <div className="ml-auto flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setSelectedIds(new Set()); setShowBulkConfirm(false); }}
+                  className="rounded-lg border border-black/10 bg-white px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+                >
+                  선택 취소
+                </button>
+                {!showBulkConfirm ? (
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => setShowBulkConfirm(true)}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    선택 삭제
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-1.5">
+                    <span className="text-xs font-medium text-red-600">{selectedIds.size}건을 삭제할까요?</span>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={handleBulkDelete}
+                      className="rounded-md bg-red-500 px-2.5 py-1 text-xs font-medium text-white disabled:opacity-50"
+                    >
+                      확인
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowBulkConfirm(false)}
+                      className="rounded-md border border-black/10 px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                    >
+                      취소
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="p-5">
             {isLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted/50" />
+                  <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted/50" />
                 ))}
               </div>
             ) : viewMode === "list" ? (
               <div className="space-y-3">
-                {reservations.length === 0 ? (
+                {filteredReservations.length === 0 ? (
                   <p className="rounded-2xl border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
                     해당 날짜에 예약이 없습니다.
                   </p>
                 ) : (
-                  reservations.map((r) => (
+                  filteredReservations.map((r) => (
                     <ReservationCard
                       key={r.id}
                       reservation={r}
                       isAdmin={isAdmin}
                       isMine={myIdSet.has(r.id)}
+                      isSelected={selectedIds.has(r.id)}
+                      onToggleSelect={() => toggleSelect(r.id)}
                       onChangeStatus={(status, adminMemo) =>
                         changeStatus.mutate({ id: r.id, status, adminMemo })
                       }
                       onDelete={() => deleteReservation.mutate(r.id)}
-                      isPending={changeStatus.isPending || deleteReservation.isPending}
+                      isPending={isPending}
                     />
                   ))
                 )}
               </div>
             ) : (
-              <TimelineView reservations={reservations} />
+              <HistoryView
+                deletedData={allDeletedQuery.data ?? []}
+                isLoading={allDeletedQuery.isLoading}
+              />
             )}
           </div>
         </section>
       </div>
-    </Shell>
+  );
+
+  if (isAdmin) {
+    return (
+      <AdminShell eyebrow="ADMIN" title="예약 현황" description="날짜별 전체 예약을 조회하고 승인합니다.">
+        {innerContent}
+      </AdminShell>
+    );
+  }
+  return (
+    <CustomerShell eyebrow="Reservations" title="예약 현황" description="내 예약 현황을 날짜별로 확인합니다." showSidebarIntro={false} showHeader={false}>
+      {innerContent}
+    </CustomerShell>
   );
 }
-
-const ADMIN_STATUS_BUTTONS = [
-  { status: "REQUESTED",          label: "승인 대기", className: "border-amber-300 bg-amber-50 text-amber-700",     activeRing: "ring-amber-200" },
-  { status: "CONFIRMED",          label: "예약 확정", className: "border-emerald-300 bg-emerald-50 text-emerald-700", activeRing: "ring-emerald-200" },
-  { status: "COMPLETED",          label: "완료",      className: "border-blue-300 bg-blue-50 text-blue-700",         activeRing: "ring-blue-200" },
-  { status: "NO_SHOW",            label: "노쇼",      className: "border-rose-300 bg-rose-50 text-rose-700",         activeRing: "ring-rose-200" },
-  { status: "CANCELLED_BY_ADMIN", label: "취소",      className: "border-black/15 bg-muted text-muted-foreground",   activeRing: "" },
-] as const;
 
 function ReservationCard({
   reservation: r,
   isAdmin,
   isMine = false,
+  isSelected,
+  onToggleSelect,
   onChangeStatus,
   onDelete,
   isPending,
@@ -223,6 +343,8 @@ function ReservationCard({
   reservation: Reservation;
   isAdmin: boolean;
   isMine?: boolean;
+  isSelected: boolean;
+  onToggleSelect: () => void;
   onChangeStatus: (status: string, adminMemo?: string) => void;
   onDelete: () => void;
   isPending: boolean;
@@ -231,60 +353,107 @@ function ReservationCard({
   const [showCancelInput, setShowCancelInput] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const isActive = ["REQUESTED", "CONFIRMED"].includes(r.status);
+  const isDeletable = isAdmin && DELETABLE_STATUSES.includes(r.status);
+  const meta = STATUS_META[r.status];
+
   const handleAdminCancel = () => {
     onChangeStatus("CANCELLED_BY_ADMIN", cancelMemo || undefined);
     setShowCancelInput(false);
     setCancelMemo("");
   };
 
-  const isActive = ["REQUESTED", "CONFIRMED"].includes(r.status);
-  const isDeletable = isAdmin && DELETABLE_STATUSES.includes(r.status);
-
   return (
-    <div className={`rounded-2xl border p-4 ${isMine ? "border-primary/40 bg-primary/5" : "border-black/10 bg-background"}`}>
-      {/* 카드 헤더: 시간 + 삭제 버튼 */}
-      <div className="flex items-center gap-2">
-        <p className="text-xs text-muted-foreground">
-          {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
-        </p>
-        {isMine && (
-          <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">내 예약</span>
-        )}
-        {isDeletable && !showDeleteConfirm && (
+    <div
+      className={`overflow-hidden rounded-2xl border transition-colors ${
+        isSelected
+          ? "border-red-300 ring-1 ring-red-200"
+          : isMine
+          ? "border-primary/40"
+          : "border-black/10"
+      } bg-background`}
+    >
+      {/* 카드 헤더: 상태 배지 + 시간 + 삭제 버튼 */}
+      <div className={`flex items-center gap-3 px-4 py-2.5 ${meta.headerClass}`}>
+        {/* 체크박스 (관리자 + 삭제가능 상태만) */}
+        {isAdmin && (
           <button
             type="button"
-            disabled={isPending}
-            onClick={() => setShowDeleteConfirm(true)}
-            className="ml-auto inline-flex items-center gap-1 rounded-lg border border-red-200 px-2 py-0.5 text-xs text-red-500 hover:bg-red-50 disabled:opacity-40"
+            onClick={onToggleSelect}
+            disabled={!isDeletable}
+            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors ${
+              isDeletable
+                ? isSelected
+                  ? "border-red-400 bg-red-400 text-white"
+                  : "border-black/20 bg-white hover:border-red-300"
+                : "cursor-not-allowed border-black/10 bg-black/5"
+            }`}
+            aria-label="선택"
           >
-            <Trash2 className="h-3 w-3" />
-            삭제
+            {isSelected && (
+              <svg className="h-2.5 w-2.5" viewBox="0 0 10 8" fill="none">
+                <path d="M1 4l3 3 5-6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
           </button>
         )}
-        {showDeleteConfirm && (
-          <div className="ml-auto flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1">
-            <p className="text-xs text-red-600">삭제할까요?</p>
-            <button
-              type="button"
-              disabled={isPending}
-              onClick={() => { onDelete(); setShowDeleteConfirm(false); }}
-              className="rounded-md bg-red-500 px-2 py-0.5 text-xs font-medium text-white disabled:opacity-50"
-            >
-              확인
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowDeleteConfirm(false)}
-              className="rounded-md border border-black/10 px-2 py-0.5 text-xs font-medium text-muted-foreground"
-            >
-              취소
-            </button>
+
+        {/* 상태 배지 */}
+        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${meta.badgeClass}`}>
+          {meta.label}
+        </span>
+
+        {/* 내 예약 뱃지 */}
+        {isMine && (
+          <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+            내 예약
+          </span>
+        )}
+
+        {/* 시간 */}
+        <span className="text-xs text-muted-foreground">
+          {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
+        </span>
+
+        {/* 삭제 버튼 (완료/노쇼/취소 상태만) */}
+        {isDeletable && (
+          <div className="ml-auto flex items-center gap-1.5">
+            {!showDeleteConfirm ? (
+              <button
+                type="button"
+                disabled={isPending}
+                onClick={() => setShowDeleteConfirm(true)}
+                className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-40"
+              >
+                <Trash2 className="h-3 w-3" />
+                삭제
+              </button>
+            ) : (
+              <div className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-1">
+                <span className="text-xs font-medium text-red-600">삭제할까요?</span>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => { onDelete(); setShowDeleteConfirm(false); }}
+                  className="rounded-md bg-red-500 px-2 py-0.5 text-xs font-medium text-white disabled:opacity-50"
+                >
+                  확인
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="rounded-md border border-black/10 px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                >
+                  취소
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      <div className="mt-2 flex items-start gap-4">
-        {/* 예약 정보 */}
+      {/* 카드 바디 */}
+      <div className="flex items-start gap-4 px-4 py-3">
         <div className="min-w-0 flex-1">
           {(() => {
             const items = r.items?.length ? r.items : [{ id: null, beautyServiceId: r.beautyServiceId, beautyServiceName: r.beautyServiceName, durationMinutes: 0, price: 0, displayOrder: 0 }];
@@ -292,7 +461,7 @@ function ReservationCard({
             const options = items.slice(1);
             return (
               <>
-                <div className="mt-1 flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   {options.length > 0 && (
                     <span className="inline-flex shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">메인</span>
                   )}
@@ -315,7 +484,7 @@ function ReservationCard({
           )}
         </div>
 
-        {/* 관리자: 상태 버튼 그룹 (우측) */}
+        {/* 관리자: 상태 버튼 그룹 */}
         {isAdmin && (
           <div className="shrink-0">
             {!showCancelInput ? (
@@ -374,15 +543,15 @@ function ReservationCard({
 
         {/* 고객: 상태 뱃지만 */}
         {!isAdmin && (
-          <span className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-medium ${STATUS_META[r.status].className}`}>
-            {STATUS_META[r.status].label}
+          <span className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-medium ${meta.legacyClass}`}>
+            {meta.label}
           </span>
         )}
       </div>
 
       {/* 고객 취소 버튼 */}
       {!isAdmin && isActive && (
-        <div className="mt-3 border-t border-black/5 pt-3">
+        <div className="border-t border-black/5 px-4 pb-3 pt-3">
           <button
             type="button"
             disabled={isPending}
@@ -397,85 +566,76 @@ function ReservationCard({
   );
 }
 
-const SLOT_INTERVAL = 30;
-const DAY_START = 10 * 60;
-const DAY_END = 21 * 60;
 
-function generateSlots() {
-  const slots: { label: string; startMinutes: number; endMinutes: number }[] = [];
-  for (let m = DAY_START; m < DAY_END; m += SLOT_INTERVAL) {
-    const h = Math.floor(m / 60);
-    const min = m % 60;
-    const eh = Math.floor((m + SLOT_INTERVAL) / 60);
-    const emin = (m + SLOT_INTERVAL) % 60;
-    slots.push({
-      label: `${h}:${String(min).padStart(2, "0")} ~ ${eh}:${String(emin).padStart(2, "0")}`,
-      startMinutes: m,
-      endMinutes: m + SLOT_INTERVAL,
-    });
+function HistoryView({
+  deletedData,
+  isLoading,
+}: {
+  deletedData: Reservation[];
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted/50" />
+        ))}
+      </div>
+    );
   }
-  return slots;
-}
-
-function toMinutes(iso: string) {
-  const d = new Date(iso);
-  return d.getHours() * 60 + d.getMinutes();
-}
-
-function TimelineView({ reservations }: { reservations: Reservation[] }) {
-  const slots = generateSlots();
-  const activeReservations = reservations.filter((r) =>
-    !["CANCELLED_BY_CUSTOMER", "CANCELLED_BY_ADMIN"].includes(r.status)
-  );
-
+  if (deletedData.length === 0) {
+    return (
+      <p className="rounded-2xl border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+        삭제된 예약이 없습니다.
+      </p>
+    );
+  }
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
-      {slots.map((slot) => {
-        const overlapping = activeReservations.filter((r) => {
-          const rs = toMinutes(r.startAt);
-          const re = toMinutes(r.endAt);
-          return rs < slot.endMinutes && re > slot.startMinutes;
-        });
-        const isBooked = overlapping.length > 0;
-
+    <div className="space-y-3">
+      {deletedData.map((r) => {
+        const meta = STATUS_META[r.status];
+        const items = r.items?.length ? r.items : null;
+        const mainName = items ? items[0].beautyServiceName : r.beautyServiceName;
+        const optionCount = items ? Math.max(items.length - 1, 0) : 0;
         return (
-          <div
-            key={slot.startMinutes}
-            className={`rounded-xl border p-3 ${
-              isBooked
-                ? "border-foreground/20 bg-foreground/5"
-                : "border-black/8 bg-muted/20"
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-muted-foreground">{slot.label}</span>
-              {isBooked ? (
-                <span className="rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-semibold text-foreground">
-                  예약 {overlapping.length}건
-                </span>
-              ) : (
-                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 ring-1 ring-emerald-200">
-                  가능
+          <div key={r.id} className="overflow-hidden rounded-2xl border border-black/10 bg-background opacity-70">
+            <div className={`flex items-center gap-3 px-4 py-2 ${meta.headerClass}`}>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.badgeClass}`}>
+                {meta.label}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {formatTime(r.startAt)} ~ {formatTime(r.endAt)}
+              </span>
+              {r.deletedAt && (
+                <span className="ml-auto text-[10px] text-muted-foreground">
+                  삭제: {new Intl.DateTimeFormat("ko-KR", {
+                    month: "2-digit", day: "2-digit",
+                    hour: "2-digit", minute: "2-digit",
+                    timeZone: "Asia/Seoul",
+                  }).format(new Date(r.deletedAt))}
                 </span>
               )}
             </div>
-            {isBooked && (
-              <div className="mt-2 space-y-1">
-                {overlapping.map((r) => {
-                  const items = r.items?.length ? r.items : null;
-                  const mainName = items ? items[0].beautyServiceName : r.beautyServiceName;
-                  const optionCount = items ? Math.max(items.length - 1, 0) : 0;
-                  return (
-                    <div key={r.id} className="flex items-center gap-1 text-xs">
-                      <span className="font-semibold text-foreground truncate">
-                        {mainName}{optionCount > 0 ? ` +${optionCount}` : ""}
-                      </span>
-                      <span className="text-muted-foreground shrink-0">· {r.staffName} · {r.customerName}</span>
-                    </div>
-                  );
-                })}
+            <div className="px-4 py-3">
+              <p className="text-sm font-semibold text-foreground">
+                {mainName}
+                {optionCount > 0 && (
+                  <span className="ml-1.5 text-xs font-normal text-muted-foreground">+옵션 {optionCount}</span>
+                )}
+              </p>
+              <div className="mt-1.5 grid grid-cols-2 gap-2 rounded-xl bg-muted/40 px-3 py-2 text-xs">
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">디자이너</p>
+                  <p className="mt-0.5 font-medium text-foreground">{r.staffName}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">고객</p>
+                  <p className="mt-0.5 font-medium text-foreground">
+                    {r.customerName ?? "—"}{r.customerPhone ? ` (${r.customerPhone})` : ""}
+                  </p>
+                </div>
               </div>
-            )}
+            </div>
           </div>
         );
       })}

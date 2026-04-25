@@ -58,3 +58,10 @@ export function useDeletedReservationsByDate(date: string, enabled: boolean = tr
     enabled,
   });
 }
+
+export function useAllDeletedReservations() {
+  return useQuery({
+    queryKey: ["reservations", "deleted", "all"],
+    queryFn: reservationApi.listAllDeleted,
+  });
+}
