@@ -182,7 +182,11 @@ export function CustomerShell({
 
         <div className={cn("grid gap-4", aside ? "xl:grid-cols-[minmax(0,1fr)_360px]" : "grid-cols-1")}>
           <div className="min-w-0">{children}</div>
-          {aside ? <div className="min-w-0">{aside}</div> : null}
+          {aside ? (
+            <div className="min-w-0">
+              <div className="xl:sticky xl:top-6">{aside}</div>
+            </div>
+          ) : null}
         </div>
       </section>
     </main>
