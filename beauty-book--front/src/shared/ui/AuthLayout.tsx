@@ -27,7 +27,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
     <main className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-6 py-6 bg-gradient-to-br from-muted/40 via-background to-accent/10">
       <div className="w-full max-w-[1300px]">
         {/* Card */}
-        <div className="grid lg:grid-cols-[3fr_2fr] items-stretch rounded-3xl border border-border bg-background shadow-2xl overflow-hidden lg:min-h-[820px]">
+        <div className="grid lg:grid-cols-[3fr_2fr] items-stretch rounded-3xl border border-border bg-background shadow-2xl overflow-hidden lg:min-h-[680px]">
 
           {/* Left — hero image */}
           <section className="relative hidden lg:block bg-muted">
@@ -38,7 +38,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
                 fill
                 unoptimized
                 sizes="780px"
-                className="object-contain"
+                className="object-cover object-left"
               />
             ) : (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary/10 via-secondary/30 to-accent/20 text-muted-foreground">
