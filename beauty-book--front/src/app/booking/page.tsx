@@ -120,15 +120,16 @@ function BookingFlowPage() {
   const [phoneInput, setPhoneInput] = useState("");
   const [serviceViewMode, setServiceViewMode] = useState<"card" | "table">("card");
   const [serviceQuery, setServiceQuery] = useState("");
+  const [appliedServiceQuery, setAppliedServiceQuery] = useState("");
 
   const filteredServices = useMemo(() => {
-    const q = serviceQuery.trim().toLowerCase();
+    const q = appliedServiceQuery.trim().toLowerCase();
     if (!q) return services;
     return services.filter((s) =>
       s.name.toLowerCase().includes(q) ||
       (s.description ?? "").toLowerCase().includes(q)
     );
-  }, [services, serviceQuery]);
+  }, [services, appliedServiceQuery]);
 
   const {
     data: reservationSlots = [],
@@ -290,16 +291,32 @@ function BookingFlowPage() {
                 <>
                   {/* 검색 + 뷰 토글 */}
                   <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                    <div className="relative flex-1 min-w-[200px] max-w-md">
+                    <form
+                      className="relative flex-1 min-w-[200px] max-w-md"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        setAppliedServiceQuery(serviceQuery);
+                      }}
+                    >
                       <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <input
                         type="search"
                         value={serviceQuery}
-                        onChange={(e) => setServiceQuery(e.target.value)}
-                        placeholder="시술 이름이나 설명으로 검색"
-                        className="w-full rounded-xl border border-black/15 bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setServiceQuery(v);
+                          // 입력값이 비워지면(X 버튼 등) 즉시 필터 해제
+                          if (v === "") setAppliedServiceQuery("");
+                        }}
+                        placeholder="시술 이름이나 설명으로 검색 (Enter)"
+                        className="w-full rounded-xl border border-black/15 bg-background py-2 pl-9 pr-20 text-sm outline-none focus:border-primary"
                       />
-                    </div>
+                      {serviceQuery && serviceQuery !== appliedServiceQuery && (
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          Enter
+                        </span>
+                      )}
+                    </form>
                     <div className="inline-flex rounded-xl border border-black/10 bg-muted/30 p-1">
                       <button
                         type="button"
