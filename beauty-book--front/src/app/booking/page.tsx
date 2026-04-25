@@ -7,7 +7,10 @@ import {
   CalendarDays,
   ChevronRight,
   Clock3,
+  LayoutGrid,
+  List,
   Scissors,
+  Search,
   UserRound,
   X,
 } from "lucide-react";
@@ -115,6 +118,17 @@ function BookingFlowPage() {
   const createReservation = useCreateReservation();
   const router = useRouter();
   const [phoneInput, setPhoneInput] = useState("");
+  const [serviceViewMode, setServiceViewMode] = useState<"card" | "table">("card");
+  const [serviceQuery, setServiceQuery] = useState("");
+
+  const filteredServices = useMemo(() => {
+    const q = serviceQuery.trim().toLowerCase();
+    if (!q) return services;
+    return services.filter((s) =>
+      s.name.toLowerCase().includes(q) ||
+      (s.description ?? "").toLowerCase().includes(q)
+    );
+  }, [services, serviceQuery]);
 
   const {
     data: reservationSlots = [],
@@ -273,21 +287,74 @@ function BookingFlowPage() {
               ) : services.length === 0 ? (
                 <p className="text-sm text-muted-foreground">등록된 시술이 없습니다. 관리자 화면에서 먼저 시술을 등록해주세요.</p>
               ) : (
-                <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-                  {services.map((service) => {
-                    const idx = selectedServiceIds.indexOf(service.id);
-                    const role = idx === -1 ? "none" : idx === 0 ? "main" : "option";
-                    return (
-                      <ServiceSelectableCard
-                        key={service.id}
-                        service={service}
-                        role={role}
-                        optionOrder={idx > 0 ? idx : null}
-                        onClick={() => bookingFlowActions.toggleService(service.id)}
+                <>
+                  {/* 검색 + 뷰 토글 */}
+                  <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                    <div className="relative flex-1 min-w-[200px] max-w-md">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <input
+                        type="search"
+                        value={serviceQuery}
+                        onChange={(e) => setServiceQuery(e.target.value)}
+                        placeholder="시술 이름이나 설명으로 검색"
+                        className="w-full rounded-xl border border-black/15 bg-background py-2 pl-9 pr-3 text-sm outline-none focus:border-primary"
                       />
-                    );
-                  })}
-                </div>
+                    </div>
+                    <div className="inline-flex rounded-xl border border-black/10 bg-muted/30 p-1">
+                      <button
+                        type="button"
+                        onClick={() => setServiceViewMode("card")}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                          serviceViewMode === "card"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                        카드
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setServiceViewMode("table")}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                          serviceViewMode === "table"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <List className="h-3.5 w-3.5" />
+                        테이블
+                      </button>
+                    </div>
+                  </div>
+
+                  {filteredServices.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">검색 결과가 없습니다.</p>
+                  ) : serviceViewMode === "card" ? (
+                    <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+                      {filteredServices.map((service) => {
+                        const idx = selectedServiceIds.indexOf(service.id);
+                        const role = idx === -1 ? "none" : idx === 0 ? "main" : "option";
+                        return (
+                          <ServiceSelectableCard
+                            key={service.id}
+                            service={service}
+                            role={role}
+                            optionOrder={idx > 0 ? idx : null}
+                            onClick={() => bookingFlowActions.toggleService(service.id)}
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <ServiceSelectableTable
+                      services={filteredServices}
+                      selectedServiceIds={selectedServiceIds}
+                      onToggle={(id) => bookingFlowActions.toggleService(id)}
+                      onPromoteToMain={(id) => bookingFlowActions.promoteToMain(id)}
+                    />
+                  )}
+                </>
               )}
             </StepSection>
           ) : null}
@@ -554,6 +621,107 @@ function ServiceSelectableCard({
         </div>
       </div>
     </button>
+  );
+}
+
+function ServiceSelectableTable({
+  services,
+  selectedServiceIds,
+  onToggle,
+  onPromoteToMain,
+}: {
+  services: BeautyService[];
+  selectedServiceIds: number[];
+  onToggle: (id: number) => void;
+  onPromoteToMain: (id: number) => void;
+}) {
+  return (
+    <div className="overflow-hidden rounded-xl border border-black/10">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/40 text-xs text-muted-foreground">
+          <tr>
+            <th className="w-16 px-3 py-2 text-left font-medium">선택</th>
+            <th className="px-3 py-2 text-left font-medium">시술명</th>
+            <th className="hidden px-3 py-2 text-left font-medium md:table-cell">설명</th>
+            <th className="w-24 px-3 py-2 text-right font-medium">시간</th>
+            <th className="w-32 px-3 py-2 text-right font-medium">가격</th>
+            <th className="w-24 px-3 py-2 text-right font-medium" />
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-black/10">
+          {services.map((service) => {
+            const idx = selectedServiceIds.indexOf(service.id);
+            const role = idx === -1 ? "none" : idx === 0 ? "main" : "option";
+            const selected = role !== "none";
+
+            return (
+              <tr
+                key={service.id}
+                onClick={() => onToggle(service.id)}
+                className={`cursor-pointer transition-colors ${
+                  role === "main"
+                    ? "bg-primary/10"
+                    : role === "option"
+                      ? "bg-primary/5"
+                      : "hover:bg-accent"
+                }`}
+              >
+                <td className="px-3 py-2.5">
+                  <span
+                    className={`inline-flex h-5 w-5 items-center justify-center rounded-md border text-[11px] font-bold ${
+                      selected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-black/20 bg-background text-transparent"
+                    }`}
+                    aria-hidden
+                  >
+                    ✓
+                  </span>
+                </td>
+                <td className="px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    {role === "main" && (
+                      <span className="inline-flex shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                        메인
+                      </span>
+                    )}
+                    {role === "option" && (
+                      <span className="inline-flex shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground ring-1 ring-primary/30">
+                        옵션 {idx}
+                      </span>
+                    )}
+                    <span className="font-medium text-foreground">{service.name}</span>
+                  </div>
+                </td>
+                <td className="hidden px-3 py-2.5 text-muted-foreground md:table-cell">
+                  <span className="line-clamp-1">{service.description ?? "—"}</span>
+                </td>
+                <td className="px-3 py-2.5 text-right text-muted-foreground">
+                  {service.durationMinutes}분
+                </td>
+                <td className="px-3 py-2.5 text-right font-medium text-foreground">
+                  {Number(service.price).toLocaleString()}원
+                </td>
+                <td className="px-3 py-2.5 text-right">
+                  {role === "option" && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPromoteToMain(service.id);
+                      }}
+                      className="text-xs text-primary hover:underline"
+                    >
+                      메인으로
+                    </button>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
