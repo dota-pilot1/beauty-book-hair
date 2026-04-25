@@ -24,8 +24,8 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
   const heroImageUrl = siteSetting?.heroImageUrl ?? null;
 
   return (
-    <main className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-4 py-10 sm:py-14 bg-gradient-to-br from-muted/40 via-background to-accent/10">
-      <div className="relative w-full max-w-5xl">
+    <main className="min-h-[calc(100vh-3.5rem)] flex items-center justify-center px-4 py-6 sm:py-10 bg-gradient-to-br from-muted/40 via-background to-accent/10">
+      <div className="relative w-full max-w-6xl">
         {/* Soft outer glow ring */}
         <div
           aria-hidden
@@ -33,7 +33,7 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
         />
 
         {/* Card = the "booklet" — items-stretch makes both pages equal height */}
-        <div className="relative grid lg:grid-cols-2 items-stretch rounded-2xl border-2 border-border bg-background shadow-[0_24px_70px_-18px_rgba(0,0,0,0.25)] ring-1 ring-black/5 overflow-hidden lg:min-h-[720px]">
+        <div className="relative grid lg:grid-cols-[3fr_2fr] items-stretch rounded-2xl border-2 border-border bg-background shadow-[0_24px_70px_-18px_rgba(0,0,0,0.25)] ring-1 ring-black/5 overflow-hidden lg:min-h-[780px]">
           <span
             aria-hidden
             className="hidden lg:block absolute top-6 bottom-6 left-1/2 w-px bg-border"
@@ -47,52 +47,36 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
             className="absolute inset-x-0 bottom-0 h-[3px] bg-gradient-to-r from-accent/60 via-accent to-accent/60"
           />
 
-          {/* Left page — brand + hero image */}
-          <section className="relative hidden lg:flex h-full flex-col gap-5 overflow-hidden bg-gradient-to-br from-primary/10 via-secondary/30 to-accent/20 p-7">
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -top-16 -left-16 h-56 w-56 rounded-full bg-primary/20 blur-3xl"
-            />
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -bottom-20 -right-10 h-64 w-64 rounded-full bg-accent/30 blur-3xl"
-            />
+          {/* Left page — full-bleed hero image */}
+          <section className="relative hidden lg:flex h-full overflow-hidden bg-muted">
+            {heroImageUrl ? (
+              <Image
+                src={heroImageUrl}
+                alt="대문 이미지"
+                fill
+                unoptimized
+                sizes="(max-width: 1024px) 100vw, 512px"
+                className="object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-primary/10 via-secondary/30 to-accent/20 text-muted-foreground">
+                <ImageIcon className="h-10 w-10" />
+                <span className="text-xs font-medium">
+                  {t("imagePlaceholder", { defaultValue: "소개 이미지 영역" })}
+                </span>
+              </div>
+            )}
 
-            {/* Brand */}
-            <div className="relative flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-                <Sparkles className="h-3.5 w-3.5" />
+            {/* Brand overlay */}
+            <div className="absolute top-5 left-5 flex items-center gap-2 text-sm font-semibold tracking-tight text-white drop-shadow">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm ring-1 ring-white/30">
+                <Sparkles className="h-3.5 w-3.5 text-white" />
               </span>
               BeautyBook
             </div>
 
-            {/* Hero image (from site-settings) or placeholder */}
-            <div className="relative flex-1 overflow-hidden rounded-xl border-2 border-dashed border-border/80 bg-background/50 backdrop-blur-sm">
-              {heroImageUrl ? (
-                <Image
-                  src={heroImageUrl}
-                  alt="대문 이미지"
-                  fill
-                  unoptimized
-                  sizes="(max-width: 1024px) 100vw, 512px"
-                  className="object-contain"
-                />
-              ) : (
-                <>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                    <ImageIcon className="h-10 w-10" />
-                    <span className="text-xs font-medium">
-                      {t("imagePlaceholder", { defaultValue: "소개 이미지 영역" })}
-                    </span>
-                  </div>
-                  <span className="absolute top-2 left-2 rounded-md bg-background/90 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground ring-1 ring-border">
-                    {t("imagePlaceholderTag", { defaultValue: "PLACEHOLDER" })}
-                  </span>
-                </>
-              )}
-            </div>
-
-            <p className="relative text-[10px] text-muted-foreground">
+            {/* Copyright overlay */}
+            <p className="absolute bottom-4 left-5 text-[10px] text-white/60">
               © {new Date().getFullYear()} BeautyBook
             </p>
           </section>
