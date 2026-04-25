@@ -5,9 +5,6 @@ spring:
   application:
     name: beauty-book-server
 
-  config:
-    import: optional:classpath:application-local.yaml
-
   datasource:
     url: jdbc:postgresql://localhost:5434/beauty_book
     username: postgres
@@ -23,6 +20,9 @@ spring:
         format_sql: true
     show-sql: true
 
+cors:
+  allowed-origin: ${ALLOWED_ORIGIN:https://dxline-tallent.com,http://localhost:3000,http://localhost:4100}
+
 jwt:
   secret: ${JWT_SECRET:beauty-book-dev-secret-key-must-be-at-least-32-bytes-long}
   access-token-expiration-ms: 1800000
@@ -37,3 +37,10 @@ aws:
     region: ${AWS_S3_REGION:ap-northeast-2}
     prefix: ${AWS_S3_PREFIX:beauty-book}
     presign-expires-seconds: 300
+
+---
+spring:
+  config:
+    activate:
+      on-profile: "!prod"
+    import: optional:classpath:application-local.yaml

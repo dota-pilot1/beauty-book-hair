@@ -1,7 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { tokenStorage } from "./tokenStorage";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4101";
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4101";
 
 export const api = axios.create({
   baseURL,

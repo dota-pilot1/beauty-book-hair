@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -24,10 +24,15 @@ export function LoginForm({ nextPath }: LoginFormProps) {
   const router = useRouter();
   const { t } = useTranslation("auth");
   const [formError, setFormError] = useState<string | null>(null);
+  const [selectedDev, setSelectedDev] = useState<string>("관리자");
+  useEffect(() => {
+    const stored = localStorage.getItem("dev-account");
+    if (stored && stored !== "관리자") setSelectedDev(stored);
+  }, []);
   const devAccounts = [
     {
       label: "관리자",
-      email: "terecal@daum.net",
+      email: "admin@daum.net",
       password: "password123",
       icon: ShieldCheck,
     },
@@ -54,7 +59,7 @@ export function LoginForm({ nextPath }: LoginFormProps) {
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
     defaultValues: {
-      email: "terecal@daum.net",
+      email: selectedDev === "고객" ? "customer@daum.net" : "admin@daum.net",
       password: "password123",
     },
   });
@@ -88,10 +93,16 @@ export function LoginForm({ nextPath }: LoginFormProps) {
               type="button"
               onClick={() => {
                 setFormError(null);
+                setSelectedDev(label);
+                localStorage.setItem("dev-account", label);
                 setValue("email", email, { shouldDirty: true });
                 setValue("password", password, { shouldDirty: true });
               }}
-              className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
+              className={`inline-flex items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                selectedDev === label
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-foreground hover:bg-accent"
+              }`}
             >
               <Icon className="h-4 w-4" />
               {label}

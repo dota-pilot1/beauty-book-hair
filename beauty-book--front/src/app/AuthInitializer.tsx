@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { authActions, useAuth } from "@/entities/user/model/authStore";
+import { authActions, authStore, useAuth } from "@/entities/user/model/authStore";
 
 export function AuthInitializer({ children }: { children: React.ReactNode }) {
   useAuth();
@@ -12,11 +12,18 @@ export function AuthInitializer({ children }: { children: React.ReactNode }) {
     pathname && pathname !== "/" ? pathname.replace(/\/+$/, "") || "/" : pathname;
 
   useEffect(() => {
+    if (normalizedPathname === "/login") {
+      authStore.setState((s) => (s.status === "idle" ? { ...s, status: "anonymous" } : s));
+      return;
+    }
     authActions.restore();
-  }, []);
+  }, [normalizedPathname]);
 
   useEffect(() => {
     const onLogout = () => {
+      if (authStore.state.status === "authenticated") {
+        return;
+      }
       authActions.forceAnonymous();
       if (normalizedPathname !== "/login") {
         router.replace("/login");
