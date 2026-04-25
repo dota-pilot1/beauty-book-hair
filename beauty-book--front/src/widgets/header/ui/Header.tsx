@@ -220,7 +220,7 @@ export function Header() {
   const displayName = user?.username ?? user?.email ?? "?";
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-sm">
+    <header className="border-b border-border bg-background">
       <div className="flex h-14 w-full items-center justify-between px-4">
         <nav className="flex items-center gap-6">
           <Link
