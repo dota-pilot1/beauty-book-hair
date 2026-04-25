@@ -101,126 +101,152 @@ export function AdminShell({
   return (
     <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-[1760px] gap-3 px-2 py-5 lg:px-3">
       {/* 사이드바 */}
-      <aside className={cn("hidden shrink-0 lg:block transition-all duration-300", collapsed ? "w-[3.5rem]" : "w-[16rem]")}>
-        <div className="sticky top-20 rounded-3xl border border-black/12 bg-sidebar/90 p-3 shadow-sm">
-          {collapsed ? (
-            /* 일자바 모드 */
-            <div className="flex flex-col items-center gap-1.5">
-              {/* 헤더 아이콘 */}
-              <Link
-                href="/dashboard"
-                title="대시보드 홈"
-                className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-xl border transition-colors",
-                  normalizedPathname === "/dashboard"
-                    ? "border-primary/30 bg-primary/10 text-primary"
-                    : "border-black/10 bg-background/70 text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <LayoutDashboard className="h-4 w-4" />
-              </Link>
+      <aside
+        className={cn(
+          "hidden shrink-0 lg:block transition-[width] duration-300 ease-in-out",
+          collapsed ? "w-[3.5rem]" : "w-[16rem]"
+        )}
+      >
+        <div
+          className={cn(
+            "sticky top-20 rounded-3xl border border-black/12 bg-sidebar/90 shadow-sm transition-[padding] duration-300",
+            collapsed ? "p-2 flex flex-col items-center gap-1.5" : "p-3"
+          )}
+        >
+          {/* 헤더 */}
+          <Link
+            href="/dashboard"
+            title={collapsed ? "대시보드 홈" : undefined}
+            className={cn(
+              "shrink-0 flex items-center overflow-hidden border bg-background/70 transition-all duration-300 ease-in-out",
+              collapsed
+                ? cn(
+                    "h-10 w-10 justify-center rounded-xl",
+                    normalizedPathname === "/dashboard"
+                      ? "border-primary/30 bg-primary/10 text-primary"
+                      : "border-black/10 text-muted-foreground hover:bg-accent hover:text-foreground"
+                  )
+                : cn(
+                    "w-full rounded-2xl px-4 py-3",
+                    normalizedPathname === "/dashboard"
+                      ? "border-primary/30 bg-primary/10"
+                      : "border-black/12 hover:border-primary/20 hover:bg-primary/5"
+                  )
+            )}
+          >
+            <LayoutDashboard className="h-5 w-5 shrink-0 text-muted-foreground" />
+            <div
+              className={cn(
+                "overflow-hidden transition-all ease-in-out",
+                collapsed
+                  ? "w-0 opacity-0 duration-[100ms]"
+                  : "w-full opacity-100 duration-200 delay-[160ms] ml-3"
+              )}
+            >
+              <p className="whitespace-nowrap text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                BeautyBook
+              </p>
+              <span className="whitespace-nowrap text-sm font-semibold text-foreground">관리자 센터</span>
+            </div>
+          </Link>
 
-              <div className="my-1 h-px w-8 bg-black/8" />
+          {collapsed && <div className="h-px w-8 bg-black/8" />}
 
-              {/* 메뉴 아이콘들 */}
-              {adminNavItems.map(({ href, label, icon: Icon }) => {
-                const normalizedHref = href !== "/" ? href.replace(/\/+$/, "") || "/" : href;
-                const active =
-                  normalizedPathname === normalizedHref ||
-                  Boolean(
-                    normalizedPathname &&
-                      normalizedHref !== "/" &&
-                      normalizedPathname.startsWith(`${normalizedHref}/`)
-                  );
-                return (
-                  <Link
-                    key={href}
-                    href={href}
-                    title={label}
-                    aria-current={active ? "page" : undefined}
+          {/* 메뉴 */}
+          <nav
+            className={cn(
+              "flex flex-col",
+              collapsed ? "items-center gap-1.5 w-full" : "w-full mt-3 gap-1"
+            )}
+          >
+            {adminNavItems.map(({ href, label, icon: Icon }) => {
+              const normalizedHref = href !== "/" ? href.replace(/\/+$/, "") || "/" : href;
+              const active =
+                normalizedPathname === normalizedHref ||
+                Boolean(
+                  normalizedPathname &&
+                    normalizedHref !== "/" &&
+                    normalizedPathname.startsWith(`${normalizedHref}/`)
+                );
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-current={active ? "page" : undefined}
+                  title={collapsed ? label : undefined}
+                  className={cn(
+                    "shrink-0 flex items-center overflow-hidden border transition-all duration-300 ease-in-out",
+                    collapsed
+                      ? cn(
+                          "h-10 w-10 justify-center rounded-xl",
+                          active
+                            ? "border-transparent bg-foreground/80 text-white shadow-sm"
+                            : "border-black/8 bg-background/50 text-muted-foreground hover:bg-accent hover:text-foreground"
+                        )
+                      : cn(
+                          "w-full rounded-2xl px-3 py-2.5",
+                          active
+                            ? "border-transparent bg-foreground/80 text-white shadow-md"
+                            : "border-black/8 bg-background/50 text-muted-foreground hover:border-black/15 hover:bg-background/80 hover:text-foreground"
+                        )
+                  )}
+                >
+                  <span
                     className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-xl border transition-colors",
-                      active
-                        ? "border-transparent bg-foreground/80 text-white shadow-sm"
-                        : "border-black/8 bg-background/50 text-muted-foreground hover:bg-accent hover:text-foreground"
+                      "shrink-0 inline-flex rounded-xl transition-all duration-300",
+                      collapsed ? "p-0" : cn("p-2", active ? "bg-background/15 text-white" : "bg-muted/60 text-muted-foreground")
                     )}
                   >
                     <Icon className="h-4 w-4" />
-                  </Link>
-                );
-              })}
+                  </span>
+                  <span
+                    className={cn(
+                      "overflow-hidden whitespace-nowrap text-sm font-semibold transition-all ease-in-out",
+                      active ? "text-white" : "text-foreground",
+                      collapsed
+                        ? "w-0 opacity-0 duration-[100ms]"
+                        : "w-full opacity-100 duration-200 delay-[160ms] ml-3"
+                    )}
+                  >
+                    {label}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
 
-              <div className="my-1 h-px w-8 bg-black/8" />
+          {collapsed && <div className="h-px w-8 bg-black/8" />}
 
-              {/* 펼치기 버튼 */}
-              <button
-                onClick={() => collapse(false)}
-                title="메뉴 펼치기"
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/8 bg-background/50 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <PanelLeftOpen className="h-4 w-4" />
-              </button>
+          {/* 일자바 토글 */}
+          <button
+            onClick={() => collapse(!collapsed)}
+            title={collapsed ? "메뉴 펼치기" : undefined}
+            className={cn(
+              "shrink-0 flex items-center overflow-hidden border border-black/10 bg-background/60 text-xs text-muted-foreground transition-all duration-300 ease-in-out hover:border-black/20 hover:bg-accent",
+              collapsed
+                ? "h-10 w-10 justify-center rounded-xl"
+                : "mt-3 w-full rounded-2xl px-3 py-2"
+            )}
+          >
+            <div className="relative h-4 w-4 shrink-0">
+              <PanelLeftClose
+                className={cn("absolute h-4 w-4 transition-opacity duration-200", collapsed ? "opacity-0" : "opacity-100")}
+              />
+              <PanelLeftOpen
+                className={cn("absolute h-4 w-4 transition-opacity duration-200", collapsed ? "opacity-100" : "opacity-0")}
+              />
             </div>
-          ) : (
-            /* 전체 모드 */
-            <>
-              <Link
-                href="/dashboard"
-                className={cn(
-                  "flex items-center gap-3 rounded-2xl border bg-background/70 px-4 py-3 transition-colors",
-                  normalizedPathname === "/dashboard"
-                    ? "border-primary/30 bg-primary/10"
-                    : "border-black/12 hover:border-primary/20 hover:bg-primary/5"
-                )}
-              >
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                  BeautyBook
-                </p>
-                <span className="text-sm font-semibold text-foreground">관리자 센터</span>
-              </Link>
-
-              <nav className="mt-3 space-y-1">
-                {adminNavItems.map(({ href, label, icon: Icon }) => {
-                  const normalizedHref = href !== "/" ? href.replace(/\/+$/, "") || "/" : href;
-                  const active =
-                    normalizedPathname === normalizedHref ||
-                    Boolean(
-                      normalizedPathname &&
-                        normalizedHref !== "/" &&
-                        normalizedPathname.startsWith(`${normalizedHref}/`)
-                    );
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "flex items-center gap-3 rounded-2xl border px-3 py-2.5 transition-all",
-                        active
-                          ? "border-transparent bg-foreground/80 text-white shadow-md"
-                          : "border-black/8 bg-background/50 text-muted-foreground hover:border-black/15 hover:bg-background/80 hover:text-foreground"
-                      )}
-                    >
-                      <span className={cn("inline-flex rounded-xl p-2", active ? "bg-background/15 text-white" : "bg-muted/60 text-muted-foreground")}>
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <span className={cn("text-sm font-semibold", active ? "text-white" : "text-foreground")}>
-                        {label}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </nav>
-
-              <button
-                onClick={() => collapse(true)}
-                className="mt-3 flex w-full items-center gap-2 rounded-2xl border border-black/10 bg-background/60 px-3 py-2 text-xs text-muted-foreground transition-colors hover:border-black/20 hover:bg-accent"
-              >
-                <PanelLeftClose className="h-4 w-4" />
-                <span>일자바 모드</span>
-              </button>
-            </>
-          )}
+            <span
+              className={cn(
+                "overflow-hidden whitespace-nowrap transition-all ease-in-out",
+                collapsed
+                  ? "w-0 opacity-0 duration-[100ms]"
+                  : "w-full opacity-100 duration-200 delay-[160ms] ml-2"
+              )}
+            >
+              일자바 모드
+            </span>
+          </button>
         </div>
       </aside>
 
