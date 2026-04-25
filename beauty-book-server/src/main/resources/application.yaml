@@ -38,6 +38,12 @@ aws:
     prefix: ${AWS_S3_PREFIX:beauty-book}
     presign-expires-seconds: 300
 
+logging:
+  level:
+    org.apache.tomcat: OFF
+    org.apache.catalina: OFF
+    org.apache.coyote: OFF
+
 ---
 spring:
   config:
