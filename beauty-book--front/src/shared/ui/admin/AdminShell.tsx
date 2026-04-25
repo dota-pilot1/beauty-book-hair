@@ -9,6 +9,7 @@ import {
   CalendarRange,
   ChartNoAxesColumn,
   CircleUserRound,
+  Clock,
   LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
@@ -63,6 +64,12 @@ const adminNavItems: AdminNavItem[] = [
     label: "시술/가격",
     description: "서비스 목록과 가격 정보를 관리합니다.",
     icon: Scissors,
+  },
+  {
+    href: "/schedule",
+    label: "영업시간 관리",
+    description: "요일별 매장 영업시간을 설정합니다.",
+    icon: Clock,
   },
   {
     href: "/menu-management",
