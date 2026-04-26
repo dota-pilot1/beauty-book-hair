@@ -30,6 +30,7 @@ export type BoardDetail = {
   boardConfigCode: string
   title: string
   content: string | null
+  authorId: number | null
   authorName: string | null
   status: BoardStatus
   isPinned: boolean
