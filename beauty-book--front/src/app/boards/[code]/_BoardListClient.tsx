@@ -386,16 +386,24 @@ export default function BoardListClient() {
       </div>
 
       {/* Split-view */}
-      <div className="overflow-hidden rounded-2xl border border-black/12 bg-card shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-black/12 shadow-sm">
         <div className="flex" style={{ minHeight: "600px" }}>
           {/* 왼쪽 목록 */}
-          <div className={`flex w-full flex-col border-r border-black/8 lg:w-[320px] lg:shrink-0 ${mobileView === "detail" ? "hidden lg:flex" : "flex"}`}>
+          <div className={`flex w-full flex-col bg-muted/25 lg:w-[42%] lg:shrink-0 ${mobileView === "detail" ? "hidden lg:flex" : "flex"}`}>
             {showWrite && <WriteForm code={code} onClose={() => setShowWrite(false)} />}
+
+            {/* 컬럼 헤더 */}
+            <div className="flex items-center border-b border-black/8 px-5 py-2.5">
+              <span className="w-7 shrink-0 text-[11px] font-medium text-muted-foreground/60">번호</span>
+              <span className="flex-1 text-[11px] font-medium text-muted-foreground/60">제목</span>
+              <span className="w-16 shrink-0 text-right text-[11px] font-medium text-muted-foreground/60">날짜</span>
+            </div>
+
             <div className="flex-1 overflow-y-auto">
               {postsQuery.isLoading ? (
-                <div className="space-y-2 p-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="h-14 animate-pulse rounded-xl bg-muted/50" />
+                <div className="space-y-px">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="h-[52px] animate-pulse bg-muted/40" />
                   ))}
                 </div>
               ) : posts.length === 0 ? (
@@ -403,34 +411,50 @@ export default function BoardListClient() {
                   등록된 게시글이 없습니다.
                 </div>
               ) : (
-                <ul className="divide-y divide-black/6">
-                  {posts.map((post) => {
+                <ul className="divide-y divide-black/5">
+                  {posts.map((post, idx) => {
                     const active = post.id === selectedId;
+                    const rowNum = postsQuery.data
+                      ? postsQuery.data.totalElements - (page * 20 + idx)
+                      : idx + 1;
                     return (
                       <li key={post.id}>
                         <button
                           type="button"
                           onClick={() => { setSelectedId(post.id); setMobileView("detail"); setShowWrite(false); }}
-                          className={`w-full border-l-2 px-4 py-3.5 text-left transition-colors ${active ? "border-primary bg-primary/6" : "border-transparent hover:bg-muted/40"}`}
+                          className={`flex w-full items-center px-5 py-3 text-left transition-colors ${
+                            active
+                              ? "bg-background shadow-[inset_0_0_0_1px_hsl(var(--border))]"
+                              : "hover:bg-background/60"
+                          }`}
                         >
-                          <div className="flex items-start gap-1.5">
-                            {post.isPinned && <Pin className="mt-0.5 h-3 w-3 shrink-0 text-primary" />}
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                {post.isPinned && (
-                                  <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">공지</span>
-                                )}
-                                <p className={`truncate text-sm font-medium ${active ? "text-primary" : "text-foreground"}`}>
-                                  {post.title}
-                                </p>
-                              </div>
-                              <div className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                                <span>{post.authorName ?? "익명"}</span>
-                                <span>·</span>
-                                <span>{formatDate(post.createdAt)}</span>
-                              </div>
-                            </div>
+                          {/* 번호 or 공지 */}
+                          <span className="w-7 shrink-0 text-center">
+                            {post.isPinned ? (
+                              <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-primary/15 text-[9px] font-bold text-primary">
+                                공지
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-muted-foreground/50">{rowNum}</span>
+                            )}
+                          </span>
+
+                          {/* 제목 */}
+                          <div className="min-w-0 flex-1 px-3">
+                            <p className={`truncate text-sm ${
+                              active ? "font-semibold text-primary" : post.isPinned ? "font-medium text-foreground" : "text-foreground/90"
+                            }`}>
+                              {post.title}
+                            </p>
+                            <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                              {post.authorName ?? "익명"}
+                            </p>
                           </div>
+
+                          {/* 날짜 */}
+                          <span className="w-16 shrink-0 text-right text-[11px] text-muted-foreground/70">
+                            {formatDate(post.createdAt).replace(/\d{4}\. /, "")}
+                          </span>
                         </button>
                       </li>
                     );
@@ -438,8 +462,9 @@ export default function BoardListClient() {
                 </ul>
               )}
             </div>
+
             {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 border-t border-black/8 px-4 py-3">
+              <div className="flex items-center justify-center gap-2 border-t border-black/8 bg-background/40 px-4 py-3">
                 <button type="button" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}
                   className="rounded-lg border border-black/12 px-3 py-1.5 text-xs disabled:opacity-40 hover:bg-muted">이전</button>
                 <span className="text-xs text-muted-foreground">{page + 1} / {totalPages}</span>
@@ -449,8 +474,11 @@ export default function BoardListClient() {
             )}
           </div>
 
+          {/* 구분선 */}
+          <div className="hidden w-px bg-black/8 lg:block" />
+
           {/* 오른쪽 상세 */}
-          <div className={`flex-1 ${mobileView === "list" ? "hidden lg:block" : "block"}`}>
+          <div className={`flex-1 bg-card ${mobileView === "list" ? "hidden lg:block" : "block"}`}>
             {selectedId ? (
               <DetailPanel key={selectedId} code={code} postId={selectedId} isAdmin={isAdmin} userId={user?.id} onDeleted={() => setSelectedId(null)} />
             ) : (
