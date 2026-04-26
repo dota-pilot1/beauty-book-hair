@@ -54,8 +54,17 @@ const ALL_DAYS: DayOfWeek[] = [
 ];
 
 const BLOCK_TYPE_LABELS: Record<BlockedTimeType, string> = {
-  STORE_CLOSED: "매장 휴무", DESIGNER_OFF: "디자이너 휴무", LUNCH: "점심 시간",
-  EDUCATION: "교육", PERSONAL: "개인 사정", ETC: "기타",
+  STORE_CLOSED: "🚪 매장 휴무", DESIGNER_OFF: "💆 디자이너 휴무", LUNCH: "🍱 점심 시간",
+  EDUCATION: "📚 교육", PERSONAL: "🙏 개인 사정", ETC: "📌 기타",
+};
+
+const BLOCK_TYPE_BADGE_CLASS: Record<BlockedTimeType, string> = {
+  STORE_CLOSED: "bg-slate-100 text-slate-700",
+  DESIGNER_OFF: "bg-blue-100 text-blue-700",
+  LUNCH: "bg-amber-100 text-amber-700",
+  EDUCATION: "bg-purple-100 text-purple-700",
+  PERSONAL: "bg-green-100 text-green-700",
+  ETC: "bg-gray-100 text-gray-600",
 };
 
 const DEFAULT_ROW: Omit<BusinessHourRow, "dayOfWeek"> = {
@@ -690,7 +699,7 @@ function BlockedTimeRow({
       <td className="px-4 py-3 text-foreground">{toKST(item.startAt)}</td>
       <td className="px-4 py-3 text-foreground">{toKST(item.endAt)}</td>
       <td className="px-4 py-3">
-        <span className="inline-flex rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700">
+        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${BLOCK_TYPE_BADGE_CLASS[item.blockType]}`}>
           {BLOCK_TYPE_LABELS[item.blockType]}
         </span>
       </td>
