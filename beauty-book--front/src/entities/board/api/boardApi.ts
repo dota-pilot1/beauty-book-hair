@@ -46,6 +46,9 @@ export const boardApi = {
   adminCreateConfig: (body: CreateBoardConfigBody) =>
     api.post<BoardConfig>("/api/admin/board-configs", body).then((r) => r.data),
 
+  adminDeleteConfig: (id: number) =>
+    api.delete(`/api/admin/board-configs/${id}`),
+
   adminListPosts: (code: string, page = 0, size = 20) =>
     api
       .get<PageResponse<BoardSummary>>(`/api/admin/boards/${code}`, { params: { page, size } })

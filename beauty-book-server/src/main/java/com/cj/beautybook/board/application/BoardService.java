@@ -13,6 +13,8 @@ import com.cj.beautybook.board.presentation.dto.CreateBoardPostRequest;
 import com.cj.beautybook.board.presentation.dto.UpdateBoardPostRequest;
 import com.cj.beautybook.common.exception.BusinessException;
 import com.cj.beautybook.common.exception.ErrorCode;
+import com.cj.beautybook.menu.domain.Menu;
+import com.cj.beautybook.menu.infrastructure.MenuRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,8 +27,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BoardService {
 
+    private static final String BOARD_PARENT_MENU_CODE = "BOARD";
+
     private final BoardConfigRepository boardConfigRepository;
     private final BoardRepository boardRepository;
+    private final MenuRepository menuRepository;
 
     @Transactional(readOnly = true)
     public List<BoardConfigResponse> listActiveConfigs() {
@@ -58,7 +63,18 @@ public class BoardService {
                 req.allowComment(),
                 req.sortOrder()
         );
-        return BoardConfigResponse.from(boardConfigRepository.save(config));
+        BoardConfigResponse saved = BoardConfigResponse.from(boardConfigRepository.save(config));
+        syncMenuOnCreate(req.code(), req.displayName(), req.sortOrder());
+        return saved;
+    }
+
+    @Transactional
+    public void deleteConfig(Long id) {
+        BoardConfig config = boardConfigRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BOARD_CONFIG_NOT_FOUND));
+        String menuCode = toMenuCode(config.getCode());
+        menuRepository.findByCode(menuCode).ifPresent(menuRepository::delete);
+        boardConfigRepository.delete(config);
     }
 
     @Transactional
@@ -121,5 +137,28 @@ public class BoardService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.BOARD_POST_NOT_FOUND));
         board.unpin();
         boardRepository.save(board);
+    }
+
+    // ===== 내부 메뉴 동기화 =====
+
+    private void syncMenuOnCreate(String boardCode, String displayName, int sortOrder) {
+        Menu parent = menuRepository.findByCode(BOARD_PARENT_MENU_CODE)
+                .orElseGet(() -> menuRepository.save(Menu.create(
+                        BOARD_PARENT_MENU_CODE, null, "게시판", null,
+                        null, null, false, null, null, true, 4
+                )));
+
+        String childCode = toMenuCode(boardCode);
+        if (!menuRepository.existsByCode(childCode)) {
+            menuRepository.save(Menu.create(
+                    childCode, parent, displayName, null,
+                    "/boards/" + boardCode, null, false,
+                    null, null, true, sortOrder
+            ));
+        }
+    }
+
+    private String toMenuCode(String boardCode) {
+        return BOARD_PARENT_MENU_CODE + "_" + boardCode.toUpperCase().replace("-", "_");
     }
 }

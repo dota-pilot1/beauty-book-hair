@@ -7,6 +7,7 @@ import {
   useAdminBoardConfigs,
   useAdminBoardPosts,
   useCreateBoardConfig,
+  useDeleteBoardConfig,
   useCreateBoardPost,
   useDeleteBoardPost,
   usePinBoardPost,
@@ -48,6 +49,7 @@ function formatDate(iso: string) {
 function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => void }) {
   const { data: configs = [], isLoading } = useAdminBoardConfigs();
   const createConfig = useCreateBoardConfig();
+  const deleteConfig = useDeleteBoardConfig();
 
   const [showForm, setShowForm] = useState(false);
   const [code, setCode] = useState("");
@@ -182,13 +184,27 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
                     비활성
                   </span>
                 )}
-                <button
-                  type="button"
-                  onClick={() => onSelectCode(config.code)}
-                  className="shrink-0 rounded-full border border-black/12 px-4 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-                >
-                  게시글 보기
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onSelectCode(config.code)}
+                    className="rounded-full border border-black/12 px-4 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                  >
+                    게시글 보기
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleteConfig.isPending}
+                    onClick={() => {
+                      if (window.confirm(`"${config.displayName}" 게시판을 삭제하시겠습니까?\n헤더 메뉴에서도 자동으로 제거됩니다.`)) {
+                        deleteConfig.mutate(config.id);
+                      }
+                    }}
+                    className="rounded-full border border-rose-200 px-4 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                  >
+                    삭제
+                  </button>
+                </div>
               </div>
             );
           })

@@ -78,6 +78,12 @@ public class BoardController {
         return boardService.createConfig(req);
     }
 
+    @DeleteMapping("/api/admin/board-configs/{id}")
+    public ResponseEntity<Void> adminDeleteConfig(@PathVariable Long id) {
+        boardService.deleteConfig(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/api/admin/boards/{code}")
     public Page<BoardSummaryResponse> adminListPosts(
             @PathVariable String code,

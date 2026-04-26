@@ -55,6 +55,17 @@ export function useCreateBoardConfig() {
   });
 }
 
+export function useDeleteBoardConfig() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => boardApi.adminDeleteConfig(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-board-configs"] });
+      queryClient.invalidateQueries({ queryKey: ["board-configs"] });
+    },
+  });
+}
+
 export function useCreateBoardPost(code: string) {
   const queryClient = useQueryClient();
   return useMutation({
