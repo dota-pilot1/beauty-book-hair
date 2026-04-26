@@ -133,6 +133,22 @@ export default function SchedulePage() {
   );
 }
 
+// ── 요일 매핑 (JS getDay → DayOfWeek) ────────────────────────────────────────
+
+const JS_TO_DOW: Record<number, DayOfWeek> = {
+  0: "SUNDAY", 1: "MONDAY", 2: "TUESDAY", 3: "WEDNESDAY",
+  4: "THURSDAY", 5: "FRIDAY", 6: "SATURDAY",
+};
+
+type PendingReservation = {
+  id: number;
+  status: string;
+  startAt: string;
+  endAt: string;
+  customerName?: string;
+  serviceName?: string;
+};
+
 // ── 영업시간 폼 ───────────────────────────────────────────────────────────────
 
 function BusinessHoursForm() {
@@ -144,10 +160,23 @@ function BusinessHoursForm() {
       api.get<BusinessHourItem[]>("/api/admin/schedules/business-hours").then((r) => r.data),
   });
 
+  const { data: pendingAll = [] } = useQuery<PendingReservation[]>({
+    queryKey: ["admin-reservations-pending"],
+    queryFn: () => api.get<PendingReservation[]>("/api/reservations/pending").then((r) => r.data),
+  });
+
   const [rows, setRows] = useState<BusinessHourRow[]>(() =>
     ALL_DAYS.map((d) => ({ dayOfWeek: d, ...DEFAULT_ROW }))
   );
   const [saved, setSaved] = useState(false);
+  const [cancelDayTarget, setCancelDayTarget] = useState<{ dayOfWeek: DayOfWeek; reservations: PendingReservation[] } | null>(null);
+
+  function pendingForDay(day: DayOfWeek): PendingReservation[] {
+    return pendingAll.filter((r) => {
+      const d = new Date(r.startAt);
+      return JS_TO_DOW[d.getDay()] === day;
+    });
+  }
 
   useEffect(() => {
     if (serverData.length === 0) return;
@@ -195,59 +224,76 @@ function BusinessHoursForm() {
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">요일</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">오픈 시간</th>
               <th className="px-4 py-3 text-left font-medium text-muted-foreground">마감 시간</th>
+              <th className="px-4 py-3 text-center font-medium text-muted-foreground">진행중인 예약</th>
               <th className="px-4 py-3 text-center font-medium text-muted-foreground">휴무</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => (
-              <tr
-                key={row.dayOfWeek}
-                className={[
-                  "transition-colors",
-                  i !== rows.length - 1 ? "border-b border-border" : "",
-                  row.closed ? "bg-muted/30" : "",
-                ].join(" ")}
-              >
-                <td className="px-4 py-3 font-medium">
-                  <span className={[
-                    "text-sm",
-                    row.dayOfWeek === "SATURDAY" ? "text-blue-600" : "",
-                    row.dayOfWeek === "SUNDAY" ? "text-rose-600" : "",
-                  ].join(" ")}>
-                    {DAY_LABELS[row.dayOfWeek]}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <input
-                    type="time" value={row.openTime} disabled={row.closed}
-                    onChange={(e) => update(row.dayOfWeek, { openTime: e.target.value })}
-                    className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <input
-                    type="time" value={row.closeTime} disabled={row.closed}
-                    onChange={(e) => update(row.dayOfWeek, { closeTime: e.target.value })}
-                    className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <button
-                    type="button" role="switch" aria-checked={row.closed}
-                    onClick={() => update(row.dayOfWeek, { closed: !row.closed })}
-                    className={[
-                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30",
-                      row.closed ? "bg-rose-500" : "bg-muted",
-                    ].join(" ")}
-                  >
+            {rows.map((row, i) => {
+              const pending = pendingForDay(row.dayOfWeek);
+              return (
+                <tr
+                  key={row.dayOfWeek}
+                  className={[
+                    "transition-colors",
+                    i !== rows.length - 1 ? "border-b border-border" : "",
+                    row.closed ? "bg-muted/30" : "",
+                  ].join(" ")}
+                >
+                  <td className="px-4 py-3 font-medium">
                     <span className={[
-                      "inline-block h-4 w-4 rounded-full bg-white shadow transition-transform",
-                      row.closed ? "translate-x-6" : "translate-x-1",
-                    ].join(" ")} />
-                  </button>
-                </td>
-              </tr>
-            ))}
+                      "text-sm",
+                      row.dayOfWeek === "SATURDAY" ? "text-blue-600" : "",
+                      row.dayOfWeek === "SUNDAY" ? "text-rose-600" : "",
+                    ].join(" ")}>
+                      {DAY_LABELS[row.dayOfWeek]}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <input
+                      type="time" value={row.openTime} disabled={row.closed}
+                      onChange={(e) => update(row.dayOfWeek, { openTime: e.target.value })}
+                      className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </td>
+                  <td className="px-4 py-3">
+                    <input
+                      type="time" value={row.closeTime} disabled={row.closed}
+                      onChange={(e) => update(row.dayOfWeek, { closeTime: e.target.value })}
+                      className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {pending.length > 0 ? (
+                      <button
+                        onClick={() => setCancelDayTarget({ dayOfWeek: row.dayOfWeek, reservations: pending })}
+                        className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
+                      >
+                        <AlertCircle className="h-3 w-3" />
+                        {pending.length}개
+                      </button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground/40">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      type="button" role="switch" aria-checked={row.closed}
+                      onClick={() => update(row.dayOfWeek, { closed: !row.closed })}
+                      className={[
+                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30",
+                        row.closed ? "bg-rose-500" : "bg-muted",
+                      ].join(" ")}
+                    >
+                      <span className={[
+                        "inline-block h-4 w-4 rounded-full bg-white shadow transition-transform",
+                        row.closed ? "translate-x-6" : "translate-x-1",
+                      ].join(" ")} />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -263,6 +309,128 @@ function BusinessHoursForm() {
         >
           {mutation.isPending ? "저장 중..." : "저장"}
         </button>
+      </div>
+
+      {cancelDayTarget && (
+        <CancelDayReservationsDialog
+          dayOfWeek={cancelDayTarget.dayOfWeek}
+          reservations={cancelDayTarget.reservations}
+          onClose={() => {
+            setCancelDayTarget(null);
+            queryClient.invalidateQueries({ queryKey: ["admin-reservations-pending"] });
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── 요일별 진행중 예약 일괄 취소 다이얼로그 ──────────────────────────────────
+
+function CancelDayReservationsDialog({
+  dayOfWeek,
+  reservations,
+  onClose,
+}: {
+  dayOfWeek: DayOfWeek;
+  reservations: PendingReservation[];
+  onClose: () => void;
+}) {
+  const [reason, setReason] = useState("");
+  const [done, setDone] = useState(false);
+  const queryClient = useQueryClient();
+
+  const cancelMutation = useMutation({
+    mutationFn: () =>
+      Promise.all(
+        reservations.map((r) =>
+          api.patch(`/api/reservations/${r.id}/status`, {
+            status: "CANCELLED_BY_ADMIN",
+            adminMemo: reason || "영업시간 변경으로 인한 취소",
+          })
+        )
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-reservations-pending"] });
+      setDone(true);
+    },
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-background shadow-xl overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="text-base font-semibold text-foreground">
+            {DAY_LABELS[dayOfWeek]} 진행중인 예약 일괄 취소
+          </h2>
+          <button onClick={onClose} className="rounded-lg p-1 hover:bg-accent">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="px-5 py-4 max-h-64 overflow-y-auto space-y-2">
+          {done ? (
+            <p className="text-sm text-emerald-600 font-medium py-4 text-center">
+              {reservations.length}개 예약이 취소됐습니다.
+            </p>
+          ) : reservations.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">진행중인 예약이 없습니다.</p>
+          ) : (
+            reservations.map((r) => (
+              <div key={r.id} className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-3 py-2">
+                <div className="text-sm">
+                  <span className="font-medium text-foreground">{r.customerName ?? `예약 #${r.id}`}</span>
+                  {r.serviceName && <span className="ml-1 text-muted-foreground">· {r.serviceName}</span>}
+                  <div className="text-xs text-muted-foreground mt-0.5">{toKST(r.startAt)}</div>
+                </div>
+                <span className={[
+                  "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                  r.status === "REQUESTED" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700",
+                ].join(" ")}>
+                  {r.status === "REQUESTED" ? "승인 대기" : "예약 확정"}
+                </span>
+              </div>
+            ))
+          )}
+        </div>
+
+        {!done && reservations.length > 0 && (
+          <div className="border-t border-border px-5 py-4 space-y-3">
+            <label className="space-y-1 block">
+              <span className="text-xs font-medium text-muted-foreground">취소 사유 (고객에게 전달됩니다)</span>
+              <input
+                type="text"
+                value={reason}
+                placeholder="예: 매장 사정으로 인한 임시 휴무"
+                onChange={(e) => setReason(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </label>
+            <div className="flex items-center justify-end gap-2">
+              <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent">
+                닫기
+              </button>
+              <button
+                onClick={() => cancelMutation.mutate()}
+                disabled={cancelMutation.isPending}
+                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+              >
+                {cancelMutation.isPending ? "취소 중..." : `${reservations.length}개 예약 일괄 취소`}
+              </button>
+            </div>
+            {cancelMutation.isError && (
+              <p className="text-xs text-rose-600">취소에 실패했습니다. 다시 시도해주세요.</p>
+            )}
+          </div>
+        )}
+
+        {done && (
+          <div className="border-t border-border px-5 py-4 flex justify-end">
+            <button onClick={onClose} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
+              닫기
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -331,6 +499,48 @@ function BlockedTimeSection() {
   return (
     <>
       <div className="space-y-6">
+        {/* 월 네비 + 목록 */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <button onClick={prevMonth} className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-accent">‹ 이전</button>
+            <span className="text-sm font-semibold">{year}년 {month}월</span>
+            <button onClick={nextMonth} className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-accent">다음 ›</button>
+          </div>
+
+          {isLoading ? (
+            <div className="rounded-2xl border border-border p-8 text-center text-sm text-muted-foreground">불러오는 중...</div>
+          ) : items.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">이 달에 등록된 차단 시간이 없습니다.</div>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-border">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">시작</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">종료</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">유형</th>
+                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">사유</th>
+                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">진행중인 예약</th>
+                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">삭제</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, i) => (
+                    <BlockedTimeRow
+                      key={item.id}
+                      item={item}
+                      isLast={i === items.length - 1}
+                      onDelete={() => deleteMutation.mutate(item.id)}
+                      deleteDisabled={deleteMutation.isPending}
+                      onCancelClick={() => setCancelTarget(item)}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
         {/* 생성 폼 */}
         <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
           <h3 className="text-sm font-semibold text-foreground">차단 시간 추가</h3>
@@ -384,47 +594,6 @@ function BlockedTimeSection() {
           </div>
         </div>
 
-        {/* 월 네비 + 목록 */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <button onClick={prevMonth} className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-accent">‹ 이전</button>
-            <span className="text-sm font-semibold">{year}년 {month}월</span>
-            <button onClick={nextMonth} className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-accent">다음 ›</button>
-          </div>
-
-          {isLoading ? (
-            <div className="rounded-2xl border border-border p-8 text-center text-sm text-muted-foreground">불러오는 중...</div>
-          ) : items.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">이 달에 등록된 차단 시간이 없습니다.</div>
-          ) : (
-            <div className="overflow-hidden rounded-2xl border border-border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40">
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">시작</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">종료</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">유형</th>
-                    <th className="px-4 py-3 text-left font-medium text-muted-foreground">사유</th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">진행중인 예약</th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">삭제</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item, i) => (
-                    <BlockedTimeRow
-                      key={item.id}
-                      item={item}
-                      isLast={i === items.length - 1}
-                      onDelete={() => deleteMutation.mutate(item.id)}
-                      deleteDisabled={deleteMutation.isPending}
-                      onCancelClick={() => setCancelTarget(item)}
-                    />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
       </div>
 
       {cancelTarget && (
