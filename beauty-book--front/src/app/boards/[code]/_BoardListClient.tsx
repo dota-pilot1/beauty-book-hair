@@ -300,29 +300,44 @@ function WriteForm({ code, onClose }: { code: string; onClose: () => void }) {
   };
 
   return (
-    <div className="border-b border-black/8 bg-muted/20 px-5 py-4 space-y-3">
-      <p className="text-xs font-semibold text-muted-foreground">새 게시글</p>
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="제목"
-        className="w-full rounded-xl border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-      />
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="내용"
-        rows={4}
-        className="w-full resize-none rounded-xl border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-      />
-      <div className="flex justify-end gap-2">
+    <div className="overflow-hidden rounded-2xl border border-black/12 bg-card shadow-sm">
+      {/* 폼 헤더 */}
+      <div className="flex items-center justify-between border-b border-black/8 px-6 py-4">
+        <p className="text-base font-semibold text-foreground">새 게시글 작성</p>
         <button type="button" onClick={onClose}
-          className="rounded-full border border-black/12 px-4 py-1.5 text-xs text-muted-foreground hover:bg-muted">
+          className="rounded-full border border-black/12 px-4 py-1.5 text-sm text-muted-foreground hover:bg-muted transition-colors">
           취소
         </button>
-        <button type="button" disabled={createPost.isPending || !title.trim()} onClick={handleSubmit}
-          className="rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground disabled:opacity-50 hover:opacity-90">
-          {createPost.isPending ? "등록 중…" : "등록"}
+      </div>
+      {/* 제목 */}
+      <div className="border-b border-black/8 px-6 py-4">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="제목을 입력하세요"
+          autoFocus
+          className="w-full bg-transparent text-lg font-medium text-foreground placeholder:text-muted-foreground/50 outline-none"
+        />
+      </div>
+      {/* 본문 */}
+      <div className="px-6 py-4">
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="내용을 입력하세요"
+          rows={12}
+          className="w-full resize-none bg-transparent text-sm leading-7 text-foreground placeholder:text-muted-foreground/40 outline-none"
+        />
+      </div>
+      {/* 액션 */}
+      <div className="flex justify-end border-t border-black/8 px-6 py-4">
+        <button
+          type="button"
+          disabled={createPost.isPending || !title.trim()}
+          onClick={handleSubmit}
+          className="rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-50 hover:opacity-90 transition-opacity"
+        >
+          {createPost.isPending ? "등록 중…" : "등록하기"}
         </button>
       </div>
     </div>
@@ -385,12 +400,19 @@ export default function BoardListClient() {
         )}
       </div>
 
+      {/* 글쓰기 폼 — 풀 와이드 */}
+      {showWrite && (
+        <div className="mb-4">
+          <WriteForm code={code} onClose={() => setShowWrite(false)} />
+        </div>
+      )}
+
       {/* Split-view */}
+      {!showWrite && (
       <div className="overflow-hidden rounded-2xl border border-black/12 shadow-sm">
         <div className="flex" style={{ minHeight: "600px" }}>
           {/* 왼쪽 목록 */}
           <div className={`flex w-full flex-col bg-muted/25 lg:w-[42%] lg:shrink-0 ${mobileView === "detail" ? "hidden lg:flex" : "flex"}`}>
-            {showWrite && <WriteForm code={code} onClose={() => setShowWrite(false)} />}
 
             {/* 컬럼 헤더 */}
             <div className="flex items-center border-b border-black/8 px-5 py-2.5">
@@ -487,6 +509,7 @@ export default function BoardListClient() {
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }
