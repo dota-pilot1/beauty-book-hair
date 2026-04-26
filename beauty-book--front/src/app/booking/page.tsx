@@ -324,6 +324,16 @@ function BookingFlowPage() {
               icon={Scissors}
               title="시술 선택"
               description="가장 먼저 선택한 시술이 메인이 되고, 이어 선택한 시술은 옵션으로 함께 진행됩니다."
+              action={
+                <button
+                  type="button"
+                  onClick={() => setOneShotOpen(true)}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md active:scale-95"
+                >
+                  <Zap className="h-4 w-4" />
+                  원샷 예약
+                </button>
+              }
             >
               {servicesLoading ? (
                 <p className="text-sm text-muted-foreground">시술 목록을 불러오는 중...</p>
@@ -375,41 +385,31 @@ function BookingFlowPage() {
                         Enter
                       </span>
                     </form>
-                    <div className="flex items-center gap-2">
+                    <div className="inline-flex rounded-xl border border-black/10 bg-muted/30 p-1">
                       <button
                         type="button"
-                        onClick={() => setOneShotOpen(true)}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
+                        onClick={() => setServiceViewMode("card")}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                          serviceViewMode === "card"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
                       >
-                        <Zap className="h-3.5 w-3.5" />
-                        원샷 예약
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                        카드
                       </button>
-                      <div className="inline-flex rounded-xl border border-black/10 bg-muted/30 p-1">
-                        <button
-                          type="button"
-                          onClick={() => setServiceViewMode("card")}
-                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                            serviceViewMode === "card"
-                              ? "bg-background text-foreground shadow-sm"
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          <LayoutGrid className="h-3.5 w-3.5" />
-                          카드
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setServiceViewMode("table")}
-                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                            serviceViewMode === "table"
-                              ? "bg-background text-foreground shadow-sm"
-                              : "text-muted-foreground hover:text-foreground"
-                          }`}
-                        >
-                          <List className="h-3.5 w-3.5" />
-                          테이블
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setServiceViewMode("table")}
+                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                          serviceViewMode === "table"
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        <List className="h-3.5 w-3.5" />
+                        테이블
+                      </button>
                     </div>
                   </div>
 
@@ -637,27 +637,32 @@ function StepSection({
   icon: Icon,
   title,
   description,
+  action,
   children,
 }: {
   icon: typeof Scissors;
   title: string;
   description: string;
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div>
-      <div className="flex items-start gap-3">
-        <span className="inline-flex rounded-2xl bg-primary/10 p-3 text-primary">
-          <Icon className="h-5 w-5" />
-        </span>
-        <div>
-          <h2 className="text-xl font-semibold text-foreground">{title}</h2>
-          {description ? (
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              {description}
-            </p>
-          ) : null}
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <span className="inline-flex rounded-2xl bg-primary/10 p-3 text-primary">
+            <Icon className="h-5 w-5" />
+          </span>
+          <div>
+            <h2 className="text-xl font-semibold text-foreground">{title}</h2>
+            {description ? (
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                {description}
+              </p>
+            ) : null}
+          </div>
         </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
       <div className="mt-5">{children}</div>
     </div>
@@ -707,11 +712,11 @@ function ServiceSelectableCard({
           aria-label={`${service.name} 이미지`}
         />
       ) : (
-        <div className="flex aspect-[16/10] flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted/60 via-muted/30 to-background">
-          <div className="rounded-2xl border border-dashed border-black/10 bg-background/60 p-3">
-            <Scissors className="h-5 w-5 text-muted-foreground/30" />
+        <div className="flex aspect-[16/10] flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-100 via-slate-50 to-zinc-100">
+          <div className="rounded-2xl border border-dashed border-slate-300/60 bg-white/70 p-3">
+            <Scissors className="h-5 w-5 text-slate-300" />
           </div>
-          <span className="text-[11px] font-medium tracking-wide text-muted-foreground/40 uppercase">No Image</span>
+          <span className="text-[11px] font-medium tracking-widest text-slate-300 uppercase">No Image</span>
         </div>
       )}
       <div className="p-4">
@@ -1337,7 +1342,7 @@ function OneShotBookingDialog({
           <div className="flex-1 overflow-hidden">
             <div
               className="flex h-full transition-transform duration-300 ease-in-out"
-              style={{ transform: `translateX(-${dialogStep * 100}%)`, width: "300%" }}
+              style={{ transform: `translateX(-${dialogStep * 33.333}%)`, width: "300%" }}
             >
               {/* ── 슬라이드 0: 시술 선택 ── */}
               <div className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%" }}>
