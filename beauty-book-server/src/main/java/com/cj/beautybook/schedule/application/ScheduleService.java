@@ -142,6 +142,17 @@ public class ScheduleService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.BLOCKED_TIME_NOT_FOUND));
     }
 
+    @Transactional(readOnly = true)
+    public List<StaffWorkingHour> findAllStaffWorkingHours() {
+        return staffWorkingHourRepository.findAll()
+                .stream()
+                .filter(h -> h.getStaff().isActive())
+                .sorted(Comparator
+                        .comparingInt((StaffWorkingHour h) -> h.getStaff().getDisplayOrder() == null ? 999 : h.getStaff().getDisplayOrder())
+                        .thenComparing(h -> h.getDayOfWeek().getValue()))
+                .toList();
+    }
+
     private Staff ensureStaff(Long staffId) {
         return staffRepository.findById(staffId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.STAFF_NOT_FOUND));

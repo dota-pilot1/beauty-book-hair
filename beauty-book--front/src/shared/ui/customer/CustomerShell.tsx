@@ -6,12 +6,12 @@ import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   CalendarCheck2,
+  CalendarDays,
   CircleUserRound,
   LayoutGrid,
   PanelLeftClose,
   PanelLeftOpen,
   Scissors,
-  Sparkles,
   UserRoundSearch,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
@@ -51,7 +51,7 @@ const customerNavItems: CustomerNavItem[] = [
     href: "/my-reservations",
     label: "내 예약",
     description: "승인 대기, 확정, 취소 상태를 확인합니다.",
-    icon: Sparkles,
+    icon: CalendarDays,
   },
   {
     href: "/services",
