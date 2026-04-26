@@ -405,7 +405,7 @@ function BlockedTimeSection() {
                     <th className="px-4 py-3 text-left font-medium text-muted-foreground">종료</th>
                     <th className="px-4 py-3 text-left font-medium text-muted-foreground">유형</th>
                     <th className="px-4 py-3 text-left font-medium text-muted-foreground">사유</th>
-                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">겹치는 예약</th>
+                    <th className="px-4 py-3 text-center font-medium text-muted-foreground">진행중인 예약</th>
                     <th className="px-4 py-3 text-center font-medium text-muted-foreground">삭제</th>
                   </tr>
                 </thead>
@@ -569,7 +569,7 @@ function CancelReservationsDialog({
         {/* 헤더 */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-foreground">겹치는 예약 일괄 취소</h2>
+            <h2 className="text-base font-semibold text-foreground">진행중인 예약 일괄 취소</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {toKST(blockedTime.startAt)} ~ {toKST(blockedTime.endAt)}
             </p>
@@ -586,7 +586,7 @@ function CancelReservationsDialog({
           ) : done ? (
             <p className="text-sm text-emerald-600 font-medium py-4 text-center">{targets.length}개 예약이 취소됐습니다.</p>
           ) : targets.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">겹치는 예약이 없습니다.</p>
+            <p className="text-sm text-muted-foreground py-4 text-center">진행중인 예약이 없습니다.</p>
           ) : (
             targets.map((r) => (
               <div key={r.id} className="flex items-center justify-between rounded-xl border border-border bg-muted/20 px-3 py-2.5">
