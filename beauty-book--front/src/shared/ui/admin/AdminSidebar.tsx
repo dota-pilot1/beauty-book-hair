@@ -12,6 +12,7 @@ import {
   CircleUserRound,
   LayoutDashboard,
   MonitorCog,
+  Newspaper,
   PanelLeftClose,
   PanelLeftOpen,
   Scissors,
@@ -78,6 +79,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "화면 관리",
     description: "대문 이미지와 소개 문구를 수정합니다.",
     icon: MonitorCog,
+  },
+  {
+    href: "/board-management",
+    label: "게시판 관리",
+    description: "게시판과 게시글을 관리합니다.",
+    icon: Newspaper,
   },
   {
     href: "/booking",
