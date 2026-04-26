@@ -424,8 +424,8 @@ export default function BoardListClient() {
                           onClick={() => { setSelectedId(post.id); setMobileView("detail"); setShowWrite(false); }}
                           className={`flex w-full items-center px-5 py-3 text-left transition-colors ${
                             active
-                              ? "bg-background shadow-[inset_0_0_0_1px_hsl(var(--border))]"
-                              : "hover:bg-background/60"
+                              ? "bg-primary/10"
+                              : "hover:bg-black/5"
                           }`}
                         >
                           {/* 번호 or 공지 */}
