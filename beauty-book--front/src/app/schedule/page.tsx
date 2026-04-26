@@ -145,8 +145,11 @@ type PendingReservation = {
   status: string;
   startAt: string;
   endAt: string;
-  customerName?: string;
-  serviceName?: string;
+  customerName: string | null;
+  customerPhone: string | null;
+  staffName: string | null;
+  beautyServiceName: string | null;
+  customerMemo: string | null;
 };
 
 // ── 영업시간 폼 ───────────────────────────────────────────────────────────────
@@ -351,51 +354,94 @@ function CancelDayReservationsDialog({
         )
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-reservations-pending"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-reservations-upcoming"] });
       setDone(true);
     },
   });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-2xl bg-background shadow-xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <h2 className="text-base font-semibold text-foreground">
-            {DAY_LABELS[dayOfWeek]} 진행중인 예약 일괄 취소
-          </h2>
-          <button onClick={onClose} className="rounded-lg p-1 hover:bg-accent">
+      <div className="w-full max-w-3xl rounded-2xl bg-background shadow-xl overflow-hidden">
+        {/* 헤더 */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div>
+            <h2 className="text-base font-semibold text-foreground">
+              {DAY_LABELS[dayOfWeek]} 진행중인 예약
+            </h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              총 {reservations.length}건 — 전화 확인 후 필요 시 일괄 취소하세요
+            </p>
+          </div>
+          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-accent">
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="px-5 py-4 max-h-64 overflow-y-auto space-y-2">
+        {/* 예약 테이블 */}
+        <div className="overflow-x-auto max-h-80 overflow-y-auto">
           {done ? (
-            <p className="text-sm text-emerald-600 font-medium py-4 text-center">
+            <p className="text-sm text-emerald-600 font-medium py-8 text-center">
               {reservations.length}개 예약이 취소됐습니다.
             </p>
           ) : reservations.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">진행중인 예약이 없습니다.</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">진행중인 예약이 없습니다.</p>
           ) : (
-            reservations.map((r) => (
-              <div key={r.id} className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-3 py-2">
-                <div className="text-sm">
-                  <span className="font-medium text-foreground">{r.customerName ?? `예약 #${r.id}`}</span>
-                  {r.serviceName && <span className="ml-1 text-muted-foreground">· {r.serviceName}</span>}
-                  <div className="text-xs text-muted-foreground mt-0.5">{toKST(r.startAt)}</div>
-                </div>
-                <span className={[
-                  "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
-                  r.status === "REQUESTED" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700",
-                ].join(" ")}>
-                  {r.status === "REQUESTED" ? "승인 대기" : "예약 확정"}
-                </span>
-              </div>
-            ))
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/40">
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">고객명</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">전화번호</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">시술</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">담당 디자이너</th>
+                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">일시</th>
+                  <th className="px-4 py-3 text-center font-medium text-muted-foreground">상태</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reservations.map((r, i) => (
+                  <tr key={r.id} className={i !== reservations.length - 1 ? "border-b border-border" : ""}>
+                    <td className="px-4 py-3 font-medium text-foreground">
+                      {r.customerName ?? `#${r.id}`}
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.customerPhone ? (
+                        <a
+                          href={`tel:${r.customerPhone}`}
+                          className="font-mono text-primary hover:underline"
+                        >
+                          {r.customerPhone}
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground/40">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {r.beautyServiceName ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {r.staffName ?? "—"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                      {toKST(r.startAt)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={[
+                        "inline-block rounded-full px-2 py-0.5 text-[10px] font-medium",
+                        r.status === "REQUESTED" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700",
+                      ].join(" ")}>
+                        {r.status === "REQUESTED" ? "승인 대기" : "예약 확정"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           )}
         </div>
 
+        {/* 취소 폼 */}
         {!done && reservations.length > 0 && (
-          <div className="border-t border-border px-5 py-4 space-y-3">
+          <div className="border-t border-border px-6 py-4 space-y-3 bg-muted/10">
             <label className="space-y-1 block">
               <span className="text-xs font-medium text-muted-foreground">취소 사유 (고객에게 전달됩니다)</span>
               <input
@@ -425,7 +471,7 @@ function CancelDayReservationsDialog({
         )}
 
         {done && (
-          <div className="border-t border-border px-5 py-4 flex justify-end">
+          <div className="border-t border-border px-6 py-4 flex justify-end">
             <button onClick={onClose} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
               닫기
             </button>
