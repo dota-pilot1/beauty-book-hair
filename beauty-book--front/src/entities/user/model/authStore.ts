@@ -54,6 +54,14 @@ export const authActions = {
     }
   },
 
+  async updateProfileImage(profileImageUrl: string): Promise<void> {
+    const updated = await authApi.updateProfileImage(profileImageUrl);
+    authStore.setState((s) => ({
+      ...s,
+      user: s.user ? { ...s.user, profileImageUrl: updated.profileImageUrl } : s.user,
+    }));
+  },
+
   async logout(): Promise<void> {
     try {
       await authApi.logout();

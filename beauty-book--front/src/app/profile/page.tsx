@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
-import { useAuth } from "@/entities/user/model/authStore";
+import { useAuth, authActions } from "@/entities/user/model/authStore";
+import { uploadImage } from "@/shared/api/upload";
 
 export default function ProfilePage() {
   return (
@@ -17,10 +18,31 @@ type Tab = "info" | "memo" | "bookmarks";
 function ProfileContent() {
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("info");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
 
   const initials = (user.username ?? "?").slice(0, 2).toUpperCase();
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert("파일 크기는 5MB 이하여야 합니다.");
+      return;
+    }
+    try {
+      setUploading(true);
+      const url = await uploadImage(file, "profile");
+      await authActions.updateProfileImage(url);
+    } catch {
+      alert("이미지 업로드에 실패했습니다.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   return (
     <main className="w-full px-4 py-6">
@@ -100,17 +122,60 @@ function ProfileContent() {
         </div>
 
         {/* 오른쪽: 사이드바 */}
-        <aside className="w-56 shrink-0">
+        <aside className="w-72 shrink-0">
           <div className="rounded-lg border border-border overflow-hidden">
-            <div className="flex flex-col items-center gap-2 bg-muted/50 px-4 py-6 border-b border-border">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground text-xl font-bold select-none">
-                {initials}
+            <div className="flex flex-col items-center gap-3 bg-muted/50 px-6 py-8 border-b border-border">
+              {/* 아바타 */}
+              <div className="relative group">
+                {user.profileImageUrl ? (
+                  <img
+                    src={user.profileImageUrl}
+                    alt={user.username}
+                    className="h-24 w-24 rounded-full object-cover border-2 border-border"
+                  />
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xl font-bold select-none">
+                    {initials}
+                  </div>
+                )}
+                {/* 업로드 오버레이 */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-not-allowed"
+                >
+                  {uploading ? (
+                    <span className="text-white text-xs">업로드 중...</span>
+                  ) : (
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                    </svg>
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
               </div>
-              <span className="text-sm font-semibold">{user.username}</span>
+
+              <span className="text-base font-semibold">{user.username}</span>
               <span className="inline-flex items-center rounded-full bg-background border border-border px-2.5 py-0.5 text-xs font-medium">
                 {user.role.name}
               </span>
+
+              {/* 사진 변경 버튼 */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="mt-1 text-xs text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              >
+                {uploading ? "업로드 중..." : "사진 변경"}
+              </button>
             </div>
+
             <div className="divide-y divide-border">
               <MetaRow label="이메일" value={user.email} />
               <MetaRow label="권한 수" value={`${user.permissions.length}개`} />

@@ -59,4 +59,12 @@ public class AuthController {
                 .map(ResponseEntity::ok)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
+
+    @PatchMapping("/me/profile-image")
+    public ResponseEntity<UserSummary> updateProfileImage(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody UpdateProfileImageRequest req
+    ) {
+        return ResponseEntity.ok(authService.updateProfileImage(principal.getId(), req));
+    }
 }

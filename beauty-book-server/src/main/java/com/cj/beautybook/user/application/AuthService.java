@@ -109,6 +109,14 @@ public class AuthService {
         refreshTokenRepository.deleteByUserId(userId);
     }
 
+    @Transactional
+    public UserSummary updateProfileImage(Long userId, UpdateProfileImageRequest req) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        user.updateProfileImage(req.profileImageUrl());
+        return UserSummary.from(user);
+    }
+
     private TokenResponse issueTokens(User user) {
         List<String> permCodes = user.getRole().getPermissions()
                 .stream().map(p -> p.getCode()).toList();

@@ -44,6 +44,9 @@ public class User {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @Column(length = 500)
+    private String profileImageUrl;
+
     public static User createNewUser(String email, String passwordHash, String username, Role defaultRole) {
         User u = new User();
         u.email = email;
@@ -62,5 +65,9 @@ public class User {
     public void updateProfile(String email, String username) {
         this.email = email;
         this.username = username;
+    }
+
+    public void updateProfileImage(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
     }
 }

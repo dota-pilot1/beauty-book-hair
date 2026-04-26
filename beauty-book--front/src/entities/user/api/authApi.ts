@@ -16,6 +16,11 @@ export const authApi = {
   me: () =>
     api.get<User>("/api/auth/me").then((r) => r.data),
 
+  updateProfileImage: (profileImageUrl: string) =>
+    api
+      .patch<User>("/api/auth/me/profile-image", { profileImageUrl })
+      .then((r) => r.data),
+
   logout: () =>
     api.post<void>("/api/auth/logout"),
 };

@@ -23,6 +23,7 @@ export type User = {
   username: string;
   role: RoleSummary;
   permissions: string[];
+  profileImageUrl?: string | null;
   createdAt?: string;
 };
 
