@@ -355,24 +355,21 @@ function BookingFlowPage() {
                         setAppliedServiceQuery(serviceQuery);
                       }}
                     >
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
                       <input
                         type="search"
                         value={serviceQuery}
                         onChange={(e) => {
                           const v = e.target.value;
                           setServiceQuery(v);
-                          // 입력값이 비워지면(X 버튼 등) 즉시 필터 해제
                           if (v === "") setAppliedServiceQuery("");
                         }}
-                        placeholder="시술 이름이나 설명으로 검색 (Enter)"
-                        className="w-full rounded-xl border border-black/15 bg-background py-2 pl-9 pr-20 text-sm outline-none focus:border-primary"
+                        placeholder="시술 검색..."
+                        className="w-full rounded-lg border border-black/10 bg-background py-2 pl-8 pr-16 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-black/25 focus:ring-0"
                       />
-                      {serviceQuery && serviceQuery !== appliedServiceQuery && (
-                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                          Enter
-                        </span>
-                      )}
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-black/10 bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground/60">
+                        Enter
+                      </span>
                     </form>
                     <div className="inline-flex rounded-xl border border-black/10 bg-muted/30 p-1">
                       <button
@@ -668,8 +665,11 @@ function ServiceSelectableCard({
           aria-label={`${service.name} 이미지`}
         />
       ) : (
-        <div className="flex aspect-[16/10] items-center justify-center bg-muted/40 text-sm text-muted-foreground">
-          이미지 미등록
+        <div className="flex aspect-[16/10] flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted/60 via-muted/30 to-background">
+          <div className="rounded-2xl border border-dashed border-black/10 bg-background/60 p-3">
+            <Scissors className="h-5 w-5 text-muted-foreground/30" />
+          </div>
+          <span className="text-[11px] font-medium tracking-wide text-muted-foreground/40 uppercase">No Image</span>
         </div>
       )}
       <div className="p-4">
