@@ -1503,12 +1503,17 @@ function OneShotBookingDialog({
             {dialogStep === 2 && selectedStartAt && selectedEndAt ? (
               /* 슬롯 선택됨 → 전화번호 입력 + 예약 요청 */
               <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span className="font-medium text-foreground">{selectedDesigner}</span>
-                  <span>·</span>
-                  <span>{selectedSlot}</span>
-                  <span>·</span>
-                  <span>{totalDuration}분 / {totalPrice.toLocaleString()}원</span>
+                <div className="flex flex-col gap-0.5">
+                  <p className="truncate text-xs font-medium text-foreground">
+                    {selectedServices.map((s) => s.name).join(", ")}
+                  </p>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>{selectedDesigner}</span>
+                    <span>·</span>
+                    <span className="truncate">{selectedSlot}</span>
+                    <span>·</span>
+                    <span className="shrink-0">{totalDuration}분 / {totalPrice.toLocaleString()}원</span>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button
