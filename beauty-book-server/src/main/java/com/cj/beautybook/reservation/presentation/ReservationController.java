@@ -69,6 +69,19 @@ public class ReservationController {
                 .toList();
     }
 
+    @GetMapping("/upcoming")
+    public List<ReservationResponse> listUpcoming(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        boolean isAdmin = "ROLE_ADMIN".equals(principal.getRoleCode())
+                || "ROLE_MANAGER".equals(principal.getRoleCode());
+        if (!isAdmin) throw new BusinessException(ErrorCode.FORBIDDEN);
+        return reservationService.findUpcoming()
+                .stream()
+                .map(r -> ReservationResponse.from(r, true))
+                .toList();
+    }
+
     @GetMapping
     public List<ReservationResponse> listByDate(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,

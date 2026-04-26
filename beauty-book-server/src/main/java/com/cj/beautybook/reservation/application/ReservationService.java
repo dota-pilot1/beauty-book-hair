@@ -111,6 +111,13 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
+    public List<Reservation> findUpcoming() {
+        return reservationRepository.findAllActive(
+                List.of(ReservationStatus.REQUESTED, ReservationStatus.CONFIRMED)
+        );
+    }
+
+    @Transactional(readOnly = true)
     public List<Reservation> findByDate(LocalDate date) {
         Instant from = date.atStartOfDay(STORE_ZONE).toInstant();
         Instant to = date.plusDays(1).atStartOfDay(STORE_ZONE).toInstant();

@@ -41,4 +41,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Query("SELECT r FROM Reservation r WHERE r.status IN :statuses AND r.endAt < :now ORDER BY r.startAt ASC")
     List<Reservation> findPastUnprocessed(@Param("statuses") Collection<ReservationStatus> statuses, @Param("now") Instant now);
+
+    @Query("SELECT r FROM Reservation r WHERE r.status IN :statuses AND r.deletedAt IS NULL ORDER BY r.startAt ASC")
+    List<Reservation> findAllActive(@Param("statuses") Collection<ReservationStatus> statuses);
 }

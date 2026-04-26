@@ -161,8 +161,8 @@ function BusinessHoursForm() {
   });
 
   const { data: pendingAll = [] } = useQuery<PendingReservation[]>({
-    queryKey: ["admin-reservations-pending"],
-    queryFn: () => api.get<PendingReservation[]>("/api/reservations/pending").then((r) => r.data),
+    queryKey: ["admin-reservations-upcoming"],
+    queryFn: () => api.get<PendingReservation[]>("/api/reservations/upcoming").then((r) => r.data),
   });
 
   const [rows, setRows] = useState<BusinessHourRow[]>(() =>
@@ -317,7 +317,7 @@ function BusinessHoursForm() {
           reservations={cancelDayTarget.reservations}
           onClose={() => {
             setCancelDayTarget(null);
-            queryClient.invalidateQueries({ queryKey: ["admin-reservations-pending"] });
+            queryClient.invalidateQueries({ queryKey: ["admin-reservations-upcoming"] });
           }}
         />
       )}
