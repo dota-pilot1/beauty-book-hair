@@ -1339,13 +1339,13 @@ function OneShotBookingDialog({
           </div>
 
           {/* 슬라이드 본문 */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden min-h-0">
             <div
-              className="flex h-full transition-transform duration-300 ease-in-out"
+              className="flex h-full min-h-0 transition-transform duration-300 ease-in-out"
               style={{ transform: `translateX(-${dialogStep * 33.333}%)`, width: "300%" }}
             >
               {/* ── 슬라이드 0: 시술 선택 ── */}
-              <div className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%" }}>
+              <div className="flex min-h-0 w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%", height: "100%" }}>
                 {/* 카테고리 */}
                 {categoryOptions.length > 0 && (
                   <div className="mb-3 flex flex-wrap gap-1.5">
@@ -1388,7 +1388,7 @@ function OneShotBookingDialog({
               </div>
 
               {/* ── 슬라이드 1: 디자이너 선택 ── */}
-              <div className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%" }}>
+              <div className="flex min-h-0 w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%", height: "100%" }}>
                 {selectedServiceIds.length === 0 ? (
                   <div className="flex flex-1 items-center justify-center">
                     <p className="text-sm text-muted-foreground">먼저 시술을 선택해주세요.</p>
@@ -1447,7 +1447,7 @@ function OneShotBookingDialog({
               </div>
 
               {/* ── 슬라이드 2: 날짜·시간 선택 ── */}
-              <div className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%" }}>
+              <div className="flex min-h-0 w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%", height: "100%" }}>
                 {/* 날짜 탭 */}
                 <div className="mb-4 grid grid-cols-4 gap-1.5 sm:grid-cols-7">
                   {dateOptions.map((opt) => (
