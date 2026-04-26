@@ -87,11 +87,10 @@ function WeeklyScheduleCard() {
   const isOpenToday = todayItem && !todayItem.closed;
 
   return (
-    <div className="rounded-2xl border border-black/12 bg-card shadow-sm overflow-hidden">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-black/8">
+    <div className="rounded-xl border border-black/10 bg-card p-4 shadow-sm">
+      <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="inline-flex rounded-xl bg-primary/10 p-2 text-primary">
+          <div className="inline-flex rounded-lg bg-primary/10 p-2 text-primary">
             <Users className="h-4 w-4" />
           </div>
           <h2 className="text-base font-semibold text-foreground">이번 주 스케쥴</h2>
@@ -109,41 +108,36 @@ function WeeklyScheduleCard() {
         )}
       </div>
 
-      {/* 요일 테이블 */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
+      <div className="overflow-x-auto rounded-lg border border-black/10 bg-white">
+        <table className="w-full min-w-[760px] table-fixed text-sm">
+          <thead className="bg-muted/35">
             <tr>
-              {/* 행 헤더 라벨 공간 */}
-              <th className="w-20 shrink-0" />
+              <th className="w-24 px-3 py-2 text-left text-xs font-semibold text-muted-foreground">
+                구분
+              </th>
               {ALL_DAYS.map((day) => {
                 const isToday = day === today;
                 return (
                   <th
                     key={day}
                     className={[
-                      "px-2 py-3 text-center text-xs font-semibold",
-                      isToday ? "bg-primary/8" : "",
+                      "px-2 py-2 text-center text-xs font-semibold",
+                      isToday ? "bg-primary/8 shadow-[inset_0_-1px_0_rgb(17_24_39_/_0.14)]" : "",
                       day === "SATURDAY" ? "text-blue-600" : "",
                       day === "SUNDAY" ? "text-rose-600" : "",
-                      !isToday && day !== "SATURDAY" && day !== "SUNDAY"
-                        ? "text-muted-foreground"
-                        : "",
-                      isToday && day !== "SATURDAY" && day !== "SUNDAY"
-                        ? "text-primary"
-                        : "",
+                      !isToday && day !== "SATURDAY" && day !== "SUNDAY" ? "text-muted-foreground" : "",
+                      isToday && day !== "SATURDAY" && day !== "SUNDAY" ? "text-primary" : "",
                     ].join(" ")}
                   >
-                      <span>{DAY_SHORT[day]}</span>
+                    <span>{DAY_SHORT[day]}</span>
                   </th>
                 );
               })}
             </tr>
           </thead>
           <tbody>
-            {/* 영업시간 행 */}
-            <tr className="border-t border-black/8 bg-muted/20">
-              <td className="px-3 py-2.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
+            <tr className="border-t border-black/8 bg-muted/15 transition-colors hover:bg-muted/25">
+              <td className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap">
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-3 w-3" />
                   영업
@@ -153,22 +147,15 @@ function WeeklyScheduleCard() {
                 const item = hours.find((h) => h.dayOfWeek === day);
                 const isToday = day === today;
                 return (
-                  <td
-                    key={day}
-                    className={[
-                      "px-1 py-2.5 text-center",
-                      isToday ? "bg-primary/8" : "",
-                    ].join(" ")}
-                  >
+                  <td key={day} className={["px-1.5 py-2 text-center", isToday ? "bg-primary/8" : ""].join(" ")}>
                     {!item ? (
-                      <span className="text-xs text-muted-foreground/40">—</span>
+                      <span className="inline-flex h-6 min-w-10 items-center justify-center rounded-md bg-muted/40 px-2 text-xs text-muted-foreground/40">—</span>
                     ) : item.closed ? (
-                      <span className="inline-flex rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-600">
-                        휴무
-                      </span>
+                      <span className="inline-flex h-6 min-w-11 items-center justify-center rounded-md bg-rose-50 px-2 text-[11px] font-semibold text-rose-600 ring-1 ring-rose-100">휴무</span>
                     ) : (
-                      <span className="text-[10px] text-muted-foreground leading-tight block">
-                        {toHHMM(item.openTime)}<br />~{toHHMM(item.closeTime)}
+                      <span className="inline-flex min-w-[68px] flex-col items-center justify-center rounded-md bg-sky-50 px-2 py-1 text-[11px] font-medium leading-tight text-sky-700 ring-1 ring-sky-100">
+                        <span>{toHHMM(item.openTime)}</span>
+                        <span>~{toHHMM(item.closeTime)}</span>
                       </span>
                     )}
                   </td>
@@ -176,7 +163,6 @@ function WeeklyScheduleCard() {
               })}
             </tr>
 
-            {/* 디자이너별 행 */}
             {schedules.length === 0 ? (
               <tr className="border-t border-black/8">
                 <td colSpan={8} className="px-3 py-4 text-center text-xs text-muted-foreground">
@@ -185,48 +171,27 @@ function WeeklyScheduleCard() {
               </tr>
             ) : (
               schedules.map((staff, idx) => (
-                <tr
-                  key={staff.staffId}
-                  className={[
-                    "border-t border-black/8",
-                    idx % 2 === 0 ? "" : "bg-muted/10",
-                  ].join(" ")}
-                >
-                  {/* 디자이너 이름 */}
-                  <td className="px-3 py-2.5">
+                <tr key={staff.staffId} className={["border-t border-black/8 transition-colors hover:bg-muted/20", idx % 2 === 0 ? "" : "bg-muted/[0.07]"].join(" ")}>
+                  <td className="px-3 py-2">
                     <div className="flex items-center gap-1.5">
                       <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
                         {staff.staffName.slice(0, 1)}
                       </div>
-                      <span className="text-xs font-medium text-foreground whitespace-nowrap">
-                        {staff.staffName}
-                      </span>
+                      <span className="text-xs font-medium text-foreground whitespace-nowrap">{staff.staffName}</span>
                     </div>
                   </td>
-
-                  {/* 요일별 출근 여부 */}
                   {ALL_DAYS.map((day) => {
                     const w = staff.workingDays.find((d) => d.dayOfWeek === day);
                     const isToday = day === today;
                     const works = w?.working ?? false;
                     return (
-                      <td
-                        key={day}
-                        className={[
-                          "px-1 py-2.5 text-center",
-                          isToday ? "bg-primary/8" : "",
-                        ].join(" ")}
-                      >
+                      <td key={day} className={["px-1.5 py-2 text-center", isToday ? "bg-primary/8" : ""].join(" ")}>
                         {works ? (
-                          <span
-                            className={[
-                              "inline-flex items-center justify-center rounded-full text-[10px] font-semibold px-1.5 py-0.5",
-                              isToday
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-emerald-50 text-emerald-700",
-                            ].join(" ")}
-                          >
-                            {staff.staffName.slice(0, 1)}
+                          <span className={[
+                            "inline-flex h-6 min-w-11 items-center justify-center rounded-md px-2 text-[11px] font-semibold",
+                            isToday ? "bg-primary text-primary-foreground" : "bg-emerald-50 text-emerald-700",
+                          ].join(" ")}>
+                            근무
                           </span>
                         ) : (
                           <span className="text-muted-foreground/25 text-xs">·</span>
