@@ -38,8 +38,9 @@ ssh -i "배포 가이드/hibot-d-server-key.pem" ubuntu@13.124.117.243 \
 ```bash
 cd beauty-book-server && ./gradlew clean build -x test
 scp -i "배포 가이드/hibot-d-server-key.pem" build/libs/beauty-book-server-*.jar ubuntu@13.124.117.243:~/app.jar
+# ⚠️ pkill 단독은 종료 확인 불가 — lsof 방식 사용
 ssh -i "배포 가이드/hibot-d-server-key.pem" ubuntu@13.124.117.243 \
-  "pkill -f 'java -jar app.jar'; sleep 2; set -a && source ~/.env && set +a; nohup java -jar app.jar --spring.profiles.active=prod > spring-boot.log 2>&1 &"
+  "lsof -ti:4101 | xargs kill -9 || true; sleep 2; set -a && source ~/.env && set +a; nohup java -jar app.jar --spring.profiles.active=prod > spring-boot.log 2>&1 &"
 ```
 
 ### 프론트엔드
@@ -49,7 +50,8 @@ ssh -i "배포 가이드/hibot-d-server-key.pem" ubuntu@13.124.117.243 \
 #   NEXT_PUBLIC_API_BASE_URL=http://13.124.117.243:4101
 
 cd beauty-book--front && npm run build
-aws s3 sync out/ s3://beauty-book-hair-front --delete
+# ⚠️ --exclude "beauty-book/*" 필수 — 같은 버킷에 업로드 이미지(beauty-book/ 폴더)가 있어 --delete만 쓰면 이미지 전부 삭제됨
+aws s3 sync out/ s3://beauty-book-hair-front --delete --exclude "beauty-book/*"
 aws cloudfront create-invalidation --distribution-id E11NF3HMOB52NI --paths "/*"
 ```
 
