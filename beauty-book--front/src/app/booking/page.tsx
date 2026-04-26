@@ -1290,7 +1290,7 @@ function OneShotBookingDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
         <Dialog.Content
-          className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-3xl bg-background shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:rounded-3xl"
+          className="fixed inset-x-0 bottom-0 z-50 flex flex-col overflow-hidden rounded-t-3xl bg-background shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:rounded-3xl"
           style={{ maxHeight: "92vh" }}
         >
           <Dialog.Title className="sr-only">원샷 예약</Dialog.Title>
@@ -1339,13 +1339,12 @@ function OneShotBookingDialog({
           </div>
 
           {/* 슬라이드 본문 */}
-          <div className="flex-1 overflow-hidden min-h-0">
-            <div
-              className="flex h-full min-h-0 transition-transform duration-300 ease-in-out"
-              style={{ transform: `translateX(-${dialogStep * 33.333}%)`, width: "300%" }}
-            >
+          <div className="relative flex-1 overflow-hidden">
               {/* ── 슬라이드 0: 시술 선택 ── */}
-              <div className="flex min-h-0 w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%", height: "100%" }}>
+              <div
+                className="absolute inset-0 overflow-y-auto p-5 transition-transform duration-300 ease-in-out"
+                style={{ transform: `translateX(${(0 - dialogStep) * 100}%)` }}
+              >
                 {/* 카테고리 */}
                 {categoryOptions.length > 0 && (
                   <div className="mb-3 flex flex-wrap gap-1.5">
@@ -1388,7 +1387,10 @@ function OneShotBookingDialog({
               </div>
 
               {/* ── 슬라이드 1: 디자이너 선택 ── */}
-              <div className="flex min-h-0 w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%", height: "100%" }}>
+              <div
+                className="absolute inset-0 overflow-y-auto p-5 transition-transform duration-300 ease-in-out"
+                style={{ transform: `translateX(${(1 - dialogStep) * 100}%)` }}
+              >
                 {selectedServiceIds.length === 0 ? (
                   <div className="flex flex-1 items-center justify-center">
                     <p className="text-sm text-muted-foreground">먼저 시술을 선택해주세요.</p>
@@ -1447,7 +1449,10 @@ function OneShotBookingDialog({
               </div>
 
               {/* ── 슬라이드 2: 날짜·시간 선택 ── */}
-              <div className="flex min-h-0 w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%", height: "100%" }}>
+              <div
+                className="absolute inset-0 overflow-y-auto p-5 transition-transform duration-300 ease-in-out"
+                style={{ transform: `translateX(${(2 - dialogStep) * 100}%)` }}
+              >
                 {/* 날짜 탭 */}
                 <div className="mb-4 grid grid-cols-4 gap-1.5 sm:grid-cols-7">
                   {dateOptions.map((opt) => (
@@ -1519,7 +1524,6 @@ function OneShotBookingDialog({
                   </div>
                 )}
               </div>
-            </div>
           </div>
 
           {/* 푸터 내비게이션 */}
