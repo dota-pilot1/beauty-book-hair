@@ -90,6 +90,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/staff").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reservation-slots").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/schedules/business-hours").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/boards/configs").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
