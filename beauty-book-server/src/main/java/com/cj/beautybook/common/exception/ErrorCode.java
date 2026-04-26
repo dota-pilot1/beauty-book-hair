@@ -46,6 +46,9 @@ public enum ErrorCode {
     RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RSVN_001", "예약을 찾을 수 없습니다."),
     RESERVATION_TIME_UNAVAILABLE(HttpStatus.CONFLICT, "RSVN_002", "선택한 시간에는 예약할 수 없습니다."),
     RESERVATION_INVALID_STATUS(HttpStatus.BAD_REQUEST, "RSVN_003", "예약 상태가 올바르지 않습니다."),
+    BOARD_CONFIG_NOT_FOUND(HttpStatus.NOT_FOUND, "BOARD_001", "게시판 설정을 찾을 수 없습니다."),
+    BOARD_CONFIG_CODE_DUPLICATE(HttpStatus.CONFLICT, "BOARD_002", "이미 존재하는 게시판 코드입니다."),
+    BOARD_POST_NOT_FOUND(HttpStatus.NOT_FOUND, "BOARD_003", "게시글을 찾을 수 없습니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_999", "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;

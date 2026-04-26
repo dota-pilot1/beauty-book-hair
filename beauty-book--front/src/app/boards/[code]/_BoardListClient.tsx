@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChevronLeft, Pencil, Pin, MessageSquare, Trash2 } from "lucide-react";
+import { LexicalEditor } from "@/shared/ui/lexical/lexical-editor";
 import {
   useBoardPosts,
   useBoardConfigs,
@@ -236,15 +237,17 @@ function DetailPanel({
       </div>
 
       {/* 본문 */}
-      <div className="flex-1 px-6 py-6">
+      <div className="flex-1 px-6 py-4">
         {editMode ? (
           <div className="space-y-3">
-            <textarea
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              rows={10}
-              className="w-full resize-none rounded-xl border border-black/12 bg-background px-4 py-3 text-sm outline-none focus:border-primary"
-            />
+            <div className="overflow-hidden rounded-xl border border-black/12">
+              <LexicalEditor
+                key={`edit-${postId}`}
+                initialState={editContent}
+                onChange={setEditContent}
+                minHeight="240px"
+              />
+            </div>
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setEditMode(false)}
                 className="rounded-full border border-black/12 px-5 py-2 text-sm text-muted-foreground hover:bg-muted">
@@ -257,9 +260,12 @@ function DetailPanel({
             </div>
           </div>
         ) : post.content ? (
-          <div className="whitespace-pre-wrap text-sm leading-7 text-foreground">
-            {post.content}
-          </div>
+          <LexicalEditor
+            key={`view-${postId}`}
+            initialState={post.content}
+            readOnly
+            minHeight="0px"
+          />
         ) : (
           <p className="text-sm text-muted-foreground">내용이 없습니다.</p>
         )}
@@ -320,13 +326,11 @@ function WriteForm({ code, onClose }: { code: string; onClose: () => void }) {
         />
       </div>
       {/* 본문 */}
-      <div className="px-6 py-4">
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
+      <div className="overflow-hidden rounded-b-none">
+        <LexicalEditor
+          onChange={setContent}
           placeholder="내용을 입력하세요"
-          rows={12}
-          className="w-full resize-none bg-transparent text-sm leading-7 text-foreground placeholder:text-muted-foreground/40 outline-none"
+          minHeight="320px"
         />
       </div>
       {/* 액션 */}
