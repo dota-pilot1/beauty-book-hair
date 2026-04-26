@@ -1495,72 +1495,81 @@ function OneShotBookingDialog({
                   }
                 </div>
 
-                {/* 확인 패널 (슬롯 선택 후 표시) */}
-                {selectedStartAt && selectedEndAt && (
-                  <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                    <p className="text-xs font-semibold text-emerald-700 mb-2">선택 완료 — 예약 요청을 보낼게요</p>
-                    <div className="space-y-1 text-sm text-emerald-900 mb-3">
-                      <p>시술: {selectedServices.map((s) => s.name).join(", ")}</p>
-                      <p>디자이너: {selectedDesigner}</p>
-                      <p>시간: {selectedSlot}</p>
-                      <p className="text-xs text-emerald-700">{totalDuration}분 · {totalPrice.toLocaleString()}원</p>
-                    </div>
-                    <input
-                      type="tel"
-                      placeholder="연락처 (010-0000-0000)"
-                      value={phoneInput}
-                      onChange={(e) => setPhoneInput(e.target.value)}
-                      className="w-full rounded-xl border border-black/15 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 mb-2"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => onSubmit(phoneInput)}
-                      disabled={isPending || !phoneInput.trim()}
-                      className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:bg-primary/90"
-                    >
-                      {isPending ? "요청 중..." : "예약 요청 보내기"}
-                    </button>
-                  </div>
-                )}
               </div>
           </div>
 
-          {/* 푸터 내비게이션 */}
-          <div className="shrink-0 flex items-center justify-between gap-3 border-t border-black/8 px-5 py-3">
-            <button
-              type="button"
-              onClick={() => dialogStep > 0 ? setDialogStep(dialogStep - 1) : handleClose()}
-              className="inline-flex items-center gap-1.5 rounded-full border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              {dialogStep === 0 ? "닫기" : "이전"}
-            </button>
-
-            <div className="flex items-center gap-1.5">
-              {ONE_SHOT_STEPS.map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i === dialogStep ? "w-5 bg-primary" : i < dialogStep ? "w-1.5 bg-primary/40" : "w-1.5 bg-muted"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {dialogStep < 2 ? (
-              <button
-                type="button"
-                onClick={() => setDialogStep(dialogStep + 1)}
-                disabled={dialogStep === 0 ? selectedServiceIds.length === 0 : !selectedDesignerId}
-                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40 hover:bg-primary/90 transition-colors"
-              >
-                {dialogStep === 0
-                  ? `다음 (${selectedServiceIds.length}개 선택됨)`
-                  : "다음"}
-                <ChevronRight className="h-4 w-4" />
-              </button>
+          {/* 푸터 */}
+          <div className="shrink-0 border-t border-black/8 px-5 py-3">
+            {dialogStep === 2 && selectedStartAt && selectedEndAt ? (
+              /* 슬롯 선택됨 → 전화번호 입력 + 예약 요청 */
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">{selectedDesigner}</span>
+                  <span>·</span>
+                  <span>{selectedSlot}</span>
+                  <span>·</span>
+                  <span>{totalDuration}분 / {totalPrice.toLocaleString()}원</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDialogStep(dialogStep - 1)}
+                    className="inline-flex items-center gap-1 shrink-0 rounded-full border border-black/15 px-3 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <input
+                    type="tel"
+                    placeholder="연락처 (010-0000-0000)"
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    className="flex-1 rounded-full border border-black/15 bg-muted/30 px-4 py-2 text-sm outline-none focus:border-black/30"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => onSubmit(phoneInput)}
+                    disabled={isPending || !phoneInput.trim()}
+                    className="shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:bg-primary/90"
+                  >
+                    {isPending ? "요청 중..." : "예약 요청"}
+                  </button>
+                </div>
+              </div>
             ) : (
-              <div className="w-28" />
+              /* 일반 내비게이션 */
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => dialogStep > 0 ? setDialogStep(dialogStep - 1) : handleClose()}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  {dialogStep === 0 ? "닫기" : "이전"}
+                </button>
+
+                <div className="flex items-center gap-1.5">
+                  {ONE_SHOT_STEPS.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        i === dialogStep ? "w-5 bg-primary" : i < dialogStep ? "w-1.5 bg-primary/40" : "w-1.5 bg-muted"
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setDialogStep(dialogStep + 1)}
+                  disabled={dialogStep === 0 ? selectedServiceIds.length === 0 : !selectedDesignerId}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40 hover:bg-primary/90 transition-colors"
+                >
+                  {dialogStep === 0
+                    ? `다음 (${selectedServiceIds.length}개 선택됨)`
+                    : "다음"}
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
             )}
           </div>
         </Dialog.Content>
