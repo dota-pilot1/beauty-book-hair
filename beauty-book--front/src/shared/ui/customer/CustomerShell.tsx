@@ -38,37 +38,37 @@ const customerNavItems: CustomerNavItem[] = [
   {
     href: "/customer-space",
     label: "미용실 소개",
-    description: "매장 소개, 빠른 예약 시작, 상담과 최근 상태를 봅니다.",
+    description: "매장 소개, 스케쥴 확인",
     icon: LayoutGrid,
   },
   {
     href: "/booking",
     label: "예약하기",
-    description: "서비스, 디자이너, 날짜와 시간을 선택합니다.",
+    description: "날짜·시간·디자이너 선택",
     icon: CalendarCheck2,
   },
   {
     href: "/my-reservations",
     label: "내 예약",
-    description: "승인 대기, 확정, 취소 상태를 확인합니다.",
+    description: "승인 대기, 확정, 취소 상태",
     icon: CalendarDays,
   },
   {
     href: "/services",
     label: "시술/가격",
-    description: "예약 전에 필요한 최소 서비스 정보를 봅니다.",
+    description: "시술 종류 및 가격 안내",
     icon: Scissors,
   },
   {
     href: "/designers",
     label: "디자이너",
-    description: "담당 디자이너의 스타일과 강점을 확인합니다.",
+    description: "디자이너 프로필 보기",
     icon: UserRoundSearch,
   },
   {
     href: "/my-info",
     label: "내 정보",
-    description: "연락처, 요청사항, 기본 프로필을 관리합니다.",
+    description: "프로필 및 요청사항 관리",
     icon: CircleUserRound,
   },
 ];
