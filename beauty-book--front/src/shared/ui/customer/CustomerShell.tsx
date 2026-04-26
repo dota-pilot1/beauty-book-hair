@@ -80,7 +80,7 @@ export function CustomerShell({
   action,
   children,
   aside,
-  showSidebarIntro = true,
+  showSidebarIntro = false,
   showHeader = true,
 }: CustomerShellProps) {
   const pathname = usePathname();
@@ -182,19 +182,26 @@ export function CustomerShell({
                             : "border-black/8 bg-background/50 text-muted-foreground hover:bg-accent hover:text-foreground"
                         )
                       : cn(
-                          "w-full rounded-2xl px-4 py-3",
+                          "w-full rounded-2xl px-3 py-3",
                           active
-                            ? "border-transparent bg-foreground/80 text-white shadow-md"
-                            : "border-black/8 bg-background/50 text-muted-foreground hover:border-black/15 hover:bg-background/80 hover:text-foreground"
+                            ? "border-black/15 bg-foreground/[0.07] shadow-sm"
+                            : "border-black/10 bg-background/60 hover:border-black/20 hover:bg-accent"
                         )
                   )}
                 >
+                  {/* 활성 인디케이터 바 */}
+                  <span
+                    className={cn(
+                      "absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-primary transition-opacity duration-200",
+                      active && !collapsed ? "opacity-100 delay-[200ms]" : "opacity-0"
+                    )}
+                  />
                   <span
                     className={cn(
                       "shrink-0 inline-flex rounded-xl transition-all duration-300",
                       collapsed
                         ? "p-0"
-                        : cn("mt-0.5 p-2", active ? "bg-background/15 text-white" : "bg-muted/60 text-muted-foreground")
+                        : cn("p-2", active ? "bg-foreground/10 text-foreground" : "bg-muted/70 text-muted-foreground")
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -207,8 +214,8 @@ export function CustomerShell({
                         : "w-full opacity-100 duration-200 delay-[160ms] ml-3"
                     )}
                   >
-                    <p className={cn("whitespace-nowrap text-sm font-semibold", active ? "text-white" : "text-foreground")}>{label}</p>
-                    <p className={cn("mt-1 whitespace-nowrap text-xs leading-5", active ? "text-white/80" : "text-muted-foreground")}>
+                    <p className={cn("whitespace-nowrap text-sm font-semibold", active ? "text-foreground" : "text-foreground/80")}>{label}</p>
+                    <p className={cn("mt-0.5 whitespace-nowrap text-xs", active ? "text-foreground/60" : "text-muted-foreground")}>
                       {desc}
                     </p>
                   </div>
@@ -259,7 +266,7 @@ export function CustomerShell({
 
       <section className="min-w-0 flex-1 space-y-6">
         {showHeader ? (
-          <header className="rounded-3xl border border-black/12 bg-gradient-to-br from-background via-background to-muted/30 p-6 shadow-sm">
+          <header className="rounded-3xl border border-black/10 bg-background p-6 shadow-sm">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div className="max-w-3xl">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
