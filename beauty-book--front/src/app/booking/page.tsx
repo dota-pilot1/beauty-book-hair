@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import * as Dialog from "@radix-ui/react-dialog";
 import {
   CalendarDays,
+  ChevronLeft,
   ChevronRight,
   Clock3,
   LayoutGrid,
@@ -13,6 +15,7 @@ import {
   Search,
   UserRound,
   X,
+  Zap,
 } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
@@ -129,6 +132,7 @@ function BookingFlowPage() {
   const [serviceQuery, setServiceQuery] = useState("");
   const [appliedServiceQuery, setAppliedServiceQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
+  const [oneShotOpen, setOneShotOpen] = useState(false);
 
   // 서비스 목록에서 카테고리 추출 (중복 제거 + displayOrder 정렬)
   const categoryOptions = useMemo(() => {
@@ -371,31 +375,41 @@ function BookingFlowPage() {
                         Enter
                       </span>
                     </form>
-                    <div className="inline-flex rounded-xl border border-black/10 bg-muted/30 p-1">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setServiceViewMode("card")}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                          serviceViewMode === "card"
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
+                        onClick={() => setOneShotOpen(true)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary/10"
                       >
-                        <LayoutGrid className="h-3.5 w-3.5" />
-                        카드
+                        <Zap className="h-3.5 w-3.5" />
+                        원샷 예약
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setServiceViewMode("table")}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                          serviceViewMode === "table"
-                            ? "bg-background text-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        <List className="h-3.5 w-3.5" />
-                        테이블
-                      </button>
+                      <div className="inline-flex rounded-xl border border-black/10 bg-muted/30 p-1">
+                        <button
+                          type="button"
+                          onClick={() => setServiceViewMode("card")}
+                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                            serviceViewMode === "card"
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <LayoutGrid className="h-3.5 w-3.5" />
+                          카드
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setServiceViewMode("table")}
+                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                            serviceViewMode === "table"
+                              ? "bg-background text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <List className="h-3.5 w-3.5" />
+                          테이블
+                        </button>
+                      </div>
                     </div>
                   </div>
 
@@ -546,6 +560,34 @@ function BookingFlowPage() {
         </section>
 
       </div>
+
+      <OneShotBookingDialog
+        open={oneShotOpen}
+        onClose={() => setOneShotOpen(false)}
+        services={services}
+        categoryOptions={categoryOptions}
+        dateOptions={dateOptions}
+        onSubmit={(phone: string) => {
+          if (selectedServiceIds.length === 0 || !selectedDesignerId || !selectedStartAt || !selectedEndAt) return;
+          createReservation.mutate(
+            {
+              beautyServiceIds: selectedServiceIds,
+              staffId: selectedDesignerId,
+              startAt: selectedStartAt,
+              endAt: selectedEndAt,
+              customerPhone: phone,
+            },
+            {
+              onSuccess: () => {
+                bookingFlowActions.reset();
+                setOneShotOpen(false);
+                router.push("/reservations");
+              },
+            }
+          );
+        }}
+        isPending={createReservation.isPending}
+      />
     </CustomerShell>
   );
 }
@@ -1138,4 +1180,446 @@ function formatTimeRangeFromIso(startAt: string | null, endAt: string | null) {
     timeZone: "Asia/Seoul",
   });
   return `${formatter.format(new Date(startAt))} ~ ${formatter.format(new Date(endAt))}`;
+}
+
+// ─── 원샷 예약 다이어로그 ───────────────────────────────────────────
+
+const ONE_SHOT_STEPS = ["시술 선택", "디자이너 선택", "날짜·시간 선택"] as const;
+
+function OneShotBookingDialog({
+  open,
+  onClose,
+  services,
+  categoryOptions,
+  dateOptions,
+  onSubmit,
+  isPending,
+}: {
+  open: boolean;
+  onClose: () => void;
+  services: BeautyService[];
+  categoryOptions: { id: number; name: string; displayOrder: number }[];
+  dateOptions: { value: string; shortLabel: string; label: string }[];
+  onSubmit: (phone: string) => void;
+  isPending: boolean;
+}) {
+  const {
+    selectedServiceIds,
+    selectedDesignerId,
+    selectedDesigner,
+    selectedDate,
+    selectedStartAt,
+    selectedEndAt,
+    selectedSlot,
+  } = useBookingFlow();
+
+  const [dialogStep, setDialogStep] = useState(0);
+  const [catFilter, setCatFilter] = useState<number | "all">("all");
+  const [query, setQuery] = useState("");
+  const [phoneInput, setPhoneInput] = useState("");
+
+  const mainServiceId = selectedServiceIds[0] ?? null;
+  const { data: staffList = [], isLoading: staffLoading } = useStaffByService(mainServiceId);
+  const {
+    data: slots = [],
+    isLoading: slotsLoading,
+    isError: slotsError,
+  } = useReservationSlots({
+    beautyServiceIds: selectedServiceIds,
+    date: selectedDate,
+    staffId: selectedDesignerId ?? undefined,
+  });
+  const { data: businessHours = [] } = useBusinessHours();
+
+  const isSelectedDateClosed = useMemo(() => {
+    if (!selectedDate || businessHours.length === 0) return false;
+    const dayNames = ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"] as const;
+    const dow = dayNames[new Date(selectedDate + "T00:00:00").getDay()];
+    const bh = businessHours.find((h) => h.dayOfWeek === dow);
+    return bh?.closed ?? false;
+  }, [selectedDate, businessHours]);
+
+  const selectedServices = useMemo(
+    () => selectedServiceIds.map((id) => services.find((s) => s.id === id)).filter(Boolean) as BeautyService[],
+    [selectedServiceIds, services]
+  );
+  const totalDuration = selectedServices.reduce((sum, s) => sum + (s.durationMinutes ?? 0), 0);
+  const totalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price ?? 0), 0);
+
+  const filteredServices = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return services.filter((s) => {
+      if (catFilter !== "all" && s.category?.id !== catFilter) return false;
+      if (!q) return true;
+      return s.name.toLowerCase().includes(q) || (s.description ?? "").toLowerCase().includes(q);
+    });
+  }, [services, query, catFilter]);
+
+  const allDone = selectedServiceIds.length > 0 && !!selectedDesignerId && !!selectedStartAt;
+
+  function handleDesignerClick(id: number, name: string) {
+    bookingFlowActions.setSelectedDesigner(id, name);
+    setDialogStep(2);
+  }
+
+  function handleSlotClick(slot: ReservationSlot) {
+    bookingFlowActions.setSelectedSlot({
+      label: `${formatDateLabel(selectedDate)} · ${formatTimeRange(slot)}`,
+      startAt: slot.startAt,
+      endAt: slot.endAt,
+      availableStaff: slot.availableStaff,
+      occupiedUnitCount: slot.occupiedUnitCount,
+    });
+  }
+
+  function handleClose() {
+    setDialogStep(0);
+    setQuery("");
+    setCatFilter("all");
+    setPhoneInput("");
+    onClose();
+  }
+
+  return (
+    <Dialog.Root open={open} onOpenChange={(o) => !o && handleClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
+        <Dialog.Content
+          className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-3xl bg-background shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:rounded-3xl"
+          style={{ maxHeight: "92vh" }}
+        >
+          <Dialog.Title className="sr-only">원샷 예약</Dialog.Title>
+
+          {/* 헤더 */}
+          <div className="shrink-0 px-5 pt-5 pb-4 border-b border-black/8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex rounded-xl bg-primary/10 p-1.5 text-primary">
+                  <Zap className="h-4 w-4" />
+                </span>
+                <div>
+                  <h2 className="text-base font-semibold text-foreground">원샷 예약</h2>
+                  <p className="text-xs text-muted-foreground">{ONE_SHOT_STEPS[dialogStep]}</p>
+                </div>
+              </div>
+              <Dialog.Close onClick={handleClose} className="rounded-full p-1.5 hover:bg-muted transition-colors">
+                <X className="h-4 w-4 text-muted-foreground" />
+              </Dialog.Close>
+            </div>
+
+            {/* 스텝 진행 바 */}
+            <div className="flex items-center gap-1.5">
+              {ONE_SHOT_STEPS.map((label, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => i < dialogStep && setDialogStep(i)}
+                  className="flex-1 group"
+                >
+                  <div
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      i < dialogStep
+                        ? "bg-primary cursor-pointer group-hover:bg-primary/70"
+                        : i === dialogStep
+                          ? "bg-primary"
+                          : "bg-muted"
+                    }`}
+                  />
+                  <p className={`mt-1 text-center text-[10px] font-medium transition-colors ${i <= dialogStep ? "text-primary" : "text-muted-foreground"}`}>
+                    {label}
+                  </p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 슬라이드 본문 */}
+          <div className="flex-1 overflow-hidden">
+            <div
+              className="flex h-full transition-transform duration-300 ease-in-out"
+              style={{ transform: `translateX(-${dialogStep * 100}%)`, width: "300%" }}
+            >
+              {/* ── 슬라이드 0: 시술 선택 ── */}
+              <div className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%" }}>
+                {/* 카테고리 */}
+                {categoryOptions.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-1.5">
+                    <CategoryChip label="전체" active={catFilter === "all"} onClick={() => setCatFilter("all")} />
+                    {categoryOptions.map((c) => (
+                      <CategoryChip key={c.id} label={c.name} active={catFilter === c.id} onClick={() => setCatFilter(c.id)} />
+                    ))}
+                  </div>
+                )}
+                {/* 검색 */}
+                <div className="relative mb-4">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="시술 검색..."
+                    className="w-full rounded-xl border border-black/10 bg-muted/30 py-2 pl-8 pr-4 text-sm outline-none focus:border-black/25"
+                  />
+                </div>
+                {/* 서비스 그리드 */}
+                <div className="grid gap-3 grid-cols-2">
+                  {filteredServices.map((service) => {
+                    const idx = selectedServiceIds.indexOf(service.id);
+                    const role = idx === -1 ? "none" : idx === 0 ? "main" : "option";
+                    return (
+                      <OneShotServiceCard
+                        key={service.id}
+                        service={service}
+                        role={role}
+                        optionOrder={idx > 0 ? idx : null}
+                        onClick={() => bookingFlowActions.toggleService(service.id)}
+                      />
+                    );
+                  })}
+                  {filteredServices.length === 0 && (
+                    <p className="col-span-2 py-8 text-center text-sm text-muted-foreground">검색 결과가 없습니다.</p>
+                  )}
+                </div>
+              </div>
+
+              {/* ── 슬라이드 1: 디자이너 선택 ── */}
+              <div className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%" }}>
+                {selectedServiceIds.length === 0 ? (
+                  <div className="flex flex-1 items-center justify-center">
+                    <p className="text-sm text-muted-foreground">먼저 시술을 선택해주세요.</p>
+                  </div>
+                ) : staffLoading ? (
+                  <div className="grid gap-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted/50" />
+                    ))}
+                  </div>
+                ) : staffList.length === 0 ? (
+                  <div className="flex flex-1 items-center justify-center">
+                    <p className="text-sm text-muted-foreground">해당 시술을 담당할 디자이너가 없습니다.</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    {staffList.map((staff) => (
+                      <button
+                        key={staff.id}
+                        type="button"
+                        onClick={() => handleDesignerClick(staff.id, staff.name)}
+                        className={`w-full rounded-2xl border p-4 text-left transition-all ${
+                          selectedDesignerId === staff.id
+                            ? "border-primary/40 bg-primary/8 ring-2 ring-primary/25"
+                            : "border-black/10 bg-background hover:bg-accent hover:border-black/20"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
+                            {staff.profileImageUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={staff.profileImageUrl} alt={staff.name} className="h-12 w-12 object-cover" />
+                            ) : (
+                              <span className="text-base font-semibold text-foreground">{staff.name[0]}</span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <h3 className="font-semibold text-foreground">{staff.name}</h3>
+                              {selectedDesignerId === staff.id && (
+                                <span className="inline-flex shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+                                  선택됨
+                                </span>
+                              )}
+                            </div>
+                            {staff.introduction && (
+                              <p className="mt-0.5 text-sm text-muted-foreground line-clamp-1">{staff.introduction}</p>
+                            )}
+                          </div>
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ── 슬라이드 2: 날짜·시간 선택 ── */}
+              <div className="flex h-full w-full shrink-0 flex-col overflow-y-auto p-5" style={{ width: "33.333%" }}>
+                {/* 날짜 탭 */}
+                <div className="mb-4 grid grid-cols-4 gap-1.5 sm:grid-cols-7">
+                  {dateOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => bookingFlowActions.setSelectedDate(opt.value)}
+                      className={`rounded-xl border px-1.5 py-2 text-center transition-colors ${
+                        selectedDate === opt.value
+                          ? "border-black/25 bg-primary text-primary-foreground"
+                          : "border-black/10 bg-background hover:bg-accent"
+                      }`}
+                    >
+                      <span className="block text-xs font-medium">{opt.shortLabel}</span>
+                      <span className="mt-0.5 block text-[11px] opacity-70">{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* 슬롯 목록 */}
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {slotsLoading
+                    ? Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted/50" />
+                      ))
+                    : slotsError
+                      ? <p className="col-span-2 text-sm text-muted-foreground">시간을 불러오지 못했습니다.</p>
+                      : slots.length === 0
+                        ? <p className="col-span-2 py-6 text-center text-sm text-muted-foreground">
+                            {isSelectedDateClosed ? "휴무일입니다. 다른 날짜를 선택해주세요." : "예약 가능한 시간이 없습니다."}
+                          </p>
+                        : slots.map((slot) => (
+                            <SlotSelectableCard
+                              key={slot.slotId}
+                              slot={slot}
+                              selected={selectedStartAt === slot.startAt}
+                              compact
+                              onClick={() => handleSlotClick(slot)}
+                            />
+                          ))
+                  }
+                </div>
+
+                {/* 확인 패널 (슬롯 선택 후 표시) */}
+                {selectedStartAt && selectedEndAt && (
+                  <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                    <p className="text-xs font-semibold text-emerald-700 mb-2">선택 완료 — 예약 요청을 보낼게요</p>
+                    <div className="space-y-1 text-sm text-emerald-900 mb-3">
+                      <p>시술: {selectedServices.map((s) => s.name).join(", ")}</p>
+                      <p>디자이너: {selectedDesigner}</p>
+                      <p>시간: {selectedSlot}</p>
+                      <p className="text-xs text-emerald-700">{totalDuration}분 · {totalPrice.toLocaleString()}원</p>
+                    </div>
+                    <input
+                      type="tel"
+                      placeholder="연락처 (010-0000-0000)"
+                      value={phoneInput}
+                      onChange={(e) => setPhoneInput(e.target.value)}
+                      className="w-full rounded-xl border border-black/15 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-400 mb-2"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onSubmit(phoneInput)}
+                      disabled={isPending || !phoneInput.trim()}
+                      className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:bg-primary/90"
+                    >
+                      {isPending ? "요청 중..." : "예약 요청 보내기"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 푸터 내비게이션 */}
+          <div className="shrink-0 flex items-center justify-between gap-3 border-t border-black/8 px-5 py-3">
+            <button
+              type="button"
+              onClick={() => dialogStep > 0 ? setDialogStep(dialogStep - 1) : handleClose()}
+              className="inline-flex items-center gap-1.5 rounded-full border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              {dialogStep === 0 ? "닫기" : "이전"}
+            </button>
+
+            <div className="flex items-center gap-1.5">
+              {ONE_SHOT_STEPS.map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i === dialogStep ? "w-5 bg-primary" : i < dialogStep ? "w-1.5 bg-primary/40" : "w-1.5 bg-muted"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {dialogStep < 2 ? (
+              <button
+                type="button"
+                onClick={() => setDialogStep(dialogStep + 1)}
+                disabled={dialogStep === 0 ? selectedServiceIds.length === 0 : !selectedDesignerId}
+                className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40 hover:bg-primary/90 transition-colors"
+              >
+                {dialogStep === 0
+                  ? `다음 (${selectedServiceIds.length}개 선택됨)`
+                  : "다음"}
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <div className="w-28" />
+            )}
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+function OneShotServiceCard({
+  service,
+  role,
+  optionOrder,
+  onClick,
+}: {
+  service: BeautyService;
+  role: "none" | "main" | "option";
+  optionOrder: number | null;
+  onClick: () => void;
+}) {
+  const selected = role !== "none";
+  const ringClass = role === "main"
+    ? "border-primary ring-2 ring-primary/30 bg-primary/5"
+    : role === "option"
+      ? "border-primary/60 ring-1 ring-primary/20 bg-primary/[0.03]"
+      : "border-black/10 bg-background hover:bg-accent";
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-2xl border text-left transition-all active:scale-[0.98] ${ringClass}`}
+    >
+      {selected && (
+        <span
+          className={`absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+            role === "main"
+              ? "bg-primary text-primary-foreground"
+              : "bg-white/95 text-primary ring-1 ring-primary/40"
+          }`}
+        >
+          {role === "main" ? "메인" : `옵션 ${optionOrder}`}
+        </span>
+      )}
+      {service.imageUrls?.[0] ? (
+        <div
+          className="aspect-[16/9] bg-cover bg-center"
+          style={{ backgroundImage: `url(${service.imageUrls[0]})` }}
+        />
+      ) : (
+        <div className="flex aspect-[16/9] items-center justify-center bg-gradient-to-br from-muted/60 to-background">
+          <Scissors className="h-5 w-5 text-muted-foreground/20" />
+        </div>
+      )}
+      <div className="p-3">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-sm font-semibold text-foreground leading-snug">{service.name}</h3>
+          <span
+            className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold mt-0.5 ${
+              selected ? "border-primary bg-primary text-primary-foreground" : "border-black/15 bg-background text-transparent"
+            }`}
+            aria-hidden
+          >
+            ✓
+          </span>
+        </div>
+        <p className="mt-1 text-[11px] text-muted-foreground">{service.durationMinutes}분 · {Number(service.price).toLocaleString()}원</p>
+      </div>
+    </button>
+  );
 }

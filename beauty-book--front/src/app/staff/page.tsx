@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Switch from "@radix-ui/react-switch";
 import * as Select from "@radix-ui/react-select";
-import { ChevronDown, X, UserCircle2, CalendarClock } from "lucide-react";
+import { ChevronDown, X, UserCircle2, CalendarClock, LayoutList, LayoutGrid, Camera } from "lucide-react";
 import { RequireRole } from "@/widgets/guards/RequireRole";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { api } from "@/shared/api/axios";
+import { uploadImage } from "@/shared/api/upload";
 
 type StaffRole = "DESIGNER" | "STAFF" | "DESK";
 
@@ -112,6 +113,7 @@ export default function StaffPage() {
 function StaffAdminPage() {
   const qc = useQueryClient();
   const [roleFilter, setRoleFilter] = useState<StaffRole | "ALL">("ALL");
+  const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -176,6 +178,24 @@ function StaffAdminPage() {
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+  const [imageUploading, setImageUploading] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFormImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert("파일 크기는 5MB 이하여야 합니다."); return; }
+    try {
+      setImageUploading(true);
+      const url = await uploadImage(file, "staff");
+      setForm((prev) => ({ ...prev, profileImageUrl: url }));
+    } catch {
+      alert("이미지 업로드에 실패했습니다.");
+    } finally {
+      setImageUploading(false);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+    }
+  }
 
   return (
     <AdminShell
@@ -204,84 +224,133 @@ function StaffAdminPage() {
                 </button>
               ))}
             </div>
-            <button
-              onClick={openCreate}
-              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              + 직원 등록
-            </button>
+            <div className="flex items-center gap-2">
+              <div className="flex rounded-md border border-border overflow-hidden">
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`p-1.5 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                  title="테이블 뷰"
+                >
+                  <LayoutList className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("card")}
+                  className={`p-1.5 transition-colors ${viewMode === "card" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                  title="카드 뷰"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </button>
+              </div>
+              <button
+                onClick={openCreate}
+                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                + 직원 등록
+              </button>
+            </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-muted-foreground">
-                  <th className="pb-2 pr-4 font-medium">순서</th>
-                  <th className="pb-2 pr-4 font-medium">이름</th>
-                  <th className="pb-2 pr-4 font-medium">직무</th>
-                  <th className="pb-2 pr-4 font-medium">소개</th>
-                  <th className="pb-2 pr-4 font-medium">활성</th>
-                  <th className="pb-2 font-medium">관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                      등록된 직원이 없습니다.
-                    </td>
+          {viewMode === "table" ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-muted-foreground">
+                    <th className="pb-2 pr-4 font-medium">순서</th>
+                    <th className="pb-2 pr-4 font-medium">이름</th>
+                    <th className="pb-2 pr-4 font-medium">직무</th>
+                    <th className="pb-2 pr-4 font-medium">소개</th>
+                    <th className="pb-2 pr-4 font-medium">활성</th>
+                    <th className="pb-2 font-medium">관리</th>
                   </tr>
-                ) : (
-                  filtered.map((staff) => (
-                    <tr
-                      key={staff.id}
-                      onClick={() => { setSelectedStaff(staff); setDetailOpen(true); }}
-                      className={`cursor-pointer border-b border-border/50 last:border-0 transition-colors hover:bg-muted/40 ${
-                        selectedStaff?.id === staff.id ? "bg-muted/60" : ""
-                      }`}
-                    >
-                      <td className="py-3 pr-4 text-muted-foreground">{staff.displayOrder}</td>
-                      <td className="py-3 pr-4 font-medium">{staff.name}</td>
-                      <td className="py-3 pr-4">
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[staff.role]}`}>
-                          {ROLE_LABELS[staff.role]}
-                        </span>
-                      </td>
-                      <td className="max-w-[240px] truncate py-3 pr-4 text-muted-foreground">
-                        {staff.introduction ?? "-"}
-                      </td>
-                      <td className="py-3 pr-4">
-                        <Switch.Root
-                          checked={staff.active}
-                          disabled
-                          className="relative inline-flex h-5 w-9 cursor-not-allowed items-center rounded-full bg-muted data-[state=checked]:bg-primary"
-                        >
-                          <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
-                        </Switch.Root>
-                      </td>
-                      <td className="py-3">
-                        <div className="flex gap-1">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); openEdit(staff); }}
-                            className="rounded border border-border px-2 py-1 text-xs hover:bg-muted"
-                          >
-                            수정
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setScheduleTarget(staff); setScheduleOpen(true); }}
-                            className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-muted"
-                          >
-                            <CalendarClock className="h-3 w-3" />
-                            스케쥴
-                          </button>
-                        </div>
+                </thead>
+                <tbody>
+                  {filtered.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                        등록된 직원이 없습니다.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    filtered.map((staff) => (
+                      <tr
+                        key={staff.id}
+                        onClick={() => { setSelectedStaff(staff); setDetailOpen(true); }}
+                        className={`cursor-pointer border-b border-border/50 last:border-0 transition-colors hover:bg-muted/40 ${
+                          selectedStaff?.id === staff.id ? "bg-muted/60" : ""
+                        }`}
+                      >
+                        <td className="py-3 pr-4 text-muted-foreground">{staff.displayOrder}</td>
+                        <td className="py-3 pr-4">
+                          <div className="flex items-center gap-2">
+                            <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+                              {staff.profileImageUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={staff.profileImageUrl} alt={staff.name} className="h-8 w-8 object-cover" />
+                              ) : (
+                                <UserCircle2 className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </div>
+                            <span className="font-medium">{staff.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[staff.role]}`}>
+                            {ROLE_LABELS[staff.role]}
+                          </span>
+                        </td>
+                        <td className="max-w-[240px] truncate py-3 pr-4 text-muted-foreground">
+                          {staff.introduction ?? "-"}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <Switch.Root
+                            checked={staff.active}
+                            disabled
+                            className="relative inline-flex h-5 w-9 cursor-not-allowed items-center rounded-full bg-muted data-[state=checked]:bg-primary"
+                          >
+                            <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
+                          </Switch.Root>
+                        </td>
+                        <td className="py-3">
+                          <div className="flex gap-1">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); openEdit(staff); }}
+                              className="rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+                            >
+                              수정
+                            </button>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setScheduleTarget(staff); setScheduleOpen(true); }}
+                              className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+                            >
+                              <CalendarClock className="h-3 w-3" />
+                              스케쥴
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {filtered.length === 0 ? (
+                <p className="col-span-full py-8 text-center text-sm text-muted-foreground">등록된 직원이 없습니다.</p>
+              ) : (
+                filtered.map((staff) => (
+                  <StaffCard
+                    key={staff.id}
+                    staff={staff}
+                    onEdit={openEdit}
+                    onSchedule={(s) => { setScheduleTarget(s); setScheduleOpen(true); }}
+                    onDetail={(s) => { setSelectedStaff(s); setDetailOpen(true); }}
+                    onImageUpdated={() => qc.invalidateQueries({ queryKey: ["admin-staff"] })}
+                  />
+                ))
+              )}
+            </div>
+          )}
         </div>
       </section>
 
@@ -381,13 +450,44 @@ function StaffAdminPage() {
               </div>
 
               <div className="grid gap-1.5">
-                <label className="text-sm font-medium">프로필 이미지 URL</label>
-                <input
-                  value={form.profileImageUrl}
-                  onChange={(e) => setForm({ ...form, profileImageUrl: e.target.value })}
-                  placeholder="https://..."
-                  className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                />
+                <label className="text-sm font-medium">프로필 이미지</label>
+                <div className="flex items-center gap-3">
+                  <div className="h-16 w-16 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border">
+                    {form.profileImageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={form.profileImageUrl} alt="preview" className="h-16 w-16 object-cover" />
+                    ) : (
+                      <UserCircle2 className="h-9 w-9 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFormImageUpload}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      disabled={imageUploading}
+                      className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted disabled:opacity-50"
+                    >
+                      <Camera className="h-3.5 w-3.5" />
+                      {imageUploading ? "업로드 중..." : "이미지 선택"}
+                    </button>
+                    {form.profileImageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => ({ ...prev, profileImageUrl: "" }))}
+                        className="text-xs text-muted-foreground hover:text-destructive text-left"
+                      >
+                        이미지 제거
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -422,7 +522,7 @@ function StaffAdminPage() {
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={isPending || !form.name.trim()}
+                disabled={isPending || imageUploading || !form.name.trim()}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {isPending ? "저장 중..." : editTarget ? "수정" : "등록"}
@@ -700,6 +800,115 @@ function StaffScheduleModal({ staff, onClose }: { staff: StaffMember; onClose: (
         >
           {saveMutation.isPending ? "저장 중..." : "저장"}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function StaffCard({
+  staff,
+  onEdit,
+  onSchedule,
+  onDetail,
+  onImageUpdated,
+}: {
+  staff: StaffMember;
+  onEdit: (s: StaffMember) => void;
+  onSchedule: (s: StaffMember) => void;
+  onDetail: (s: StaffMember) => void;
+  onImageUpdated: () => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const qc = useQueryClient();
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert("파일 크기는 5MB 이하여야 합니다."); return; }
+    try {
+      setUploading(true);
+      const url = await uploadImage(file, "staff");
+      const currentForm: StaffForm = {
+        name: staff.name,
+        role: staff.role,
+        profileImageUrl: url,
+        introduction: staff.introduction ?? "",
+        active: staff.active,
+        displayOrder: staff.displayOrder,
+      };
+      await staffApi.update(staff.id, currentForm);
+      qc.invalidateQueries({ queryKey: ["admin-staff"] });
+      onImageUpdated();
+    } catch {
+      alert("이미지 업로드에 실패했습니다.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+      {/* 이미지 영역 */}
+      <div className="relative group h-40 bg-muted flex items-center justify-center">
+        {staff.profileImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={staff.profileImageUrl} alt={staff.name} className="h-full w-full object-cover" />
+        ) : (
+          <UserCircle2 className="h-16 w-16 text-muted-foreground/40" />
+        )}
+        {/* 업로드 오버레이 */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white disabled:opacity-60"
+          >
+            <Camera className="h-3.5 w-3.5" />
+            {uploading ? "업로드 중..." : "이미지 변경"}
+          </button>
+        </div>
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+        {/* 활성 표시 */}
+        <div className={`absolute top-2 right-2 h-2.5 w-2.5 rounded-full border-2 border-card ${staff.active ? "bg-green-500" : "bg-muted-foreground/50"}`} title={staff.active ? "활성" : "비활성"} />
+      </div>
+
+      {/* 정보 영역 */}
+      <div className="p-3 flex flex-col gap-2 flex-1">
+        <div>
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <p className="font-semibold text-sm">{staff.name}</p>
+            <span className={`rounded-full px-1.5 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[staff.role]}`}>
+              {ROLE_LABELS[staff.role]}
+            </span>
+          </div>
+          {staff.introduction && (
+            <p className="text-xs text-muted-foreground line-clamp-2">{staff.introduction}</p>
+          )}
+        </div>
+
+        <div className="flex gap-1 mt-auto pt-1 border-t border-border/50">
+          <button
+            onClick={() => onDetail(staff)}
+            className="flex-1 rounded border border-border py-1 text-xs hover:bg-muted"
+          >
+            상세
+          </button>
+          <button
+            onClick={() => onEdit(staff)}
+            className="flex-1 rounded border border-border py-1 text-xs hover:bg-muted"
+          >
+            수정
+          </button>
+          <button
+            onClick={() => onSchedule(staff)}
+            className="flex items-center gap-0.5 rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+          >
+            <CalendarClock className="h-3 w-3" />
+          </button>
+        </div>
       </div>
     </div>
   );
