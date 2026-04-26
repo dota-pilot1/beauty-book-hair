@@ -5,8 +5,10 @@ import com.cj.beautybook.board.application.BoardService;
 import com.cj.beautybook.board.presentation.dto.BoardConfigResponse;
 import com.cj.beautybook.board.presentation.dto.BoardDetailResponse;
 import com.cj.beautybook.board.presentation.dto.BoardSummaryResponse;
+import com.cj.beautybook.board.presentation.dto.CommentResponse;
 import com.cj.beautybook.board.presentation.dto.CreateBoardConfigRequest;
 import com.cj.beautybook.board.presentation.dto.CreateBoardPostRequest;
+import com.cj.beautybook.board.presentation.dto.CreateCommentRequest;
 import com.cj.beautybook.board.presentation.dto.UpdateBoardPostRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -133,6 +135,37 @@ public class BoardController {
     @DeleteMapping("/api/admin/boards/{id}/pin")
     public ResponseEntity<Void> adminUnpinPost(@PathVariable Long id) {
         boardService.unpinPost(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    // ===== 댓글 API =====
+
+    @GetMapping("/api/boards/{boardId}/comments")
+    public List<CommentResponse> listComments(@PathVariable Long boardId) {
+        return boardService.listComments(boardId);
+    }
+
+    @PostMapping("/api/boards/{boardId}/comments")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommentResponse createComment(
+            @PathVariable Long boardId,
+            @RequestBody @Valid CreateCommentRequest req,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        if (principal == null) throw new com.cj.beautybook.common.exception.BusinessException(com.cj.beautybook.common.exception.ErrorCode.INVALID_TOKEN);
+        return boardService.createComment(boardId, req, principal.getId(), principal.getUsername());
+    }
+
+    @DeleteMapping("/api/boards/{boardId}/comments/{commentId}")
+    public ResponseEntity<Void> deleteComment(
+            @PathVariable Long boardId,
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        if (principal == null) throw new com.cj.beautybook.common.exception.BusinessException(com.cj.beautybook.common.exception.ErrorCode.INVALID_TOKEN);
+        boolean isAdmin = principal.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        boardService.deleteComment(boardId, commentId, principal.getId(), isAdmin);
         return ResponseEntity.noContent().build();
     }
 }

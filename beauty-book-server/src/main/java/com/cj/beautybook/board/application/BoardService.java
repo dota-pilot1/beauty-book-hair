@@ -1,15 +1,19 @@
 package com.cj.beautybook.board.application;
 
 import com.cj.beautybook.board.domain.Board;
+import com.cj.beautybook.board.domain.BoardComment;
 import com.cj.beautybook.board.domain.BoardConfig;
 import com.cj.beautybook.board.domain.BoardStatus;
+import com.cj.beautybook.board.infrastructure.BoardCommentRepository;
 import com.cj.beautybook.board.infrastructure.BoardConfigRepository;
 import com.cj.beautybook.board.infrastructure.BoardRepository;
 import com.cj.beautybook.board.presentation.dto.BoardConfigResponse;
 import com.cj.beautybook.board.presentation.dto.BoardDetailResponse;
 import com.cj.beautybook.board.presentation.dto.BoardSummaryResponse;
+import com.cj.beautybook.board.presentation.dto.CommentResponse;
 import com.cj.beautybook.board.presentation.dto.CreateBoardConfigRequest;
 import com.cj.beautybook.board.presentation.dto.CreateBoardPostRequest;
+import com.cj.beautybook.board.presentation.dto.CreateCommentRequest;
 import com.cj.beautybook.board.presentation.dto.UpdateBoardPostRequest;
 import com.cj.beautybook.common.exception.BusinessException;
 import com.cj.beautybook.common.exception.ErrorCode;
@@ -31,6 +35,7 @@ public class BoardService {
 
     private final BoardConfigRepository boardConfigRepository;
     private final BoardRepository boardRepository;
+    private final BoardCommentRepository boardCommentRepository;
     private final MenuRepository menuRepository;
 
     @Transactional(readOnly = true)
@@ -137,6 +142,36 @@ public class BoardService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.BOARD_POST_NOT_FOUND));
         board.unpin();
         boardRepository.save(board);
+    }
+
+    // ===== 댓글 =====
+
+    @Transactional(readOnly = true)
+    public List<CommentResponse> listComments(Long boardId) {
+        return boardCommentRepository.findActiveByBoardId(boardId)
+                .stream()
+                .map(CommentResponse::from)
+                .toList();
+    }
+
+    @Transactional
+    public CommentResponse createComment(Long boardId, CreateCommentRequest req, Long authorId, String authorName) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BOARD_POST_NOT_FOUND));
+        boolean isAdmin = false; // 필요 시 role 체크로 변경
+        BoardComment comment = BoardComment.create(board, authorId, authorName, req.content(), isAdmin);
+        return CommentResponse.from(boardCommentRepository.save(comment));
+    }
+
+    @Transactional
+    public void deleteComment(Long boardId, Long commentId, Long requesterId, boolean isAdmin) {
+        BoardComment comment = boardCommentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BOARD_POST_NOT_FOUND));
+        if (!isAdmin && !comment.getAuthorId().equals(requesterId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        comment.softDelete();
+        boardCommentRepository.save(comment);
     }
 
     // ===== 내부 메뉴 동기화 =====

@@ -48,3 +48,13 @@ export type PageResponse<T> = {
   number: number  // current page (0-based)
   size: number
 }
+
+export type CommentItem = {
+  id: number
+  boardId: number
+  authorId: number
+  authorName: string
+  content: string
+  isAdminReply: boolean
+  createdAt: string
+}

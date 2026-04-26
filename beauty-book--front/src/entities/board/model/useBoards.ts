@@ -121,3 +121,33 @@ export function useUnpinBoardPost() {
     },
   });
 }
+
+export function useBoardComments(boardId: number) {
+  return useQuery({
+    queryKey: ["board-comments", boardId],
+    queryFn: () => boardApi.listComments(boardId),
+    enabled: boardId > 0,
+  });
+}
+
+export function useCreateComment(boardId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (content: string) =>
+      boardApi.createComment(boardId, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board-comments", boardId] });
+    },
+  });
+}
+
+export function useDeleteComment(boardId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (commentId: number) =>
+      boardApi.deleteComment(boardId, commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["board-comments", boardId] });
+    },
+  });
+}

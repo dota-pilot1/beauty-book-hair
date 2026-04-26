@@ -1,5 +1,5 @@
 import { api } from "@/shared/api/axios";
-import type { BoardConfig, BoardSummary, BoardDetail, PageResponse } from "../model/types";
+import type { BoardConfig, BoardSummary, BoardDetail, PageResponse, CommentItem } from "../model/types";
 
 export type CreateBoardConfigBody = {
   code: string;
@@ -24,6 +24,10 @@ export type UpdateBoardPostBody = {
   status?: string;
   isPinned?: boolean;
   isAnswered?: boolean;
+};
+
+export type CreateCommentBody = {
+  content: string;
 };
 
 export const boardApi = {
@@ -68,4 +72,14 @@ export const boardApi = {
 
   adminUnpinPost: (id: number) =>
     api.delete(`/api/admin/boards/${id}/pin`),
+
+  // 댓글
+  listComments: (boardId: number) =>
+    api.get<CommentItem[]>(`/api/boards/${boardId}/comments`).then((r) => r.data),
+
+  createComment: (boardId: number, body: CreateCommentBody) =>
+    api.post<CommentItem>(`/api/boards/${boardId}/comments`, body).then((r) => r.data),
+
+  deleteComment: (boardId: number, commentId: number) =>
+    api.delete(`/api/boards/${boardId}/comments/${commentId}`),
 };
