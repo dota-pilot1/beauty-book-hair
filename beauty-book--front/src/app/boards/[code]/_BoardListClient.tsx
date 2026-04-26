@@ -39,7 +39,7 @@ export default function BoardListClient() {
   const totalPages = pageData?.totalPages ?? 0;
 
   const isQA = config?.kind === "QA";
-  const isAdmin = user?.role?.name === "ADMIN";
+  const isAdmin = user?.role?.code === "ROLE_ADMIN";
   const canWrite = !!user && (isAdmin || config?.allowCustomerWrite);
 
   const handleSubmit = () => {

@@ -34,7 +34,7 @@ export default function BoardDetailClient() {
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("");
 
-  const isAdmin = user?.role?.name === "ADMIN";
+  const isAdmin = user?.role?.code === "ROLE_ADMIN";
   const isOwner = !!user && !!post && post.authorId === user.id;
   const canEdit = isAdmin || isOwner;
 
