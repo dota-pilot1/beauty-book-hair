@@ -901,59 +901,61 @@ function RecurringBlockedTimeSection() {
           </div>
         </div>
 
-        <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">시작 시간</label>
-            <input
-              type="time"
-              value={form.startTime}
-              onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-            />
+        <div className="flex gap-3 items-end">
+          <div className="flex-1 grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">시작 시간</label>
+              <input
+                type="time"
+                value={form.startTime}
+                onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">종료 시간</label>
+              <input
+                type="time"
+                value={form.endTime}
+                onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">차단 유형</label>
+              <select
+                value={form.blockType}
+                onChange={(e) => setForm((f) => ({ ...f, blockType: e.target.value as BlockedTimeType }))}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              >
+                {(Object.keys(BLOCK_TYPE_LABELS) as BlockedTimeType[]).map((k) => (
+                  <option key={k} value={k}>{BLOCK_TYPE_LABELS[k]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-muted-foreground">사유 (선택)</label>
+              <input
+                type="text"
+                placeholder="예: 직원 식사 시간"
+                value={form.reason}
+                onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              />
+            </div>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">종료 시간</label>
-            <input
-              type="time"
-              value={form.endTime}
-              onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">차단 유형</label>
-            <select
-              value={form.blockType}
-              onChange={(e) => setForm((f) => ({ ...f, blockType: e.target.value as BlockedTimeType }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+          <div className="flex flex-col items-end gap-1">
+            {error && <p className="text-xs font-medium text-rose-600">{error}</p>}
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={createMutation.isPending}
+              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors whitespace-nowrap"
             >
-              {(Object.keys(BLOCK_TYPE_LABELS) as BlockedTimeType[]).map((k) => (
-                <option key={k} value={k}>{BLOCK_TYPE_LABELS[k]}</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">사유 (선택)</label>
-            <input
-              type="text"
-              placeholder="예: 직원 식사 시간"
-              value={form.reason}
-              onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-            />
+              {createMutation.isPending ? "추가 중..." : "정기 차단 추가"}
+            </button>
           </div>
         </div>
-
-        {error && <p className="mb-2 text-xs font-medium text-rose-600">{error}</p>}
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={createMutation.isPending}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-        >
-          {createMutation.isPending ? "추가 중..." : "정기 차단 추가"}
-        </button>
       </div>
     </div>
   );
