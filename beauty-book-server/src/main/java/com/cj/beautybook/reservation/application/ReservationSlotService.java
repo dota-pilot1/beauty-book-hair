@@ -11,9 +11,11 @@ import com.cj.beautybook.reservation.presentation.dto.AvailableStaffResponse;
 import com.cj.beautybook.reservation.presentation.dto.ReservationSlotResponse;
 import com.cj.beautybook.schedule.domain.BlockedTime;
 import com.cj.beautybook.schedule.domain.BusinessHour;
+import com.cj.beautybook.schedule.domain.RecurringBlockedTime;
 import com.cj.beautybook.schedule.domain.StaffWorkingHour;
 import com.cj.beautybook.schedule.infrastructure.BlockedTimeRepository;
 import com.cj.beautybook.schedule.infrastructure.BusinessHourRepository;
+import com.cj.beautybook.schedule.infrastructure.RecurringBlockedTimeRepository;
 import com.cj.beautybook.schedule.infrastructure.StaffWorkingHourRepository;
 import com.cj.beautybook.staff.domain.Staff;
 import com.cj.beautybook.staff.domain.StaffService;
@@ -56,6 +58,7 @@ public class ReservationSlotService {
     private final BusinessHourRepository businessHourRepository;
     private final StaffWorkingHourRepository staffWorkingHourRepository;
     private final BlockedTimeRepository blockedTimeRepository;
+    private final RecurringBlockedTimeRepository recurringBlockedTimeRepository;
     private final ReservationRepository reservationRepository;
 
     @Transactional(readOnly = true)
@@ -95,10 +98,31 @@ public class ReservationSlotService {
                 .filter(Objects::nonNull)
                 .collect(Collectors.toMap(wh -> wh.getStaff().getId(), Function.identity()));
 
+        // 반복 차단: 해당 요일에 해당하는 항목을 당일 Instant로 변환해서 일회성 차단에 머지
+        List<RecurringBlockedTime> allRecurring = recurringBlockedTimeRepository.findByActiveTrue();
+        List<BlockedTime> recurringAsBlocked = allRecurring.stream()
+                .filter(r -> r.parseDaysOfWeek().contains(dayOfWeek))
+                .map(r -> BlockedTime.create(
+                        r.getStaff(),
+                        date.atTime(r.getStartTime()).atZone(STORE_ZONE).toInstant(),
+                        date.atTime(r.getEndTime()).atZone(STORE_ZONE).toInstant(),
+                        r.getReason(),
+                        r.getBlockType()
+                ))
+                .toList();
+
         Map<Long, List<BlockedTime>> blockedTimes = staffList.stream()
                 .collect(Collectors.toMap(
                         Staff::getId,
-                        staff -> blockedTimeRepository.findConflicting(staff.getId(), dayStart, dayEnd)
+                        staff -> {
+                            List<BlockedTime> oneTime = blockedTimeRepository.findConflicting(staff.getId(), dayStart, dayEnd);
+                            List<BlockedTime> recurring = recurringAsBlocked.stream()
+                                    .filter(b -> b.getStaff() == null || b.getStaff().getId().equals(staff.getId()))
+                                    .toList();
+                            List<BlockedTime> merged = new ArrayList<>(oneTime);
+                            merged.addAll(recurring);
+                            return merged;
+                        }
                 ));
 
         Map<Long, List<Reservation>> reservations = staffList.stream()

@@ -42,6 +42,17 @@ type BlockedTimeItem = {
   blockType: BlockedTimeType;
 };
 
+type RecurringBlockedTimeItem = {
+  id: number;
+  staffId: number | null;
+  daysOfWeek: DayOfWeek[];
+  startTime: string;
+  endTime: string;
+  blockType: BlockedTimeType;
+  reason: string | null;
+  active: boolean;
+};
+
 // ── 상수 ──────────────────────────────────────────────────────────────────────
 
 const DAY_LABELS: Record<DayOfWeek, string> = {
@@ -136,7 +147,14 @@ export default function SchedulePage() {
           ))}
         </div>
 
-        {tab === "hours" ? <BusinessHoursForm /> : <BlockedTimeSection />}
+        {tab === "hours" ? (
+          <div className="space-y-8">
+            <BusinessHoursForm />
+            <RecurringBlockedTimeSection />
+          </div>
+        ) : (
+          <BlockedTimeSection />
+        )}
       </AdminShell>
     </RequireRole>
   );
@@ -726,6 +744,218 @@ function BlockedTimeRow({
         </button>
       </td>
     </tr>
+  );
+}
+
+// ── 정기 차단 시간 ─────────────────────────────────────────────────────────────
+
+const DAY_SHORT: Record<DayOfWeek, string> = {
+  MONDAY: "월", TUESDAY: "화", WEDNESDAY: "수", THURSDAY: "목",
+  FRIDAY: "금", SATURDAY: "토", SUNDAY: "일",
+};
+
+function RecurringBlockedTimeSection() {
+  const queryClient = useQueryClient();
+
+  const { data: items = [] } = useQuery<RecurringBlockedTimeItem[]>({
+    queryKey: ["recurring-blocked-times"],
+    queryFn: () => api.get("/api/admin/schedules/recurring-blocked-times").then((r) => r.data),
+  });
+
+  const [form, setForm] = useState({
+    daysOfWeek: [] as DayOfWeek[],
+    startTime: "13:00",
+    endTime: "14:00",
+    blockType: "LUNCH" as BlockedTimeType,
+    reason: "",
+  });
+  const [error, setError] = useState("");
+
+  const createMutation = useMutation({
+    mutationFn: (body: object) => api.post("/api/admin/schedules/recurring-blocked-times", body),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recurring-blocked-times"] });
+      setForm({ daysOfWeek: [], startTime: "13:00", endTime: "14:00", blockType: "LUNCH", reason: "" });
+      setError("");
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.delete(`/api/admin/schedules/recurring-blocked-times/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["recurring-blocked-times"] }),
+  });
+
+  function toggleDay(day: DayOfWeek) {
+    setForm((f) => ({
+      ...f,
+      daysOfWeek: f.daysOfWeek.includes(day)
+        ? f.daysOfWeek.filter((d) => d !== day)
+        : [...f.daysOfWeek, day],
+    }));
+  }
+
+  function handleSubmit() {
+    if (form.daysOfWeek.length === 0) { setError("요일을 선택해주세요."); return; }
+    if (!form.startTime || !form.endTime || form.startTime >= form.endTime) {
+      setError("시작/종료 시간을 올바르게 입력해주세요.");
+      return;
+    }
+    setError("");
+    createMutation.mutate({
+      daysOfWeek: form.daysOfWeek,
+      startTime: form.startTime,
+      endTime: form.endTime,
+      blockType: form.blockType,
+      reason: form.reason || null,
+    });
+  }
+
+  return (
+    <div>
+      <div className="mb-4">
+        <h3 className="text-base font-semibold text-foreground">정기 차단 시간</h3>
+        <p className="mt-0.5 text-sm text-muted-foreground">매주 반복되는 차단 시간을 설정합니다. (예: 매일 점심 13:00~14:00)</p>
+      </div>
+
+      {/* 목록 */}
+      {items.length === 0 ? (
+        <p className="mb-4 rounded-xl border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
+          등록된 정기 차단이 없습니다.
+        </p>
+      ) : (
+        <div className="mb-4 overflow-hidden rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">요일</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">시간</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">유형</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">사유</th>
+                <th className="px-4 py-3 text-center font-medium text-muted-foreground">삭제</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, idx) => (
+                <tr key={item.id} className={["transition-colors hover:bg-muted/20", idx < items.length - 1 ? "border-b border-border" : ""].join(" ")}>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-1 flex-wrap">
+                      {ALL_DAYS.filter((d) => item.daysOfWeek.includes(d)).map((d) => (
+                        <span key={d} className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                          {DAY_SHORT[d]}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-foreground">{item.startTime.slice(0, 5)} ~ {item.endTime.slice(0, 5)}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${BLOCK_TYPE_BADGE_CLASS[item.blockType]}`}>
+                      {BLOCK_TYPE_LABELS[item.blockType]}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{item.reason ?? "—"}</td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => deleteMutation.mutate(item.id)}
+                      disabled={deleteMutation.isPending}
+                      className="inline-flex items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-40"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* 추가 폼 */}
+      <div className="rounded-xl border border-border bg-muted/10 p-5">
+        <p className="mb-3 text-sm font-medium text-foreground">정기 차단 추가</p>
+
+        {/* 요일 선택 */}
+        <div className="mb-3">
+          <p className="mb-1.5 text-xs font-medium text-muted-foreground">요일</p>
+          <div className="flex gap-1.5 flex-wrap">
+            {ALL_DAYS.map((day) => (
+              <button
+                key={day}
+                type="button"
+                onClick={() => toggleDay(day)}
+                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  form.daysOfWeek.includes(day)
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background border border-border text-foreground hover:bg-accent"
+                }`}
+              >
+                {DAY_SHORT[day]}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, daysOfWeek: f.daysOfWeek.length === 7 ? [] : [...ALL_DAYS] }))}
+              className="rounded-full border border-dashed border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
+            >
+              {form.daysOfWeek.length === 7 ? "전체 해제" : "전체"}
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">시작 시간</label>
+            <input
+              type="time"
+              value={form.startTime}
+              onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">종료 시간</label>
+            <input
+              type="time"
+              value={form.endTime}
+              onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">차단 유형</label>
+            <select
+              value={form.blockType}
+              onChange={(e) => setForm((f) => ({ ...f, blockType: e.target.value as BlockedTimeType }))}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            >
+              {(Object.keys(BLOCK_TYPE_LABELS) as BlockedTimeType[]).map((k) => (
+                <option key={k} value={k}>{BLOCK_TYPE_LABELS[k]}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">사유 (선택)</label>
+            <input
+              type="text"
+              placeholder="예: 직원 식사 시간"
+              value={form.reason}
+              onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+            />
+          </div>
+        </div>
+
+        {error && <p className="mb-2 text-xs font-medium text-rose-600">{error}</p>}
+
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={createMutation.isPending}
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+        >
+          {createMutation.isPending ? "추가 중..." : "정기 차단 추가"}
+        </button>
+      </div>
+    </div>
   );
 }
 

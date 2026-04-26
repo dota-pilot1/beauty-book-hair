@@ -4,6 +4,8 @@ import com.cj.beautybook.schedule.application.ScheduleService;
 import com.cj.beautybook.schedule.presentation.dto.BlockedTimeResponse;
 import com.cj.beautybook.schedule.presentation.dto.BusinessHourResponse;
 import com.cj.beautybook.schedule.presentation.dto.CreateBlockedTimeRequest;
+import com.cj.beautybook.schedule.presentation.dto.CreateRecurringBlockedTimeRequest;
+import com.cj.beautybook.schedule.presentation.dto.RecurringBlockedTimeResponse;
 import com.cj.beautybook.schedule.presentation.dto.StaffWorkingHourResponse;
 import com.cj.beautybook.schedule.presentation.dto.UpdateBlockedTimeRequest;
 import com.cj.beautybook.schedule.presentation.dto.UpdateBusinessHoursRequest;
@@ -103,5 +105,27 @@ public class AdminScheduleController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteBlockedTime(@PathVariable Long blockedTimeId) {
         scheduleService.deleteBlockedTime(blockedTimeId);
+    }
+
+    @GetMapping("/recurring-blocked-times")
+    public List<RecurringBlockedTimeResponse> listRecurringBlockedTimes() {
+        return scheduleService.findRecurringBlockedTimes()
+                .stream()
+                .map(RecurringBlockedTimeResponse::from)
+                .toList();
+    }
+
+    @PostMapping("/recurring-blocked-times")
+    @ResponseStatus(HttpStatus.CREATED)
+    public RecurringBlockedTimeResponse createRecurringBlockedTime(
+            @Valid @RequestBody CreateRecurringBlockedTimeRequest request
+    ) {
+        return RecurringBlockedTimeResponse.from(scheduleService.createRecurringBlockedTime(request));
+    }
+
+    @DeleteMapping("/recurring-blocked-times/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteRecurringBlockedTime(@PathVariable Long id) {
+        scheduleService.deleteRecurringBlockedTime(id);
     }
 }

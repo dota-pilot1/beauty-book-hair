@@ -4,11 +4,14 @@ import com.cj.beautybook.common.exception.BusinessException;
 import com.cj.beautybook.common.exception.ErrorCode;
 import com.cj.beautybook.schedule.domain.BlockedTime;
 import com.cj.beautybook.schedule.domain.BusinessHour;
+import com.cj.beautybook.schedule.domain.RecurringBlockedTime;
 import com.cj.beautybook.schedule.domain.StaffWorkingHour;
 import com.cj.beautybook.schedule.infrastructure.BlockedTimeRepository;
 import com.cj.beautybook.schedule.infrastructure.BusinessHourRepository;
+import com.cj.beautybook.schedule.infrastructure.RecurringBlockedTimeRepository;
 import com.cj.beautybook.schedule.infrastructure.StaffWorkingHourRepository;
 import com.cj.beautybook.schedule.presentation.dto.CreateBlockedTimeRequest;
+import com.cj.beautybook.schedule.presentation.dto.CreateRecurringBlockedTimeRequest;
 import com.cj.beautybook.schedule.presentation.dto.UpdateBlockedTimeRequest;
 import com.cj.beautybook.schedule.presentation.dto.UpdateBusinessHourItem;
 import com.cj.beautybook.schedule.presentation.dto.UpdateBusinessHoursRequest;
@@ -33,6 +36,7 @@ public class ScheduleService {
     private final BusinessHourRepository businessHourRepository;
     private final StaffWorkingHourRepository staffWorkingHourRepository;
     private final BlockedTimeRepository blockedTimeRepository;
+    private final RecurringBlockedTimeRepository recurringBlockedTimeRepository;
     private final StaffRepository staffRepository;
 
     @Transactional(readOnly = true)
@@ -135,6 +139,34 @@ public class ScheduleService {
     public void deleteBlockedTime(Long blockedTimeId) {
         BlockedTime blockedTime = getBlockedTime(blockedTimeId);
         blockedTimeRepository.delete(blockedTime);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RecurringBlockedTime> findRecurringBlockedTimes() {
+        return recurringBlockedTimeRepository.findByActiveTrue();
+    }
+
+    @Transactional
+    public RecurringBlockedTime createRecurringBlockedTime(CreateRecurringBlockedTimeRequest request) {
+        if (request.startTime() == null || request.endTime() == null || !request.startTime().isBefore(request.endTime())) {
+            throw new BusinessException(ErrorCode.SCHEDULE_INVALID_TIME_RANGE);
+        }
+        Staff staff = request.staffId() == null ? null : ensureStaff(request.staffId());
+        return recurringBlockedTimeRepository.save(RecurringBlockedTime.create(
+                staff,
+                request.daysOfWeek(),
+                request.startTime(),
+                request.endTime(),
+                request.blockType(),
+                request.reason()
+        ));
+    }
+
+    @Transactional
+    public void deleteRecurringBlockedTime(Long id) {
+        RecurringBlockedTime r = recurringBlockedTimeRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BLOCKED_TIME_NOT_FOUND));
+        recurringBlockedTimeRepository.delete(r);
     }
 
     private BlockedTime getBlockedTime(Long blockedTimeId) {
