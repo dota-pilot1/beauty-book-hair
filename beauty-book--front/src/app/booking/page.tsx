@@ -270,7 +270,7 @@ function BookingFlowPage() {
               {
                 onSuccess: () => {
                   bookingFlowActions.reset();
-                  router.push("/reservations");
+                  router.push("/my-reservations");
                 },
               }
             );
@@ -581,7 +581,7 @@ function BookingFlowPage() {
               onSuccess: () => {
                 bookingFlowActions.reset();
                 setOneShotOpen(false);
-                router.push("/reservations");
+                router.push("/my-reservations");
               },
             }
           );
