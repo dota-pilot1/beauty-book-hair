@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Clock3, LayoutGrid, List, Scissors, WalletCards } from "lucide-react";
+import { Clock3, Images, LayoutGrid, List, Scissors, WalletCards } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
 import { useVisibleBeautyServices } from "@/entities/beauty-service/model/useBeautyServices";
 import { cn } from "@/shared/lib/utils";
+import { ServiceImageDialog } from "@/shared/ui/ServiceImageDialog";
 
 export default function ServicesPage() {
   return (
@@ -19,6 +20,7 @@ function ServicesContent() {
   const { data: services = [], isLoading, isError } = useVisibleBeautyServices("services-page");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [dialogState, setDialogState] = useState<{ urls: string[]; index: number; alt: string } | null>(null);
 
   const categories = useMemo(() => {
     const seen = new Set<string>();
@@ -108,56 +110,68 @@ function ServicesContent() {
       {/* 카드 뷰 */}
       {viewMode === "grid" && (
         <section className="grid gap-4 lg:grid-cols-3">
-          {filtered.map((service) => (
-            <article key={service.id} className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-              {service.imageUrls?.[0] ? (
-                <div
-                  className="aspect-[16/10] bg-cover bg-center bg-no-repeat"
-                  style={{ backgroundImage: `url(${service.imageUrls[0]})` }}
-                  aria-label={`${service.name} 이미지`}
-                />
-              ) : (
-                <div className="aspect-[16/10] flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted/50 via-muted/30 to-background border-b border-border/40">
-                  <div className="rounded-2xl bg-muted/60 p-4">
-                    <Scissors className="h-8 w-8 text-muted-foreground/40" />
+          {filtered.map((service) => {
+            const hasImages = (service.imageUrls?.length ?? 0) > 0;
+            const multipleImages = (service.imageUrls?.length ?? 0) > 1;
+            return (
+              <article key={service.id} className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+                {hasImages ? (
+                  <div
+                    className="relative aspect-[16/10] cursor-pointer"
+                    onClick={() => setDialogState({ urls: service.imageUrls!, index: 0, alt: service.name })}
+                  >
+                    <div
+                      className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+                      style={{ backgroundImage: `url(${service.imageUrls![0]})` }}
+                      aria-label={`${service.name} 이미지`}
+                    />
+                    {multipleImages && (
+                      <span className="absolute right-2 top-2 flex items-center gap-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                        <Images className="h-3 w-3" />
+                        {service.imageUrls!.length}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-xs text-muted-foreground/50">이미지 없음</span>
-                </div>
-              )}
-              <div className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="inline-flex rounded-2xl bg-primary/10 p-3 text-primary">
-                    <Scissors className="h-5 w-5" />
+                ) : (
+                  <div className="aspect-[16/10] flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-muted/50 via-muted/30 to-background border-b border-border/40">
+                    <div className="rounded-2xl bg-muted/60 p-4">
+                      <Scissors className="h-8 w-8 text-muted-foreground/40" />
+                    </div>
+                    <span className="text-xs text-muted-foreground/50">이미지 없음</span>
                   </div>
-                  <span className="rounded-full border border-black/10 bg-muted/40 px-2.5 py-0.5 text-xs text-muted-foreground">
-                    {service.category.name}
-                  </span>
+                )}
+                <div className="p-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-lg font-semibold">{service.name}</h2>
+                    <span className="shrink-0 rounded-full border border-black/10 bg-muted/40 px-2.5 py-0.5 text-xs text-muted-foreground">
+                      {service.category.name}
+                    </span>
+                  </div>
+                  {service.description ? (
+                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                      {service.description}
+                    </p>
+                  ) : null}
+                  <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+                    <p className="flex items-center gap-2">
+                      <Clock3 className="h-4 w-4" />
+                      예상 소요 시간 {service.durationMinutes}분
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <WalletCards className="h-4 w-4" />
+                      기본 가격 {Number(service.price).toLocaleString()}원
+                    </p>
+                  </div>
+                  <a
+                    href="/booking"
+                    className="mt-5 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                  >
+                    이 시술로 예약하기
+                  </a>
                 </div>
-                <h2 className="mt-4 text-lg font-semibold">{service.name}</h2>
-                {service.description ? (
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                    {service.description}
-                  </p>
-                ) : null}
-                <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-                  <p className="flex items-center gap-2">
-                    <Clock3 className="h-4 w-4" />
-                    예상 소요 시간 {service.durationMinutes}분
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <WalletCards className="h-4 w-4" />
-                    기본 가격 {Number(service.price).toLocaleString()}원
-                  </p>
-                </div>
-                <a
-                  href="/booking"
-                  className="mt-5 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-                >
-                  이 시술로 예약하기
-                </a>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </section>
       )}
 
@@ -180,10 +194,22 @@ function ServicesContent() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {service.imageUrls?.[0] ? (
-                        <div
-                          className="h-10 w-10 shrink-0 rounded-xl bg-cover bg-center bg-no-repeat"
-                          style={{ backgroundImage: `url(${service.imageUrls[0]})` }}
-                        />
+                        <button
+                          type="button"
+                          className="relative h-10 w-10 shrink-0 overflow-hidden rounded-xl"
+                          onClick={() => setDialogState({ urls: service.imageUrls!, index: 0, alt: service.name })}
+                          aria-label="이미지 보기"
+                        >
+                          <div
+                            className="h-full w-full bg-cover bg-center bg-no-repeat"
+                            style={{ backgroundImage: `url(${service.imageUrls[0]})` }}
+                          />
+                          {(service.imageUrls.length ?? 0) > 1 && (
+                            <span className="absolute inset-0 flex items-center justify-center bg-black/30 text-[9px] font-bold text-white">
+                              +{service.imageUrls.length - 1}
+                            </span>
+                          )}
+                        </button>
                       ) : (
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/60">
                           <Scissors className="h-4 w-4 text-muted-foreground/40" />
@@ -224,6 +250,16 @@ function ServicesContent() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {dialogState && (
+        <ServiceImageDialog
+          open={true}
+          imageUrls={dialogState.urls}
+          initialIndex={dialogState.index}
+          alt={dialogState.alt}
+          onClose={() => setDialogState(null)}
+        />
       )}
     </CustomerShell>
   );

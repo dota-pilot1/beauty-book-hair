@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, LayoutGrid, Plus, Table2, Trash2 } from "lucide-react";
+import { ImagePlus, Images, LayoutGrid, Plus, Table2, Trash2 } from "lucide-react";
 import { beautyServiceApi } from "@/entities/beauty-service/api/beautyServiceApi";
 import type { BeautyService, BeautyServiceCategory } from "@/entities/beauty-service/model/types";
 import { toast, toastError } from "@/shared/lib/toast";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { BeautyServiceFormDialog } from "./BeautyServiceFormDialog";
+import { ServiceImageDialog } from "@/shared/ui/ServiceImageDialog";
 
 type Props = {
   selectedCategoryId: number | null;
@@ -21,6 +22,7 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
   const [viewMode, setViewMode] = useState<"table" | "card">("card");
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
+  const [imageDialog, setImageDialog] = useState<{ urls: string[]; alt: string } | null>(null);
 
   const { data: services, isLoading, isError } = useQuery({
     queryKey: ["beauty-services", selectedCategoryId],
@@ -220,27 +222,33 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
           ) : null}
           {services?.map((service) => (
             <article key={service.id} className="overflow-hidden rounded-md border border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
-              <div className="relative flex aspect-[16/9] items-center justify-center border-b border-border bg-muted/50">
-                {service.imageUrls?.[0] ? (
+              {service.imageUrls?.[0] ? (
+                <div
+                  className="relative aspect-[16/9] cursor-pointer border-b border-border"
+                  onClick={() => setImageDialog({ urls: service.imageUrls!, alt: service.name })}
+                >
                   <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                     style={{ backgroundImage: `url(${service.imageUrls[0]})` }}
                     aria-label={`${service.name} 대표 이미지`}
                   />
-                ) : (
+                  {service.imageUrls.length > 1 && (
+                    <span className="absolute right-2 top-2 flex items-center gap-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white">
+                      <Images className="h-3 w-3" />
+                      {service.imageUrls.length}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex aspect-[16/9] items-center justify-center border-b border-border bg-muted/50">
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <span className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-border bg-background shadow-sm">
                       <ImagePlus className="h-5 w-5" />
                     </span>
                     <span className="text-xs">이미지 미등록</span>
                   </div>
-                )}
-                {service.imageUrls && service.imageUrls.length > 1 ? (
-                  <span className="absolute bottom-3 right-3 rounded-sm bg-background/90 px-2 py-1 text-xs font-medium text-muted-foreground shadow-sm">
-                    +{service.imageUrls.length - 1}
-                  </span>
-                ) : null}
-              </div>
+                </div>
+              )}
 
               <div className="p-4">
                 <div className="flex items-start justify-between gap-3">
@@ -283,6 +291,15 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
             </article>
           ))}
         </div>
+      )}
+
+      {imageDialog && (
+        <ServiceImageDialog
+          open={true}
+          imageUrls={imageDialog.urls}
+          alt={imageDialog.alt}
+          onClose={() => setImageDialog(null)}
+        />
       )}
 
       <BeautyServiceFormDialog
