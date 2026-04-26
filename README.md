@@ -174,6 +174,54 @@ aws cloudfront create-invalidation --distribution-id E11NF3HMOB52NI --paths "/*"
 
 ---
 
+## 환경변수 설정
+
+### 프론트엔드
+
+`beauty-book--front/` 디렉터리에 아래 파일을 상황에 맞게 생성합니다. (`.gitignore` 대상 — 직접 생성 필요)
+
+**`.env.local`** — 로컬 개발용
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:4101
+```
+
+**`.env.production`** — 운영 빌드용 (`npm run build` 시 자동 적용)
+
+```env
+NEXT_PUBLIC_API_BASE_URL=https://dxline-tallent.com
+```
+
+> 운영 환경에서는 CloudFront가 `/api/*` 요청을 EC2 백엔드로 프록시합니다.  
+> EC2를 직접 호출(`http://...`)하면 HTTPS 페이지에서 Mixed Content 차단이 발생하므로 반드시 CloudFront 도메인(`https://...`)을 사용해야 합니다.
+
+---
+
+### 백엔드
+
+EC2 서버의 `~/.env` 파일에 환경변수를 저장하고, 서버 시작 시 `source ~/.env`로 주입합니다.
+
+**`~/.env`** (EC2 서버 내)
+
+```env
+DB_URL=jdbc:postgresql://localhost:5434/beauty_book
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+
+JWT_SECRET=<your-jwt-secret-256bit>
+JWT_ACCESS_EXPIRATION=3600000
+JWT_REFRESH_EXPIRATION=604800000
+
+AWS_ACCESS_KEY_ID=<your-access-key>
+AWS_SECRET_ACCESS_KEY=<your-secret-key>
+AWS_REGION=ap-northeast-2
+AWS_S3_BUCKET=beauty-book-hair-front
+```
+
+`application-prod.yaml`에서 `${ENV_VAR}` 형태로 참조하며, 배포 명령어 내 `set -a && source ~/.env && set +a`로 자동 로드됩니다.
+
+---
+
 ## 상세 문서
 
 - 구현 현황 및 할일: `docs-for-현재 작업 내역/`
