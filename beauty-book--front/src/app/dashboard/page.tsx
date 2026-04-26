@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Clock, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { useAuth } from "@/entities/user/model/authStore";
@@ -10,7 +11,211 @@ import {
   useChangeReservationStatus,
 } from "@/entities/reservation/model/useReservations";
 import type { Reservation, ReservationStatus } from "@/entities/reservation/model/types";
+import { api } from "@/shared/api/axios";
 import { useMemo, useState } from "react";
+
+// ── 주간 스케줄 타입/상수 ────────────────────────────────────────────────────────
+
+type DayOfWeek =
+  | "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY"
+  | "FRIDAY" | "SATURDAY" | "SUNDAY";
+
+type BusinessHourItem = {
+  id: number;
+  dayOfWeek: DayOfWeek;
+  openTime: string | null;
+  closeTime: string | null;
+  closed: boolean;
+};
+
+type WorkingDay = {
+  dayOfWeek: DayOfWeek;
+  startTime: string | null;
+  endTime: string | null;
+  working: boolean;
+};
+
+type StaffSchedule = {
+  staffId: number;
+  staffName: string;
+  profileImageUrl: string | null;
+  workingDays: WorkingDay[];
+};
+
+const ALL_DAYS: DayOfWeek[] = [
+  "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY",
+];
+
+const DAY_SHORT: Record<DayOfWeek, string> = {
+  MONDAY: "월", TUESDAY: "화", WEDNESDAY: "수", THURSDAY: "목",
+  FRIDAY: "금", SATURDAY: "토", SUNDAY: "일",
+};
+
+const JS_DAY_TO_DOW: Record<number, DayOfWeek> = {
+  0: "SUNDAY", 1: "MONDAY", 2: "TUESDAY", 3: "WEDNESDAY",
+  4: "THURSDAY", 5: "FRIDAY", 6: "SATURDAY",
+};
+
+function todayDow(): DayOfWeek {
+  return JS_DAY_TO_DOW[new Date().getDay()];
+}
+
+function toHHMM(time: string | null) {
+  if (!time) return null;
+  return time.slice(0, 5);
+}
+
+// ── 주간 스케줄 카드 ──────────────────────────────────────────────────────────
+
+function WeeklyScheduleCard() {
+  const today = todayDow();
+
+  const { data: hours = [] } = useQuery<BusinessHourItem[]>({
+    queryKey: ["business-hours"],
+    queryFn: () =>
+      api.get<BusinessHourItem[]>("/api/schedules/business-hours").then((r) => r.data),
+  });
+
+  const { data: schedules = [] } = useQuery<StaffSchedule[]>({
+    queryKey: ["staff-working-hours"],
+    queryFn: () =>
+      api.get<StaffSchedule[]>("/api/schedules/staff-working-hours").then((r) => r.data),
+  });
+
+  const todayItem = hours.find((h) => h.dayOfWeek === today);
+  const isOpenToday = todayItem && !todayItem.closed;
+
+  return (
+    <div className="rounded-2xl border border-black/12 bg-card shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-black/8">
+        <div className="flex items-center gap-2">
+          <div className="inline-flex rounded-xl bg-primary/10 p-2 text-primary">
+            <Users className="h-4 w-4" />
+          </div>
+          <h2 className="text-base font-semibold text-foreground">이번 주 스케줄</h2>
+        </div>
+        {todayItem && (
+          <span
+            className={[
+              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+              isOpenToday ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700",
+            ].join(" ")}
+          >
+            <span className={["h-1.5 w-1.5 rounded-full", isOpenToday ? "bg-emerald-500" : "bg-rose-500"].join(" ")} />
+            {isOpenToday ? "오늘 영업 중" : "오늘 휴무"}
+          </span>
+        )}
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr>
+              <th className="w-20 shrink-0" />
+              {ALL_DAYS.map((day) => {
+                const isToday = day === today;
+                return (
+                  <th
+                    key={day}
+                    className={[
+                      "px-2 py-3 text-center text-xs font-semibold",
+                      isToday ? "bg-primary/8" : "",
+                      day === "SATURDAY" ? "text-blue-600" : "",
+                      day === "SUNDAY" ? "text-rose-600" : "",
+                      !isToday && day !== "SATURDAY" && day !== "SUNDAY" ? "text-muted-foreground" : "",
+                      isToday && day !== "SATURDAY" && day !== "SUNDAY" ? "text-primary" : "",
+                    ].join(" ")}
+                  >
+                    <span>{DAY_SHORT[day]}</span>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-t border-black/8 bg-muted/20">
+              <td className="px-3 py-2.5 text-xs font-medium text-muted-foreground whitespace-nowrap">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3 w-3" />
+                  영업
+                </div>
+              </td>
+              {ALL_DAYS.map((day) => {
+                const item = hours.find((h) => h.dayOfWeek === day);
+                const isToday = day === today;
+                return (
+                  <td key={day} className={["px-1 py-2.5 text-center", isToday ? "bg-primary/8" : ""].join(" ")}>
+                    {!item ? (
+                      <span className="text-xs text-muted-foreground/40">—</span>
+                    ) : item.closed ? (
+                      <span className="inline-flex rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-600">휴무</span>
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground leading-tight block">
+                        {toHHMM(item.openTime)}<br />~{toHHMM(item.closeTime)}
+                      </span>
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+
+            {schedules.length === 0 ? (
+              <tr className="border-t border-black/8">
+                <td colSpan={8} className="px-3 py-4 text-center text-xs text-muted-foreground">
+                  디자이너 스케줄 정보가 없습니다.
+                </td>
+              </tr>
+            ) : (
+              schedules.map((staff, idx) => (
+                <tr key={staff.staffId} className={["border-t border-black/8", idx % 2 === 0 ? "" : "bg-muted/10"].join(" ")}>
+                  <td className="px-3 py-2.5">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+                        {staff.staffName.slice(0, 1)}
+                      </div>
+                      <span className="text-xs font-medium text-foreground whitespace-nowrap">{staff.staffName}</span>
+                    </div>
+                  </td>
+                  {ALL_DAYS.map((day) => {
+                    const w = staff.workingDays.find((d) => d.dayOfWeek === day);
+                    const isToday = day === today;
+                    const works = w?.working ?? false;
+                    return (
+                      <td key={day} className={["px-1 py-2.5 text-center", isToday ? "bg-primary/8" : ""].join(" ")}>
+                        {works ? (
+                          <span className={[
+                            "inline-flex items-center justify-center rounded-full text-[10px] font-semibold px-1.5 py-0.5",
+                            isToday ? "bg-primary text-primary-foreground" : "bg-emerald-50 text-emerald-700",
+                          ].join(" ")}>
+                            {staff.staffName.slice(0, 1)}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground/25 text-xs">·</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function useTodayWorkingStaffCount() {
+  const today = todayDow();
+  const { data: schedules = [] } = useQuery<StaffSchedule[]>({
+    queryKey: ["staff-working-hours"],
+    queryFn: () =>
+      api.get<StaffSchedule[]>("/api/schedules/staff-working-hours").then((r) => r.data),
+  });
+  return schedules.filter((s) =>
+    s.workingDays.find((d) => d.dayOfWeek === today)?.working === true
+  ).length;
+}
 
 const STATUS_META: Record<ReservationStatus, { label: string; className: string }> = {
   REQUESTED:             { label: "승인 대기",   className: "bg-amber-50 text-amber-700 ring-1 ring-amber-200" },
@@ -45,6 +250,7 @@ function DashboardInner() {
 
   const { data: todayReservations = [], isLoading } = useReservationsByDate(today);
   const changeStatus = useChangeReservationStatus();
+  const workingStaffCount = useTodayWorkingStaffCount();
 
   const requested = todayReservations.filter((r) => r.status === "REQUESTED").length;
   const confirmed = todayReservations.filter((r) => r.status === "CONFIRMED").length;
@@ -72,13 +278,16 @@ function DashboardInner() {
       }
     >
       <div className="space-y-4">
+        {/* 이번 주 스케줄 */}
+        <WeeklyScheduleCard />
+
         {/* 통계 */}
         <section className="grid gap-3 md:grid-cols-4">
           {[
             { label: "오늘 전체 예약", value: isLoading ? "…" : String(todayReservations.length) },
             { label: "승인 대기",      value: isLoading ? "…" : String(requested) },
             { label: "예약 확정",      value: isLoading ? "…" : String(confirmed) },
-            { label: "근무 직원",      value: "—" },
+            { label: "근무 직원",      value: workingStaffCount > 0 ? String(workingStaffCount) : "—" },
           ].map((item) => (
             <article key={item.label} className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
               <p className="text-sm text-muted-foreground">{item.label}</p>

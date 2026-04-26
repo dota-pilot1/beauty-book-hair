@@ -11,6 +11,7 @@ import {
   CircleUserRound,
   Clock,
   LayoutDashboard,
+  MonitorCog,
   PanelLeftClose,
   PanelLeftOpen,
   Scissors,
@@ -78,6 +79,12 @@ const adminNavItems: AdminNavItem[] = [
     icon: ChartNoAxesColumn,
   },
   {
+    href: "/site-settings",
+    label: "화면 관리",
+    description: "대문 이미지와 소개 문구를 수정합니다.",
+    icon: MonitorCog,
+  },
+  {
     href: "/booking",
     label: "예약 홈",
     description: "고객 예약 화면을 미리 봅니다.",
@@ -106,7 +113,7 @@ export function AdminShell({
     pathname && pathname !== "/" ? pathname.replace(/\/+$/, "") || "/" : pathname;
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-[1760px] gap-3 px-2 py-5 lg:px-3">
+    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-[1760px] gap-6 px-4 py-6 lg:px-6">
       {/* 사이드바 */}
       <aside
         className={cn(
@@ -116,54 +123,15 @@ export function AdminShell({
       >
         <div
           className={cn(
-            "sticky top-20 rounded-3xl border border-black/12 bg-sidebar/90 shadow-sm transition-[padding] duration-300",
-            collapsed ? "p-2 flex flex-col items-center gap-1.5" : "p-3"
+            "sticky top-20 rounded-xl border border-sidebar-border bg-sidebar shadow-sm transition-[padding] duration-300",
+            collapsed ? "p-2 flex flex-col items-center gap-2" : "p-4"
           )}
         >
-          {/* 헤더 */}
-          <Link
-            href="/dashboard"
-            title={collapsed ? "대시보드 홈" : undefined}
-            className={cn(
-              "shrink-0 flex items-center overflow-hidden border bg-background/70 transition-all duration-300 ease-in-out",
-              collapsed
-                ? cn(
-                    "h-10 w-10 justify-center rounded-xl",
-                    normalizedPathname === "/dashboard"
-                      ? "border-primary/30 bg-primary/10 text-primary"
-                      : "border-black/10 text-muted-foreground hover:bg-accent hover:text-foreground"
-                  )
-                : cn(
-                    "w-full rounded-2xl px-4 py-3",
-                    normalizedPathname === "/dashboard"
-                      ? "border-primary/30 bg-primary/10"
-                      : "border-black/12 hover:border-primary/20 hover:bg-primary/5"
-                  )
-            )}
-          >
-            <LayoutDashboard className="h-5 w-5 shrink-0 text-muted-foreground" />
-            <div
-              className={cn(
-                "overflow-hidden transition-all ease-in-out",
-                collapsed
-                  ? "w-0 opacity-0 duration-[100ms]"
-                  : "w-full opacity-100 duration-200 delay-[160ms] ml-3"
-              )}
-            >
-              <p className="whitespace-nowrap text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
-                BeautyBook
-              </p>
-              <span className="whitespace-nowrap text-sm font-semibold text-foreground">관리자 센터</span>
-            </div>
-          </Link>
-
-          {collapsed && <div className="h-px w-8 bg-black/8" />}
-
           {/* 메뉴 */}
           <nav
             className={cn(
               "flex flex-col",
-              collapsed ? "items-center gap-1.5 w-full" : "w-full mt-3 gap-1"
+              collapsed ? "items-center gap-2 w-full" : "w-full gap-2"
             )}
           >
             {adminNavItems.map(({ href, label, icon: Icon }) => {
@@ -187,21 +155,21 @@ export function AdminShell({
                       ? cn(
                           "h-10 w-10 justify-center rounded-xl",
                           active
-                            ? "border-transparent bg-foreground/80 text-white shadow-sm"
-                            : "border-black/8 bg-background/50 text-muted-foreground hover:bg-accent hover:text-foreground"
+                            ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                            : "border-border bg-card text-muted-foreground hover:border-primary hover:bg-accent hover:text-foreground"
                         )
                       : cn(
-                          "w-full rounded-2xl px-3 py-2.5",
+                          "w-full rounded-xl px-3 py-2.5",
                           active
-                            ? "border-transparent bg-foreground/80 text-white shadow-md"
-                            : "border-black/8 bg-background/50 text-muted-foreground hover:border-black/15 hover:bg-background/80 hover:text-foreground"
+                            ? "border-primary bg-primary text-primary-foreground shadow-md"
+                            : "border-border bg-card text-muted-foreground hover:border-primary hover:bg-accent hover:text-foreground"
                         )
                   )}
                 >
                   <span
                     className={cn(
                       "shrink-0 inline-flex rounded-xl transition-all duration-300",
-                      collapsed ? "p-0" : cn("p-2", active ? "bg-background/15 text-white" : "bg-muted/60 text-muted-foreground")
+                      collapsed ? "p-0" : cn("p-2", active ? "bg-primary-foreground/15 text-primary-foreground" : "bg-muted text-muted-foreground")
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -209,7 +177,7 @@ export function AdminShell({
                   <span
                     className={cn(
                       "overflow-hidden whitespace-nowrap text-sm font-semibold transition-all ease-in-out",
-                      active ? "text-white" : "text-foreground",
+                      active ? "text-primary-foreground" : "text-foreground",
                       collapsed
                         ? "w-0 opacity-0 duration-[100ms]"
                         : "w-full opacity-100 duration-200 delay-[160ms] ml-3"
@@ -222,17 +190,17 @@ export function AdminShell({
             })}
           </nav>
 
-          {collapsed && <div className="h-px w-8 bg-black/8" />}
+          {collapsed && <div className="h-px w-8 bg-border" />}
 
           {/* 일자바 토글 */}
           <button
             onClick={() => collapse(!collapsed)}
             title={collapsed ? "메뉴 펼치기" : undefined}
             className={cn(
-              "shrink-0 flex items-center overflow-hidden border border-black/10 bg-background/60 text-xs text-muted-foreground transition-all duration-300 ease-in-out hover:border-black/20 hover:bg-accent",
+              "shrink-0 flex items-center overflow-hidden border border-border bg-card text-xs text-muted-foreground transition-all duration-300 ease-in-out hover:border-primary hover:bg-accent hover:text-foreground",
               collapsed
                 ? "h-10 w-10 justify-center rounded-xl"
-                : "mt-3 w-full rounded-2xl px-3 py-2"
+                : "mt-4 w-full rounded-xl px-3 py-2"
             )}
           >
             <div className="relative h-4 w-4 shrink-0">
@@ -259,16 +227,16 @@ export function AdminShell({
 
       {/* 메인 */}
       <section className="min-w-0 flex-1 space-y-6">
-        <header className="rounded-3xl border border-black/12 bg-gradient-to-br from-background via-background to-muted/30 p-6 shadow-sm">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+        <header className="rounded-xl border border-border bg-card px-5 py-4 shadow-sm">
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 {eyebrow}
               </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
+              <h1 className="mt-1 text-xl font-semibold tracking-tight text-foreground">
                 {title}
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 {description}
               </p>
             </div>
@@ -276,7 +244,7 @@ export function AdminShell({
           </div>
         </header>
 
-        <div className={cn("grid gap-4", aside ? "xl:grid-cols-[minmax(0,1fr)_360px]" : "grid-cols-1")}>
+        <div className={cn("grid gap-6", aside ? "xl:grid-cols-[minmax(0,1fr)_360px]" : "grid-cols-1")}>
           <div className="min-w-0">{children}</div>
           {aside && <div className="min-w-0">{aside}</div>}
         </div>

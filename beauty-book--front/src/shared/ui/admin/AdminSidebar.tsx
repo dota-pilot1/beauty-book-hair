@@ -11,6 +11,7 @@ import {
   ChartNoAxesColumn,
   CircleUserRound,
   LayoutDashboard,
+  MonitorCog,
   PanelLeftClose,
   PanelLeftOpen,
   Scissors,
@@ -71,6 +72,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "메뉴 관리",
     description: "메인 소개 영역과 전역 설정을 수정합니다.",
     icon: ChartNoAxesColumn,
+  },
+  {
+    href: "/site-settings",
+    label: "화면 관리",
+    description: "대문 이미지와 소개 문구를 수정합니다.",
+    icon: MonitorCog,
   },
   {
     href: "/booking",
