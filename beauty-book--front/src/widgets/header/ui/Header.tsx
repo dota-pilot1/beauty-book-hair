@@ -59,10 +59,10 @@ function DropdownMenu({ item }: { item: MenuItem }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+        className={`flex h-8 items-center gap-1 rounded-md border px-3 text-[13px] font-medium transition-colors ${
           isActive
-            ? "bg-foreground text-background"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            ? "border-primary/40 bg-primary/10 text-primary"
+            : "border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
         }`}
       >
         {item.label}
@@ -159,7 +159,7 @@ function UserDropdown({
     <div ref={ref} className="relative hidden sm:block">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/50 px-3 py-1.5 hover:bg-muted transition-colors"
+        className="flex h-8 items-center gap-2 rounded-md border border-border bg-muted/50 px-3 hover:bg-muted transition-colors"
       >
         <UserAvatar name={displayName} />
         {user.role && <RoleBadge role={user.role} />}
@@ -233,10 +233,11 @@ export function Header() {
               {user && <UserDropdown displayName={displayName} user={user} />}
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                className="flex h-8 w-8 items-center justify-center rounded-md border border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                title={t("logout")}
+                aria-label={t("logout")}
               >
                 <LogoutIcon />
-                <span className="hidden sm:inline">{t("logout")}</span>
               </button>
             </>
           ) : status === "anonymous" ? (
