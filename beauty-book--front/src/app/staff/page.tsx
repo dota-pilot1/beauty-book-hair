@@ -25,11 +25,12 @@ import { CSS } from "@dnd-kit/utilities";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ToggleSwitch } from "@/shared/ui/ToggleSwitch";
 import * as Select from "@radix-ui/react-select";
-import { ChevronDown, X, UserCircle2, CalendarClock, LayoutList, LayoutGrid, Camera, GripVertical } from "lucide-react";
+import { ChevronDown, X, UserCircle2, CalendarClock, CalendarDays, LayoutList, LayoutGrid, Camera, GripVertical } from "lucide-react";
 import { RequireRole } from "@/widgets/guards/RequireRole";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { api } from "@/shared/api/axios";
 import { uploadImage } from "@/shared/api/upload";
+import { AdminDesignerScheduleDialog } from "@/features/admin-designer-schedule";
 
 type StaffRole = "DESIGNER" | "STAFF" | "DESK";
 
@@ -150,6 +151,8 @@ function StaffAdminPage() {
   const [form, setForm] = useState<StaffForm>(EMPTY_FORM);
   const [scheduleTarget, setScheduleTarget] = useState<StaffMember | null>(null);
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [calendarTarget, setCalendarTarget] = useState<StaffMember | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const { data: staffList = [] } = useQuery({
     queryKey: ["admin-staff"],
@@ -376,6 +379,7 @@ function StaffAdminPage() {
                             onDetail={(s) => { setSelectedStaff(s); setDetailOpen(true); }}
                             onEdit={openEdit}
                             onSchedule={(s) => { setScheduleTarget(s); setScheduleOpen(true); }}
+                            onCalendar={(s) => { setCalendarTarget(s); setCalendarOpen(true); }}
                           />
                         ))
                       )}
@@ -403,6 +407,7 @@ function StaffAdminPage() {
                         disabled={reorderMutation.isPending}
                         onEdit={openEdit}
                         onSchedule={(s) => { setScheduleTarget(s); setScheduleOpen(true); }}
+                        onCalendar={(s) => { setCalendarTarget(s); setCalendarOpen(true); }}
                         onDetail={(s) => { setSelectedStaff(s); setDetailOpen(true); }}
                         onImageUpdated={() => qc.invalidateQueries({ queryKey: ["admin-staff"] })}
                       />
@@ -447,6 +452,17 @@ function StaffAdminPage() {
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+
+      {/* 직원별 예약 스케쥴 다이얼로그 */}
+      {calendarTarget && (
+        <AdminDesignerScheduleDialog
+          open={calendarOpen}
+          onClose={() => { setCalendarOpen(false); setCalendarTarget(null); }}
+          staffName={calendarTarget.name}
+          staffId={calendarTarget.id}
+          initialDate={new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" })}
+        />
+      )}
 
       {/* 등록/수정 다이얼로그 */}
       <Dialog.Root open={dialogOpen} onOpenChange={(open) => !open && closeDialog()}>
@@ -679,6 +695,7 @@ function SortableStaffRow({
   onDetail,
   onEdit,
   onSchedule,
+  onCalendar,
 }: {
   staff: StaffMember;
   selected: boolean;
@@ -686,6 +703,7 @@ function SortableStaffRow({
   onDetail: (s: StaffMember) => void;
   onEdit: (s: StaffMember) => void;
   onSchedule: (s: StaffMember) => void;
+  onCalendar: (s: StaffMember) => void;
 }) {
   const {
     attributes,
@@ -765,6 +783,13 @@ function SortableStaffRow({
             className="flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
           >
             <CalendarClock className="h-3 w-3" />
+            근무시간
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onCalendar(staff); }}
+            className="flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
+          >
+            <CalendarDays className="h-3 w-3" />
             스케쥴
           </button>
         </div>
@@ -778,6 +803,7 @@ function SortableStaffCard({
   disabled,
   onEdit,
   onSchedule,
+  onCalendar,
   onDetail,
   onImageUpdated,
 }: {
@@ -785,6 +811,7 @@ function SortableStaffCard({
   disabled: boolean;
   onEdit: (s: StaffMember) => void;
   onSchedule: (s: StaffMember) => void;
+  onCalendar: (s: StaffMember) => void;
   onDetail: (s: StaffMember) => void;
   onImageUpdated: () => void;
 }) {
@@ -811,6 +838,7 @@ function SortableStaffCard({
         dragHandleProps={{ attributes, listeners }}
         onEdit={onEdit}
         onSchedule={onSchedule}
+        onCalendar={onCalendar}
         onDetail={onDetail}
         onImageUpdated={onImageUpdated}
       />
@@ -1085,6 +1113,7 @@ function StaffCard({
   dragHandleProps,
   onEdit,
   onSchedule,
+  onCalendar,
   onDetail,
   onImageUpdated,
 }: {
@@ -1092,6 +1121,7 @@ function StaffCard({
   dragHandleProps?: SortableHandleProps;
   onEdit: (s: StaffMember) => void;
   onSchedule: (s: StaffMember) => void;
+  onCalendar: (s: StaffMember) => void;
   onDetail: (s: StaffMember) => void;
   onImageUpdated: () => void;
 }) {
@@ -1194,8 +1224,16 @@ function StaffCard({
           <button
             onClick={() => onSchedule(staff)}
             className="flex items-center gap-0.5 rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+            title="근무시간"
           >
             <CalendarClock className="h-3 w-3" />
+          </button>
+          <button
+            onClick={() => onCalendar(staff)}
+            className="flex items-center gap-0.5 rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+            title="스케쥴"
+          >
+            <CalendarDays className="h-3 w-3" />
           </button>
         </div>
       </div>

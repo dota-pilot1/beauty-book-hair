@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, CalendarDays } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
@@ -9,6 +9,7 @@ import { useReservationsByDate, useMyReservations, useChangeReservationStatus, u
 import type { Reservation, ReservationStatus } from "@/entities/reservation/model/types";
 import { useStore } from "@tanstack/react-store";
 import { authStore } from "@/entities/user/model/authStore";
+import { AdminDesignerScheduleDialog } from "@/features/admin-designer-schedule";
 
 const DELETABLE_STATUSES: ReservationStatus[] = [
   "CANCELLED_BY_CUSTOMER",
@@ -70,6 +71,7 @@ function ReservationsContent() {
   const [showBulkConfirm, setShowBulkConfirm] = useState(false);
   const [showPastDeleteConfirm, setShowPastDeleteConfirm] = useState(false);
   const [staffFilter, setStaffFilter] = useState<string | null>(null);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
 
   const allQuery = useReservationsByDate(selectedDate);
   const myQuery = useMyReservations();
@@ -98,6 +100,12 @@ function ReservationsContent() {
   const filteredReservations = staffFilter
     ? reservations.filter((r) => r.staffName === staffFilter)
     : reservations;
+
+  const staffIdByName = useMemo(() => {
+    const map = new Map<string, number>();
+    reservations.forEach((r) => map.set(r.staffName, r.staffId));
+    return map;
+  }, [reservations]);
 
   const handleDateChange = (date: string) => {
     setSelectedDate(date);
@@ -237,6 +245,20 @@ function ReservationsContent() {
                   </button>
                 );
               })}
+
+              {isAdmin && staffFilter !== null && (
+                <>
+                  <span className="h-4 w-px bg-black/10" />
+                  <button
+                    type="button"
+                    onClick={() => setScheduleOpen(true)}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary hover:bg-primary/15"
+                  >
+                    <CalendarDays className="h-3 w-3" />
+                    스케쥴 보기
+                  </button>
+                </>
+              )}
 
               {isAdmin && deletableReservations.length > 0 && viewMode === "list" && (
                 <>
@@ -398,10 +420,21 @@ function ReservationsContent() {
       </div>
   );
 
+  const scheduleDialog = isAdmin && staffFilter !== null && (
+    <AdminDesignerScheduleDialog
+      open={scheduleOpen}
+      onClose={() => setScheduleOpen(false)}
+      staffName={staffFilter}
+      staffId={staffIdByName.get(staffFilter) ?? 0}
+      initialDate={selectedDate}
+    />
+  );
+
   if (isAdmin) {
     return (
       <AdminShell eyebrow="ADMIN" title="예약 현황" description="날짜별 전체 예약을 조회하고 승인합니다.">
         {innerContent}
+        {scheduleDialog}
       </AdminShell>
     );
   }
