@@ -121,23 +121,27 @@ function monthRange(year: number, month: number) {
 // ── 페이지 ────────────────────────────────────────────────────────────────────
 
 export default function SchedulePage() {
-  const [tab, setTab] = useState<"hours" | "blocked">("hours");
+  const [tab, setTab] = useState<"hours" | "recurring" | "blocked">("hours");
 
   return (
     <RequireRole roles={["ROLE_ADMIN", "ROLE_MANAGER"]}>
       <AdminShell
         eyebrow="Admin"
         title="영업시간 관리"
-        description="요일별 매장 영업시간을 설정하고, 특정 날짜의 예약 차단 시간을 관리합니다."
+        description="요일별 매장 영업시간을 설정하고, 반복 및 특정 날짜의 예약 차단 시간을 관리합니다."
       >
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "hours" | "blocked")}>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "hours" | "recurring" | "blocked")}>
           <TabsList className="mb-6">
             <TabsTrigger value="hours">영업시간</TabsTrigger>
+            <TabsTrigger value="recurring">정기 차단 시간</TabsTrigger>
             <TabsTrigger value="blocked">예약 차단 시간</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="hours" className="space-y-8">
+          <TabsContent value="hours">
             <BusinessHoursForm />
+          </TabsContent>
+
+          <TabsContent value="recurring">
             <RecurringBlockedTimeSection />
           </TabsContent>
 
