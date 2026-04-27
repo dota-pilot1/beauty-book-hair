@@ -111,7 +111,7 @@ export default function DesignersPage() {
                       상세 보기
                     </button>
                     <Link
-                      href="/booking"
+                      href={`/booking?designerId=${designer.id}&designerName=${encodeURIComponent(designer.name)}`}
                       className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
                     >
                       이 디자이너로 예약하기
@@ -157,7 +157,7 @@ export default function DesignersPage() {
                       상세 보기
                     </button>
                     <Link
-                      href="/booking"
+                      href={`/booking?designerId=${designer.id}&designerName=${encodeURIComponent(designer.name)}`}
                       className="rounded-full bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground hover:bg-primary/90"
                     >
                       예약하기
@@ -281,7 +281,7 @@ function DesignerDetailDialog({
                 닫기
               </button>
               <Link
-                href="/booking"
+                href={`/booking?designerId=${designer.id}&designerName=${encodeURIComponent(designer.name)}`}
                 className="rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 이 디자이너로 예약하기

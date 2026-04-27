@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
@@ -33,6 +33,10 @@ import {
 } from "@/features/booking/model/bookingFlowStore";
 import { useCreateReservation } from "@/entities/reservation/model/useReservations";
 import { useBusinessHours } from "@/entities/schedule/model/useBusinessHours";
+import {
+  DesignerFirstBookingDialog,
+  type DesignerFirstSubmitParams,
+} from "./DesignerFirstBookingDialog";
 
 function formatPhoneSuffix(raw: string): string {
   const digits = raw.replace(/\D/g, "").slice(0, 8);
@@ -143,6 +147,7 @@ function BookingFlowPage() {
   const { data: staffList = [], isLoading: staffLoading } = useStaffByService(mainServiceId);
   const createReservation = useCreateReservation();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [phoneInput, setPhoneInput] = useState("");
   const [serviceViewMode, setServiceViewMode] = useState<"card" | "table">("card");
   const [serviceQuery, setServiceQuery] = useState("");
@@ -150,6 +155,7 @@ function BookingFlowPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
   const [oneShotOpen, setOneShotOpen] = useState(false);
   const [exhaustedToday, setExhaustedToday] = useState(false);
+  const [designerFirstOpen, setDesignerFirstOpen] = useState(false);
 
   // 서비스 목록에서 카테고리 추출 (중복 제거 + displayOrder 정렬)
   const categoryOptions = useMemo(() => {
@@ -218,13 +224,26 @@ function BookingFlowPage() {
     }
   }, [reservationSlots, slotsLoading, selectedDate]);
 
-  // 모바일에서 자동으로 원샷 다이얼로그 열기
+  // URL ?designerId=&designerName= → DesignerFirstBookingDialog 자동 오픈
+  const designerPreset = useMemo(() => {
+    const rawId = searchParams.get("designerId");
+    const rawName = searchParams.get("designerName");
+    const id = Number(rawId);
+    if (!rawId || isNaN(id) || id <= 0 || !rawName) return null;
+    return { id, name: rawName };
+  }, [searchParams]);
+
+  // 모바일 자동 오픈 + designerPreset 처리
   useEffect(() => {
     if (!hydrated) return;
+    if (designerPreset) {
+      setDesignerFirstOpen(true);
+      return;
+    }
     if (window.matchMedia("(max-width: 639px)").matches) {
       setOneShotOpen(true);
     }
-  }, [hydrated]);
+  }, [hydrated, designerPreset]);
 
   const currentIndex = steps.findIndex((item) => item.key === step);
 
@@ -674,6 +693,40 @@ function BookingFlowPage() {
         }}
         isPending={createReservation.isPending}
       />
+
+      {designerPreset && (
+        <DesignerFirstBookingDialog
+          open={designerFirstOpen}
+          onClose={() => {
+            setDesignerFirstOpen(false);
+            if (window.matchMedia("(max-width: 639px)").matches) {
+              router.back();
+            }
+          }}
+          designer={designerPreset}
+          services={services}
+          categoryOptions={categoryOptions}
+          dateOptions={dateOptions}
+          onSubmit={(params: DesignerFirstSubmitParams) => {
+            createReservation.mutate(
+              {
+                beautyServiceIds: params.serviceIds,
+                staffId: params.staffId,
+                startAt: params.startAt,
+                endAt: params.endAt,
+                customerPhone: params.phone,
+              },
+              {
+                onSuccess: () => {
+                  setDesignerFirstOpen(false);
+                  router.push("/my-reservations");
+                },
+              }
+            );
+          }}
+          isPending={createReservation.isPending}
+        />
+      )}
     </CustomerShell>
   );
 }
