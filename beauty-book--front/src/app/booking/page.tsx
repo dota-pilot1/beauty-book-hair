@@ -218,6 +218,14 @@ function BookingFlowPage() {
     }
   }, [reservationSlots, slotsLoading, selectedDate]);
 
+  // 모바일에서 자동으로 원샷 다이얼로그 열기
+  useEffect(() => {
+    if (!hydrated) return;
+    if (window.matchMedia("(max-width: 639px)").matches) {
+      setOneShotOpen(true);
+    }
+  }, [hydrated]);
+
   const currentIndex = steps.findIndex((item) => item.key === step);
 
   const goNext = () => {
@@ -635,7 +643,13 @@ function BookingFlowPage() {
 
       <OneShotBookingDialog
         open={oneShotOpen}
-        onClose={() => setOneShotOpen(false)}
+        onClose={() => {
+          setOneShotOpen(false);
+          // 모바일에서 닫으면 홈으로 이동 (데스크탑 플로우 노출 방지)
+          if (window.matchMedia("(max-width: 639px)").matches) {
+            router.push("/customer-space");
+          }
+        }}
         services={services}
         categoryOptions={categoryOptions}
         dateOptions={dateOptions}
@@ -1426,7 +1440,7 @@ function OneShotBookingDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
         <Dialog.Content
-          className="fixed inset-x-0 bottom-0 z-50 flex h-[92vh] flex-col overflow-hidden rounded-t-3xl bg-background shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:rounded-3xl"
+          className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background shadow-2xl sm:inset-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:h-[90vh] sm:max-h-[800px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:rounded-3xl"
         >
           <Dialog.Title className="sr-only">원샷 예약</Dialog.Title>
 
