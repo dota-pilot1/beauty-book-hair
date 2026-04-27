@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronLeft, ChevronRight, Scissors, Search, X } from "lucide-react";
 import type { BeautyService } from "@/entities/beauty-service/model/types";
 import type { ReservationSlot, ReservationSlotStatus } from "@/entities/reservation/model/types";
 import { useReservationSlots } from "@/entities/reservation/model/useReservationSlots";
 import { useBusinessHours } from "@/entities/schedule/model/useBusinessHours";
+import { staffApi } from "@/entities/staff/api/staffApi";
 
 // ── Step labels ───────────────────────────────────────────────
 
@@ -150,6 +152,22 @@ export function DesignerFirstBookingDialog({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // 이 디자이너가 진행할 수 있는 시술 ID 목록 (캐시 공유: DesignerDetailDialog와 동일 queryKey)
+  const { data: designerServiceIds } = useQuery({
+    queryKey: ["designer-available-services", designer.id],
+    queryFn: async () => {
+      const results = await Promise.all(
+        services.map(async (service) => {
+          const staffList = await staffApi.list({ beautyServiceId: service.id });
+          return { serviceId: service.id, canDo: staffList.some((s) => s.id === designer.id) };
+        })
+      );
+      return new Set(results.filter((r) => r.canDo).map((r) => r.serviceId));
+    },
+    enabled: services.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: slots = [], isLoading: slotsLoading, isError: slotsError } = useReservationSlots({
     beautyServiceIds: selectedServiceIds,
     date: selectedDate,
@@ -173,14 +191,18 @@ export function DesignerFirstBookingDialog({
   const totalDuration = selectedServices.reduce((sum, s) => sum + (s.durationMinutes ?? 0), 0);
   const totalPrice = selectedServices.reduce((sum, s) => sum + Number(s.price ?? 0), 0);
 
+  // 디자이너가 할 수 있는 시술만 표시 (designerServiceIds 로드 전엔 전체 표시)
   const filteredServices = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return services.filter((s) => {
+    const base = designerServiceIds
+      ? services.filter((s) => designerServiceIds.has(s.id))
+      : services;
+    return base.filter((s) => {
       if (catFilter !== "all" && s.category?.id !== catFilter) return false;
       if (!q) return true;
       return s.name.toLowerCase().includes(q) || (s.description ?? "").toLowerCase().includes(q);
     });
-  }, [services, query, catFilter]);
+  }, [services, designerServiceIds, query, catFilter]);
 
   function toggleService(id: number) {
     setSelectedServiceIds((prev) =>
@@ -278,19 +300,24 @@ export function DesignerFirstBookingDialog({
               className="absolute inset-0 overflow-y-auto p-5 transition-transform duration-300 ease-in-out"
               style={{ transform: `translateX(${(0 - dialogStep) * 100}%)` }}
             >
-              {categoryOptions.length > 0 && (
-                <div className="mb-3 flex flex-wrap gap-1.5">
-                  <DFCategoryChip label="전체" active={catFilter === "all"} onClick={() => setCatFilter("all")} />
-                  {categoryOptions.map((c) => (
-                    <DFCategoryChip
-                      key={c.id}
-                      label={c.name}
-                      active={catFilter === c.id}
-                      onClick={() => setCatFilter(c.id)}
-                    />
-                  ))}
-                </div>
-              )}
+              {categoryOptions.length > 0 && (() => {
+                const visibleCategoryIds = new Set(filteredServices.map((s) => s.category?.id).filter(Boolean));
+                const visibleCategories = categoryOptions.filter((c) => visibleCategoryIds.has(c.id));
+                if (visibleCategories.length === 0) return null;
+                return (
+                  <div className="mb-3 flex flex-wrap gap-1.5">
+                    <DFCategoryChip label="전체" active={catFilter === "all"} onClick={() => setCatFilter("all")} />
+                    {visibleCategories.map((c) => (
+                      <DFCategoryChip
+                        key={c.id}
+                        label={c.name}
+                        active={catFilter === c.id}
+                        onClick={() => setCatFilter(c.id)}
+                      />
+                    ))}
+                  </div>
+                );
+              })()}
               <div className="relative mb-4">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
                 <input
