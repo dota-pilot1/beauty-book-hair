@@ -19,12 +19,13 @@ const STATUS_META: Record<ReservationStatus, { label: string; className: string 
   NO_SHOW:              { label: "노쇼",     className: "border border-rose-300 bg-rose-50 text-rose-600" },
 };
 
-type Tab = "REQUESTED" | "COMPLETED" | "OTHER";
+type Tab = "REQUESTED" | "CONFIRMED" | "COMPLETED" | "OTHER";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "REQUESTED", label: "승인 대기" },
-  { key: "COMPLETED", label: "완료" },
-  { key: "OTHER",     label: "그외" },
+  { key: "REQUESTED",  label: "승인 대기" },
+  { key: "CONFIRMED",  label: "예약 확정" },
+  { key: "COMPLETED",  label: "완료" },
+  { key: "OTHER",      label: "그외" },
 ];
 
 function formatDateTime(iso: string) {
@@ -53,14 +54,16 @@ function MyReservationsContent() {
 
   const counts: Record<Tab, number> = {
     REQUESTED: reservations.filter((r) => r.status === "REQUESTED").length,
+    CONFIRMED: reservations.filter((r) => r.status === "CONFIRMED").length,
     COMPLETED: reservations.filter((r) => r.status === "COMPLETED").length,
-    OTHER:     reservations.filter((r) => !["REQUESTED", "COMPLETED"].includes(r.status)).length,
+    OTHER:     reservations.filter((r) => !["REQUESTED", "CONFIRMED", "COMPLETED"].includes(r.status)).length,
   };
 
   const list = reservations.filter((r) => {
     if (tab === "REQUESTED") return r.status === "REQUESTED";
+    if (tab === "CONFIRMED") return r.status === "CONFIRMED";
     if (tab === "COMPLETED") return r.status === "COMPLETED";
-    return !["REQUESTED", "COMPLETED"].includes(r.status);
+    return !["REQUESTED", "CONFIRMED", "COMPLETED"].includes(r.status);
   });
 
   const handleAction = (r: Reservation) => {
@@ -170,8 +173,9 @@ function MyReservationsContent() {
             <div className="py-12 text-center">
               <p className="text-xs text-foreground/35">
                 {tab === "REQUESTED" && "승인 대기 중인 예약이 없습니다."}
+                {tab === "CONFIRMED" && "확정된 예약이 없습니다."}
                 {tab === "COMPLETED" && "완료된 예약이 없습니다."}
-                {tab === "OTHER" && "취소 · 확정 · 노쇼 예약이 없습니다."}
+                {tab === "OTHER" && "취소 · 노쇼 예약이 없습니다."}
               </p>
             </div>
           ) : (
