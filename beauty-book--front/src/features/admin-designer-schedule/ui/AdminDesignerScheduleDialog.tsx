@@ -67,7 +67,7 @@ export function AdminDesignerScheduleDialog({ open, onClose, staffName, staffId,
   const [selectedDate, setSelectedDate] = useState(initialDate);
 
   const schedule = useDaySchedule(staffId, selectedDate, open);
-  const { isLoading, isStoreClosed, startMinutes, endMinutes, blockedRanges, reservations } = schedule;
+  const { isLoading, isStoreClosed, isStaffOff, startMinutes, endMinutes, blockedRanges, offDutyRanges, reservations } = schedule;
 
   const slots = generateSlots(startMinutes, endMinutes);
   const baseMinutes = slots.length > 0 ? slots[0].minutes : 0;
@@ -133,6 +133,12 @@ export function AdminDesignerScheduleDialog({ open, onClose, staffName, staffId,
                 slots={slots}
                 containerHeight={containerHeight}
                 isStoreClosed={isStoreClosed}
+                isStaffOff={isStaffOff}
+                staffName={staffName}
+                offDutyRanges={offDutyRanges.map((o) => ({
+                  topPx: topPxFromMinutes(o.startMinutes),
+                  heightPx: heightPxFromMinutes(o.startMinutes, o.endMinutes),
+                }))}
                 blockedRanges={blockedRanges.map((b) => ({
                   ...b,
                   topPx: topPxFromMinutes(b.startMinutes),
@@ -166,6 +172,12 @@ type TimelineProps = {
   slots: { label: string; minutes: number }[];
   containerHeight: number;
   isStoreClosed: boolean;
+  isStaffOff: boolean;
+  staffName: string;
+  offDutyRanges: Array<{
+    topPx: number;
+    heightPx: number;
+  }>;
   blockedRanges: Array<{
     blockType: keyof typeof BLOCK_TYPE_LABELS;
     reason: string | null;
@@ -181,8 +193,8 @@ type TimelineProps = {
   }>;
 };
 
-function Timeline({ slots, containerHeight, isStoreClosed, blockedRanges, reservations }: TimelineProps) {
-  const isEmpty = !isStoreClosed && blockedRanges.length === 0 && reservations.length === 0;
+function Timeline({ slots, containerHeight, isStoreClosed, isStaffOff, staffName, offDutyRanges, blockedRanges, reservations }: TimelineProps) {
+  const isEmpty = !isStoreClosed && !isStaffOff && blockedRanges.length === 0 && reservations.length === 0;
 
   return (
     <div className="relative" style={{ height: `${containerHeight}px` }}>
@@ -197,6 +209,17 @@ function Timeline({ slots, containerHeight, isStoreClosed, blockedRanges, reserv
             {slot.label}
           </span>
           <div className="mt-2 flex-1 border-t border-dashed border-border/40" />
+        </div>
+      ))}
+
+      {/* 근무 외 시간 오버레이 */}
+      {offDutyRanges.map((o, i) => (
+        <div
+          key={`off-${i}`}
+          className="absolute left-13 right-0 flex items-center justify-center overflow-hidden rounded-lg bg-slate-100/80 px-2.5 py-1.5"
+          style={{ top: `${o.topPx}px`, height: `${o.heightPx}px` }}
+        >
+          <p className="truncate text-[11px] font-medium text-slate-400">근무 외</p>
         </div>
       ))}
 
@@ -254,6 +277,18 @@ function Timeline({ slots, containerHeight, isStoreClosed, blockedRanges, reserv
           <div className="sticky top-1/3 z-20 flex justify-center">
             <p className="rounded-full bg-foreground/85 px-4 py-1.5 text-xs font-medium text-background shadow-sm">
               🚪 이 날은 매장 휴무일입니다
+            </p>
+          </div>
+        </>
+      )}
+
+      {/* 직원 개인 휴무 오버레이 */}
+      {!isStoreClosed && isStaffOff && (
+        <>
+          <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-[1px]" />
+          <div className="sticky top-1/3 z-20 flex justify-center">
+            <p className="rounded-full bg-rose-500/90 px-4 py-1.5 text-xs font-medium text-white shadow-sm">
+              💆 {staffName} 디자이너 휴무일
             </p>
           </div>
         </>

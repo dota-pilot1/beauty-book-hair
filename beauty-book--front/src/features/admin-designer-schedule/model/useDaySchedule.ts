@@ -41,6 +41,18 @@ type RecurringBlockedTimeItem = {
   active: boolean;
 };
 
+type StaffScheduleItem = {
+  staffId: number;
+  staffName: string;
+  profileImageUrl: string | null;
+  workingDays: Array<{
+    dayOfWeek: DayOfWeek;
+    startTime: string;
+    endTime: string;
+    working: boolean;
+  }>;
+};
+
 const DAY_OF_WEEK_MAP: DayOfWeek[] = [
   "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY",
   "THURSDAY", "FRIDAY", "SATURDAY",
@@ -73,12 +85,19 @@ export type BlockedRange = {
   reason: string | null;
 };
 
+export type OffDutyRange = {
+  startMinutes: number;
+  endMinutes: number;
+};
+
 export type DaySchedule = {
   isLoading: boolean;
   isStoreClosed: boolean;
+  isStaffOff: boolean;
   startMinutes: number;
   endMinutes: number;
   blockedRanges: BlockedRange[];
+  offDutyRanges: OffDutyRange[];
   reservations: Reservation[];
 };
 
@@ -121,11 +140,19 @@ export function useDaySchedule(staffId: number, date: string, enabled: boolean):
     enabled,
   });
 
+  const staffWorkingHoursQ = useQuery({
+    queryKey: ["staff-working-hours"],
+    queryFn: () =>
+      api.get<StaffScheduleItem[]>("/api/schedules/staff-working-hours").then((r) => r.data),
+    enabled,
+  });
+
   const isLoading =
     businessHoursQ.isLoading ||
     blockedTimesQ.isLoading ||
     recurringBlocksQ.isLoading ||
-    reservationsQ.isLoading;
+    reservationsQ.isLoading ||
+    staffWorkingHoursQ.isLoading;
 
   const businessHour = businessHoursQ.data?.find((bh) => bh.dayOfWeek === dayOfWeek);
 
@@ -136,11 +163,29 @@ export function useDaySchedule(staffId: number, date: string, enabled: boolean):
     return {
       isLoading,
       isStoreClosed: true,
+      isStaffOff: false,
       startMinutes,
       endMinutes,
       blockedRanges: [],
+      offDutyRanges: [],
       reservations: [],
     };
+  }
+
+  const staffSchedule = (staffWorkingHoursQ.data ?? []).find((s) => s.staffId === staffId);
+  const staffDay = staffSchedule?.workingDays.find((w) => w.dayOfWeek === dayOfWeek);
+  const isStaffOff = staffSchedule != null && (staffDay == null || !staffDay.working);
+
+  const offDutyRanges: OffDutyRange[] = [];
+  if (!isStaffOff && staffDay) {
+    const staffStart = timeToMinutes(staffDay.startTime);
+    const staffEnd = timeToMinutes(staffDay.endTime);
+    if (staffStart > startMinutes) {
+      offDutyRanges.push({ startMinutes, endMinutes: staffStart });
+    }
+    if (staffEnd < endMinutes) {
+      offDutyRanges.push({ startMinutes: staffEnd, endMinutes });
+    }
   }
 
   const dateBlocks: BlockedRange[] = (blockedTimesQ.data ?? [])
@@ -170,9 +215,11 @@ export function useDaySchedule(staffId: number, date: string, enabled: boolean):
   return {
     isLoading,
     isStoreClosed: false,
+    isStaffOff,
     startMinutes,
     endMinutes,
     blockedRanges,
+    offDutyRanges,
     reservations,
   };
 }
