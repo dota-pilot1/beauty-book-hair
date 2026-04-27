@@ -1,14 +1,12 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import { ImagePlus, Loader2, ChevronLeft, X } from "lucide-react";
+import { Loader2, ChevronLeft, X } from "lucide-react";
 import Link from "next/link";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { LexicalEditor } from "@/shared/ui/lexical/lexical-editor";
-import { uploadImage } from "@/shared/api/upload";
 import { useUpdateBlogPost } from "@/entities/blog/model/useBlog";
 import { blogApi } from "@/entities/blog/api/blogApi";
 
@@ -23,14 +21,10 @@ export default function BlogPostEditPage() {
   const [slug, setSlug] = useState("");
   const [content, setContent] = useState("");
   const [summary, setSummary] = useState("");
-  const [coverImageUrl, setCoverImageUrl] = useState("");
   const [authorName, setAuthorName] = useState("");
   const [tagNames, setTagNames] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [uploading, setUploading] = useState(false);
   const [loaded, setLoaded] = useState(false);
-
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -40,22 +34,10 @@ export default function BlogPostEditPage() {
       setTitle(post.title);
       setSlug(post.slug);
       setSummary(post.summary ?? "");
-      setCoverImageUrl(post.coverImageUrl ?? "");
       setAuthorName(post.authorName ?? "");
       setLoaded(true);
     });
   }, [id]);
-
-  const handleCoverUpload = async (file: File) => {
-    if (!file.type.startsWith("image/")) return;
-    setUploading(true);
-    try {
-      const url = await uploadImage(file, "blog");
-      setCoverImageUrl(url);
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const addTag = (value: string) => {
     const trimmed = value.trim().replace(/,+$/, "").trim();
@@ -84,7 +66,6 @@ export default function BlogPostEditPage() {
           slug: slug.trim(),
           content,
           summary: summary.trim() || undefined,
-          coverImageUrl: coverImageUrl || undefined,
           authorName: authorName.trim() || undefined,
           status: submitStatus,
           tagNames,
@@ -119,37 +100,6 @@ export default function BlogPostEditPage() {
             <ChevronLeft className="h-3.5 w-3.5" />
             목록으로
           </Link>
-
-          {/* 커버 이미지 */}
-          <section className="rounded-2xl border border-black/10 bg-card p-5 shadow-sm">
-            <p className="mb-3 text-sm font-medium text-foreground">커버 이미지</p>
-            {coverImageUrl ? (
-              <div className="relative aspect-video w-full overflow-hidden rounded-xl">
-                <Image src={coverImageUrl} alt="커버" fill className="object-cover" />
-                <button
-                  onClick={() => setCoverImageUrl("")}
-                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => coverInputRef.current?.click()}
-                disabled={uploading}
-                className="flex aspect-video w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-              >
-                {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImagePlus className="h-6 w-6" />}
-              </button>
-            )}
-            <input
-              ref={coverInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => e.target.files?.[0] && handleCoverUpload(e.target.files[0])}
-            />
-          </section>
 
           {/* 기본 정보 */}
           <section className="rounded-2xl border border-black/10 bg-card p-5 shadow-sm space-y-4">
@@ -190,10 +140,23 @@ export default function BlogPostEditPage() {
             </div>
           </section>
 
+          {/* 본문 에디터 */}
+          <section className="rounded-2xl border border-black/10 bg-card shadow-sm overflow-hidden">
+            <div className="border-b border-black/8 px-5 py-3">
+              <p className="text-sm font-medium text-foreground">본문</p>
+            </div>
+            <LexicalEditor
+              key={`blog-edit-${id}`}
+              initialState={content || undefined}
+              onChange={setContent}
+              minHeight="300px"
+            />
+          </section>
+
           {/* 태그 입력 */}
           <section className="rounded-2xl border border-black/10 bg-card p-5 shadow-sm">
-            <p className="mb-2 text-sm font-medium text-foreground">태그</p>
-            <p className="mb-3 text-xs text-muted-foreground">Enter 또는 쉼표로 추가</p>
+            <p className="mb-1 text-sm font-medium text-foreground">태그</p>
+            <p className="mb-3 text-xs text-muted-foreground">Enter 또는 쉼표로 추가 · Backspace로 마지막 태그 제거</p>
             <div className="flex flex-wrap gap-1.5 rounded-lg border border-input bg-background px-3 py-2 min-h-[42px] focus-within:ring-1 focus-within:ring-primary">
               {tagNames.map((tag) => (
                 <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
@@ -212,19 +175,6 @@ export default function BlogPostEditPage() {
                 className="flex-1 min-w-[80px] bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
             </div>
-          </section>
-
-          {/* 본문 에디터 */}
-          <section className="rounded-2xl border border-black/10 bg-card shadow-sm overflow-hidden">
-            <div className="border-b border-black/8 px-5 py-3">
-              <p className="text-sm font-medium text-foreground">본문</p>
-            </div>
-            <LexicalEditor
-              key={`blog-edit-${id}`}
-              initialState={content || undefined}
-              onChange={setContent}
-              minHeight="300px"
-            />
           </section>
 
           {/* 액션 버튼 */}

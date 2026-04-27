@@ -105,7 +105,7 @@ export default function BlogListClient() {
   const { data, isLoading } = useBlogPosts(selectedCategory, page);
   const { user } = useAuth();
 
-  const isAdmin = user?.role?.code === "ROLE_ADMIN";
+  const canPost = user?.role?.code === "ROLE_ADMIN" || user?.role?.code === "ROLE_MANAGER";
 
   const posts = data?.content ?? [];
   const totalPages = data?.totalPages ?? 1;
@@ -121,8 +121,10 @@ export default function BlogListClient() {
       title="헤어 다이어리"
       description="디자이너들의 스타일 노하우와 헤어 이야기를 확인해보세요."
       aside={<BlogAside selectedCategory={selectedCategory} onCategoryClick={handleCategoryClick} />}
-      action={
-        isAdmin ? (
+      showHeader={false}
+    >
+      {canPost ? (
+        <div className="mb-4 flex justify-end">
           <Link
             href="/blog-management/new"
             className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
@@ -130,9 +132,9 @@ export default function BlogListClient() {
             <PenSquare className="h-3.5 w-3.5" />
             포스트 작성
           </Link>
-        ) : undefined
-      }
-    >
+        </div>
+      ) : null}
+
       {/* 피드 */}
       {isLoading ? (
         <div className="space-y-3">
@@ -150,7 +152,7 @@ export default function BlogListClient() {
       ) : posts.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-20 text-center">
           <p className="text-sm text-muted-foreground">아직 등록된 포스트가 없습니다.</p>
-          {isAdmin && (
+          {canPost && (
             <Link
               href="/blog-management/new"
               className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"

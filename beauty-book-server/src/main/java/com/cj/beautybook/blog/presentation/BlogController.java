@@ -12,6 +12,7 @@ import com.cj.beautybook.blog.presentation.dto.UpdateBlogPostRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -69,8 +70,9 @@ public class BlogController {
         return blogService.listCategories();
     }
 
-    // ── 어드민 API ───────────────────────────────────────────────────────────
+    // ── 어드민 API (ADMIN + MANAGER 접근 가능) ─────────────────────────────────
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     @GetMapping("/api/admin/blog/posts")
     public Page<BlogPostSummaryResponse> adminListAll(
             @RequestParam(defaultValue = "0") int page,
@@ -80,11 +82,13 @@ public class BlogController {
         return blogService.adminListAll(pageable);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     @GetMapping("/api/admin/blog/posts/suggest-slug")
     public Map<String, String> suggestSlug(@RequestParam String title) {
         return Map.of("slug", blogService.generateSlug(title));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     @PostMapping("/api/admin/blog/posts")
     @ResponseStatus(HttpStatus.CREATED)
     public BlogPostDetailResponse adminCreate(
@@ -93,6 +97,7 @@ public class BlogController {
         return blogService.createPost(req);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
     @PatchMapping("/api/admin/blog/posts/{id}")
     public BlogPostDetailResponse adminUpdate(
             @PathVariable Long id,
@@ -101,30 +106,35 @@ public class BlogController {
         return blogService.updatePost(id, req);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/api/admin/blog/posts/{id}")
     public ResponseEntity<Void> adminDelete(@PathVariable Long id) {
         blogService.deletePost(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/api/admin/blog/tags")
     @ResponseStatus(HttpStatus.CREATED)
     public BlogTagResponse adminCreateTag(@RequestBody @Valid CreateBlogTagRequest req) {
         return blogService.createTag(req);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/api/admin/blog/tags/{id}")
     public ResponseEntity<Void> adminDeleteTag(@PathVariable Long id) {
         blogService.deleteTag(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/api/admin/blog/categories")
     @ResponseStatus(HttpStatus.CREATED)
     public BlogCategoryResponse adminCreateCategory(@RequestBody @Valid CreateBlogCategoryRequest req) {
         return blogService.createCategory(req);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/api/admin/blog/categories/{id}")
     public ResponseEntity<Void> adminDeleteCategory(@PathVariable Long id) {
         blogService.deleteCategory(id);
