@@ -129,7 +129,7 @@ export default function SchedulePage() {
         title="영업시간 관리"
         description="요일별 매장 영업시간을 설정하고, 특정 날짜의 예약 차단 시간을 관리합니다."
       >
-        <div className="mb-6 flex gap-1 rounded-xl border border-border bg-muted/30 p-1 w-fit">
+        <div className="mb-6 inline-flex gap-0.5 rounded-xl border border-border bg-muted/60 p-1.5">
           {([
             { key: "hours", label: "영업시간" },
             { key: "blocked", label: "예약 차단 시간" },
@@ -138,10 +138,10 @@ export default function SchedulePage() {
               key={key}
               onClick={() => setTab(key)}
               className={[
-                "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                "rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200",
                 tab === key
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "bg-background text-foreground shadow-md"
+                  : "text-foreground/60 hover:text-foreground hover:bg-background/40",
               ].join(" ")}
             >
               {label}
