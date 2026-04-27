@@ -8,7 +8,7 @@ import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
 import { BlogAside } from "./_BlogAside";
 import { BlogPostSheet } from "./_BlogPostSheet";
 import { LexicalEditor } from "@/shared/ui/lexical/lexical-editor";
-import { useBlogPosts } from "@/entities/blog/model/useBlog";
+import { useBlogPosts, useBlogCategories } from "@/entities/blog/model/useBlog";
 import { useAuth } from "@/entities/user/model/authStore";
 import type { BlogPostSummary } from "@/entities/blog/model/types";
 
@@ -52,27 +52,27 @@ function BlogCard({ post }: { post: BlogPostSummary }) {
       className="group h-full flex flex-col rounded-2xl border border-black/8 bg-card overflow-hidden"
     >
       {/* 헤더 — 배지·제목 */}
-      <div className="px-5 pt-4 pb-3 border-b border-black/6">
-        <div className="flex items-center gap-1.5 mb-2 min-h-[20px]">
+      <div className="px-4 pt-3 pb-2.5 border-b border-black/6">
+        <div className="flex items-center gap-1.5 mb-1 min-h-[18px]">
           {post.category && (
-            <span className="rounded-full bg-background border border-black/8 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <span className="rounded-full bg-background border border-black/8 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
               {post.category.name}
             </span>
           )}
           {post.isPinned && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-              <Pin className="h-3 w-3" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+              <Pin className="h-2.5 w-2.5" />
               추천
             </span>
           )}
         </div>
-        <h3 className="text-[15px] font-semibold leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2">
+        <h3 className="text-[14px] font-semibold leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2">
           {post.title}
         </h3>
       </div>
 
       {/* 본문 미리보기 */}
-      <div className="flex-1 px-5 py-4">
+      <div className="flex-1 px-4 py-3">
         {post.previewJson ? (
           <div className="relative max-h-44 overflow-hidden">
             <LexicalEditor
@@ -93,7 +93,7 @@ function BlogCard({ post }: { post: BlogPostSummary }) {
       </div>
 
       {/* 푸터 메타 */}
-      <div className="flex items-center gap-2.5 border-t border-black/6 px-5 py-3 text-xs text-muted-foreground bg-black/[0.04]">
+      <div className="flex items-center gap-2 border-t border-black/6 px-4 py-2.5 text-xs text-muted-foreground bg-black/[0.04]">
         <AuthorAvatar name={post.authorName ?? "B"} />
         <span className="font-medium text-foreground/70">{post.authorName ?? "BeautyBook"}</span>
         <span className="text-muted-foreground/30">·</span>
@@ -114,12 +114,16 @@ export default function BlogListClient() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data, isLoading } = useBlogPosts(selectedCategory, page);
+  const { data: categories } = useBlogCategories();
   const { user } = useAuth();
 
   const canPost = user?.role?.code === "ROLE_ADMIN" || user?.role?.code === "ROLE_MANAGER";
 
   const posts = data?.content ?? [];
   const totalPages = data?.totalPages ?? 1;
+  const selectedCategoryName = selectedCategory
+    ? categories?.find((c) => c.slug === selectedCategory)?.name
+    : undefined;
 
   const handleCategoryClick = (slug: string | undefined) => {
     setSelectedCategory(slug);
@@ -135,6 +139,28 @@ export default function BlogListClient() {
       showHeader={false}
       aside={<BlogAside selectedCategory={selectedCategory} onCategoryClick={handleCategoryClick} />}
     >
+
+      {/* 에디토리얼 헤더 */}
+      <div className="mb-5 pb-4 border-b border-black/8">
+        <p className="text-[11px] font-semibold tracking-[0.18em] text-primary/60 uppercase mb-1.5">
+          Hair Diary
+        </p>
+        <div className="flex items-end justify-between gap-2">
+          <h2 className="text-[26px] font-bold tracking-tight text-foreground leading-none">
+            {selectedCategoryName ?? "헤어 다이어리"}
+          </h2>
+          {!isLoading && (
+            <span className="text-xs text-muted-foreground mb-0.5">
+              {data?.totalElements ?? 0}개의 포스트
+            </span>
+          )}
+        </div>
+        <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
+          {selectedCategoryName
+            ? `${selectedCategoryName} 카테고리의 포스트`
+            : "디자이너들의 스타일 노하우와 헤어 이야기"}
+        </p>
+      </div>
 
       {/* 피드 */}
       {isLoading ? (
