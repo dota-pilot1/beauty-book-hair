@@ -31,7 +31,7 @@ type TabsListProps = {
 export function TabsList({ children, className = "" }: TabsListProps) {
   return (
     <div
-      className={`inline-flex gap-6 border-b border-border ${className}`}
+      className={`inline-flex gap-2 ${className}`}
       role="tablist"
     >
       {children}
@@ -59,16 +59,13 @@ export function TabsTrigger({ value, children, className = "" }: TabsTriggerProp
       role="tab"
       aria-selected={isSelected}
       onClick={() => onValueChange(value)}
-      className={`px-1 py-3 text-sm font-semibold transition-all duration-200 relative ${
+      className={`px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
         isSelected
-          ? "text-primary"
-          : "text-foreground/60 hover:text-foreground"
+          ? "bg-primary text-primary-foreground shadow-sm"
+          : "border border-border text-foreground hover:border-primary/50 hover:text-primary"
       } ${className}`}
     >
       {children}
-      {isSelected && (
-        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
-      )}
     </button>
   );
 }
