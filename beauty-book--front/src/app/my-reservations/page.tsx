@@ -5,6 +5,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
+import { AlertDialog } from "@/shared/ui/AlertDialog";
 import { useMyReservations, useChangeReservationStatus, useDeleteReservation } from "@/entities/reservation/model/useReservations";
 import { useAuth } from "@/entities/user/model/authStore";
 import type { Reservation, ReservationStatus } from "@/entities/reservation/model/types";
@@ -46,6 +47,7 @@ function MyReservationsContent() {
   const { data: reservations = [], isLoading } = useMyReservations();
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("REQUESTED");
+  const [pendingDelete, setPendingDelete] = useState<Reservation | null>(null);
   const changeStatus = useChangeReservationStatus();
   const deleteReservation = useDeleteReservation();
 
@@ -61,21 +63,27 @@ function MyReservationsContent() {
     return !["REQUESTED", "COMPLETED"].includes(r.status);
   });
 
-  const handleCancel = (r: Reservation) => {
+  const handleAction = (r: Reservation) => {
     if (r.status === "REQUESTED") {
-      deleteReservation.mutate(r.id, {
-        onSuccess: () => toast.success("예약 요청이 취소되었습니다."),
-        onError: () => toast.error("취소에 실패했습니다. 다시 시도해 주세요."),
-      });
-    } else {
-      changeStatus.mutate(
-        { id: r.id, status: "CANCELLED_BY_CUSTOMER" },
-        {
-          onSuccess: () => toast.success("예약이 취소되었습니다."),
-          onError: () => toast.error("예약 취소에 실패했습니다. 다시 시도해 주세요."),
-        }
-      );
+      setPendingDelete(r);
+      return;
     }
+    changeStatus.mutate(
+      { id: r.id, status: "CANCELLED_BY_CUSTOMER" },
+      {
+        onSuccess: () => toast.success("예약이 취소되었습니다."),
+        onError: () => toast.error("예약 취소에 실패했습니다. 다시 시도해 주세요."),
+      }
+    );
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    deleteReservation.mutate(pendingDelete.id, {
+      onSuccess: () => toast.success("예약 요청이 삭제되었습니다."),
+      onError: () => toast.error("삭제에 실패했습니다. 다시 시도해 주세요."),
+    });
+    setPendingDelete(null);
   };
 
   return (
@@ -86,6 +94,21 @@ function MyReservationsContent() {
       showSidebarIntro={false}
       showHeader={false}
     >
+      <AlertDialog
+        open={!!pendingDelete}
+        variant="error"
+        title="예약 요청을 삭제할까요?"
+        description={
+          pendingDelete
+            ? `${pendingDelete.beautyServiceName} · ${formatDateTime(pendingDelete.startAt)}\n\n삭제하면 이력이 남지 않으며 복구할 수 없습니다.`
+            : undefined
+        }
+        confirmText="삭제"
+        cancelText="취소"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+
       <div className="space-y-3">
         {/* 헤더 바 */}
         <div className="flex items-center justify-between">
@@ -157,7 +180,7 @@ function MyReservationsContent() {
                 <ReservationRow
                   key={r.id}
                   reservation={r}
-                  onCancel={["REQUESTED", "CONFIRMED"].includes(r.status) ? () => handleCancel(r) : undefined}
+                  onAction={["REQUESTED", "CONFIRMED"].includes(r.status) ? () => handleAction(r) : undefined}
                   actionLabel={r.status === "REQUESTED" ? "삭제" : "취소"}
                   isPending={changeStatus.isPending || deleteReservation.isPending}
                 />
@@ -172,12 +195,12 @@ function MyReservationsContent() {
 
 function ReservationRow({
   reservation: r,
-  onCancel,
+  onAction,
   actionLabel = "취소",
   isPending,
 }: {
   reservation: Reservation;
-  onCancel?: () => void;
+  onAction?: () => void;
   actionLabel?: string;
   isPending: boolean;
 }) {
@@ -190,7 +213,6 @@ function ReservationRow({
 
   return (
     <div className="flex items-center gap-3 px-4 py-3 hover:bg-black/[0.015] transition-colors">
-      {/* 시술명 */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 truncate">
           <span className="truncate text-sm font-semibold text-foreground">{main.beautyServiceName}</span>
@@ -203,13 +225,12 @@ function ReservationRow({
         </p>
       </div>
 
-      {/* 우측 액션 */}
       <div className="flex shrink-0 items-center gap-2">
-        {onCancel && (
+        {onAction && (
           <button
             type="button"
             disabled={isPending}
-            onClick={onCancel}
+            onClick={onAction}
             className={`h-6 rounded border px-2 text-[11px] font-medium transition-colors disabled:opacity-30 ${
               actionLabel === "삭제"
                 ? "border-rose-300 text-rose-500 hover:border-rose-400 hover:bg-rose-50 hover:text-rose-600"
