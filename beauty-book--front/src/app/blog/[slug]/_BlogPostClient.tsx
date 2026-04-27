@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Eye, ChevronLeft } from "lucide-react";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
 import { LexicalEditor } from "@/shared/ui/lexical/lexical-editor";
@@ -51,7 +52,12 @@ export default function BlogPostClient() {
 
   return (
     <CustomerShell eyebrow="Hair Diary" title="" description="" showHeader={false} aside={aside}>
-      <article className="rounded-2xl border border-black/10 bg-card overflow-hidden shadow-sm">
+      <motion.article
+        className="rounded-2xl border border-black/10 bg-card overflow-hidden shadow-sm"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+      >
         {/* 헤더 */}
         <header className="px-7 pt-5 pb-5 space-y-2.5 border-b border-black/8">
           <Link
@@ -124,7 +130,7 @@ export default function BlogPostClient() {
             목록으로
           </Link>
         </div>
-      </article>
+      </motion.article>
     </CustomerShell>
   );
 }

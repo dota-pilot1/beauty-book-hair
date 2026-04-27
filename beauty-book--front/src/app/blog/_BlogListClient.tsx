@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { Eye, Pin, PenSquare } from "lucide-react";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
 import { BlogAside } from "./_BlogAside";
@@ -40,37 +41,40 @@ function AuthorAvatar({ name }: { name: string }) {
 
 function BlogCard({ post }: { post: BlogPostSummary }) {
   return (
+    <motion.div
+      whileHover={{ y: -3, boxShadow: "0 8px 24px -4px rgba(0,0,0,0.10)" }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 400, damping: 28 }}
+      className="rounded-2xl overflow-hidden"
+    >
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex flex-col rounded-2xl border border-black/8 bg-card transition-colors hover:border-primary/30 hover:bg-muted/30 overflow-hidden"
+      className="group flex flex-col rounded-2xl border border-black/8 bg-card overflow-hidden"
     >
-      {/* 본문 영역 */}
-      <div className="p-5 pb-4">
-        {/* 배지 */}
-        {(post.category || post.isPinned) && (
-          <div className="mb-2.5 flex items-center gap-1.5">
-            {post.category && (
-              <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                {post.category.name}
-              </span>
-            )}
-            {post.isPinned && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                <Pin className="h-3 w-3" />
-                추천
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* 제목 */}
-        <h3 className="text-base font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">
+      {/* 헤더 — 배지·제목 */}
+      <div className="px-5 pt-4 pb-3 border-b border-black/6">
+        <div className="flex items-center gap-1.5 mb-2 min-h-[20px]">
+          {post.category && (
+            <span className="rounded-full bg-background border border-black/8 px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {post.category.name}
+            </span>
+          )}
+          {post.isPinned && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+              <Pin className="h-3 w-3" />
+              추천
+            </span>
+          )}
+        </div>
+        <h3 className="text-[15px] font-semibold leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2">
           {post.title}
         </h3>
+      </div>
 
-        {/* 본문 미리보기 */}
+      {/* 본문 미리보기 */}
+      <div className="flex-1 px-5 py-4">
         {post.previewJson ? (
-          <div className="relative mt-3 max-h-44 overflow-hidden">
+          <div className="relative max-h-44 overflow-hidden">
             <LexicalEditor
               key={`preview-${post.id}`}
               initialState={post.previewJson}
@@ -80,14 +84,16 @@ function BlogCard({ post }: { post: BlogPostSummary }) {
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card to-transparent" />
           </div>
         ) : (post.contentPreview || post.summary) ? (
-          <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground line-clamp-4">
+          <p className="text-sm leading-relaxed text-muted-foreground line-clamp-4">
             {post.contentPreview || post.summary}
           </p>
-        ) : null}
+        ) : (
+          <p className="text-sm text-muted-foreground/40 italic">본문 없음</p>
+        )}
       </div>
 
-      {/* 푸터 메타 — 구분선 */}
-      <div className="flex items-center gap-3 border-t border-black/6 px-5 py-3 text-xs text-muted-foreground bg-muted/20">
+      {/* 푸터 메타 */}
+      <div className="flex items-center gap-2.5 border-t border-black/6 px-5 py-3 text-xs text-muted-foreground bg-muted/20">
         <AuthorAvatar name={post.authorName ?? "B"} />
         <span className="font-medium text-foreground/70">{post.authorName ?? "BeautyBook"}</span>
         <span className="text-muted-foreground/30">·</span>
@@ -98,6 +104,7 @@ function BlogCard({ post }: { post: BlogPostSummary }) {
         </span>
       </div>
     </Link>
+    </motion.div>
   );
 }
 
@@ -157,11 +164,22 @@ export default function BlogListClient() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+          initial="hidden"
+          animate="visible"
+          variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+        >
           {posts.map((post) => (
-            <BlogCard key={post.id} post={post} />
+            <motion.div
+              key={post.id}
+              variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <BlogCard post={post} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* 페이지네이션 */}
