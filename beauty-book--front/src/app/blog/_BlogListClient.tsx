@@ -45,11 +45,11 @@ function BlogCard({ post }: { post: BlogPostSummary }) {
       whileHover={{ y: -3, boxShadow: "0 8px 24px -4px rgba(0,0,0,0.10)" }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 28 }}
-      className="rounded-2xl overflow-hidden"
+      className="h-full rounded-2xl overflow-hidden"
     >
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex flex-col rounded-2xl border border-black/8 bg-card overflow-hidden"
+      className="group h-full flex flex-col rounded-2xl border border-black/8 bg-card overflow-hidden"
     >
       {/* 헤더 — 배지·제목 */}
       <div className="px-5 pt-4 pb-3 border-b border-black/6">
@@ -175,6 +175,7 @@ export default function BlogListClient() {
               key={post.id}
               variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
               transition={{ duration: 0.25, ease: "easeOut" }}
+              className="h-full"
             >
               <BlogCard post={post} />
             </motion.div>
