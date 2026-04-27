@@ -203,6 +203,19 @@ function BookingFlowPage() {
     bookingFlowActions.hydrate();
   }, []);
 
+  // 오늘 슬롯이 전부 PAST이면 내일로 자동 이동
+  useEffect(() => {
+    if (slotsLoading || reservationSlots.length === 0) return;
+    const today = formatDateInput(new Date());
+    if (selectedDate !== today) return;
+    const allPast = reservationSlots.every((s) => s.status === "PAST");
+    if (allPast) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      bookingFlowActions.setSelectedDate(formatDateInput(tomorrow));
+    }
+  }, [reservationSlots, slotsLoading, selectedDate]);
+
   const currentIndex = steps.findIndex((item) => item.key === step);
 
   const goNext = () => {
@@ -1340,6 +1353,19 @@ function OneShotBookingDialog({
       return s.name.toLowerCase().includes(q) || (s.description ?? "").toLowerCase().includes(q);
     });
   }, [services, query, catFilter]);
+
+  // 오늘 슬롯이 전부 PAST이면 내일로 자동 이동 (다이얼로그 내부)
+  useEffect(() => {
+    if (slotsLoading || slots.length === 0) return;
+    const today = formatDateInput(new Date());
+    if (selectedDate !== today) return;
+    const allPast = slots.every((s) => s.status === "PAST");
+    if (allPast) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      bookingFlowActions.setSelectedDate(formatDateInput(tomorrow));
+    }
+  }, [slots, slotsLoading, selectedDate]);
 
   function handleDesignerClick(id: number, name: string) {
     bookingFlowActions.setSelectedDesigner(id, name);
