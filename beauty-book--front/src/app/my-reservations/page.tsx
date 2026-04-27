@@ -210,7 +210,11 @@ function ReservationRow({
             type="button"
             disabled={isPending}
             onClick={onCancel}
-            className="h-6 rounded border border-black/12 px-2 text-[11px] text-foreground/35 hover:border-black/25 hover:text-foreground/70 transition-colors disabled:opacity-30"
+            className={`h-6 rounded border px-2 text-[11px] font-medium transition-colors disabled:opacity-30 ${
+              actionLabel === "삭제"
+                ? "border-rose-300 text-rose-500 hover:border-rose-400 hover:bg-rose-50 hover:text-rose-600"
+                : "border-black/20 text-foreground/50 hover:border-black/30 hover:text-foreground/70"
+            }`}
           >
             {actionLabel}
           </button>
