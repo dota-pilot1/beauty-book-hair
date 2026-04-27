@@ -216,10 +216,10 @@ function Timeline({ slots, containerHeight, isStoreClosed, isStaffOff, staffName
       {offDutyRanges.map((o, i) => (
         <div
           key={`off-${i}`}
-          className="absolute left-13 right-0 flex items-center justify-center overflow-hidden rounded-lg bg-slate-100/80 px-2.5 py-1.5"
+          className="absolute left-13 right-0 flex items-center justify-center overflow-hidden rounded-lg border border-slate-300 bg-slate-200 px-2.5 py-1.5"
           style={{ top: `${o.topPx}px`, height: `${o.heightPx}px` }}
         >
-          <p className="truncate text-[11px] font-medium text-slate-400">근무 외</p>
+          <p className="truncate text-[11px] font-semibold text-slate-600">🚫 근무 외</p>
         </div>
       ))}
 
