@@ -162,15 +162,7 @@ function UserDropdown({
         className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/50 px-3 py-1.5 hover:bg-muted transition-colors"
       >
         <UserAvatar name={displayName} />
-        <span className="text-sm font-medium leading-none text-foreground">
-          {displayName}
-        </span>
-        {user.role && (
-          <>
-            <span className="h-3.5 w-px bg-border/80" />
-            <RoleBadge role={user.role} />
-          </>
-        )}
+        {user.role && <RoleBadge role={user.role} />}
         <svg
           className={`h-3 w-3 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"
