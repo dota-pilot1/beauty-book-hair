@@ -65,7 +65,7 @@ public class Gallery {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private GalleryPhotoType photoType = GalleryPhotoType.PORTFOLIO;
+    private GalleryPhotoType photoType = GalleryPhotoType.BA;
 
     @Column(nullable = false)
     private boolean isPublished = true;
@@ -103,7 +103,7 @@ public class Gallery {
         g.designerId = designerId;
         g.designerName = designerName;
         g.tag = tag != null ? tag : GalleryTag.ETC;
-        g.photoType = photoType != null ? photoType : GalleryPhotoType.PORTFOLIO;
+        g.photoType = photoType != null ? photoType : GalleryPhotoType.BA;
         g.isPublished = isPublished;
         g.viewCount = 0;
         return g;
@@ -127,7 +127,7 @@ public class Gallery {
         this.designerId = designerId;
         this.designerName = designerName;
         this.tag = tag != null ? tag : GalleryTag.ETC;
-        this.photoType = photoType != null ? photoType : GalleryPhotoType.PORTFOLIO;
+        this.photoType = photoType != null ? photoType : GalleryPhotoType.BA;
         this.isPublished = isPublished;
     }
 

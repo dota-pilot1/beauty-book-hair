@@ -17,7 +17,7 @@ import type { GalleryItem, GalleryPhotoType, GalleryTag } from "@/entities/galle
 import { GALLERY_PHOTO_TYPE_LABEL, GALLERY_TAG_LABEL } from "@/entities/gallery/model/types";
 
 const TAG_OPTIONS: GalleryTag[] = ["CUT", "PERM", "COLOR", "TREATMENT", "SCALP", "STYLING", "ETC"];
-const PHOTO_TYPE_OPTIONS: GalleryPhotoType[] = ["BA", "MODEL", "PORTFOLIO"];
+const PHOTO_TYPE_OPTIONS: GalleryPhotoType[] = ["BA", "MODEL"];
 
 const TAG_BADGE: Record<GalleryTag, string> = {
   CUT:       "bg-sky-100 text-sky-700",
@@ -30,9 +30,8 @@ const TAG_BADGE: Record<GalleryTag, string> = {
 };
 
 const PHOTO_TYPE_BADGE: Record<GalleryPhotoType, string> = {
-  BA:        "bg-blue-100 text-blue-700",
-  MODEL:     "bg-purple-100 text-purple-700",
-  PORTFOLIO: "bg-orange-100 text-orange-700",
+  BA:    "bg-blue-100 text-blue-700",
+  MODEL: "bg-purple-100 text-purple-700",
 };
 
 function formatDate(iso: string) {
@@ -359,7 +358,7 @@ const EMPTY_FORM: FormState = {
   beforeImageUrl: "",
   designerName: "",
   tag: "ETC",
-  photoType: "PORTFOLIO",
+  photoType: "BA",
   isPublished: true,
 };
 

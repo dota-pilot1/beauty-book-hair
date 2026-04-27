@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
 import { usePublicGallery } from "@/entities/gallery/model/useGallery";
 import type { GalleryItem, GalleryPhotoType, GalleryTag } from "@/entities/gallery/model/types";
-import { GALLERY_PHOTO_TYPE_LABEL, GALLERY_TAG_LABEL } from "@/entities/gallery/model/types";
+import { GALLERY_TAG_LABEL } from "@/entities/gallery/model/types";
 
 const TAG_OPTIONS: Array<{ value: GalleryTag | "ALL"; label: string }> = [
   { value: "ALL", label: "전체" },
@@ -19,13 +19,6 @@ const TAG_OPTIONS: Array<{ value: GalleryTag | "ALL"; label: string }> = [
   { value: "ETC", label: "기타" },
 ];
 
-const PHOTO_TYPE_OPTIONS: Array<{ value: GalleryPhotoType | "ALL"; label: string }> = [
-  { value: "ALL", label: "전체" },
-  { value: "BA", label: "B/A" },
-  { value: "MODEL", label: "모델" },
-  { value: "PORTFOLIO", label: "포트폴리오" },
-];
-
 const TAG_BADGE_COLOR: Record<GalleryTag, string> = {
   CUT:       "bg-sky-100 text-sky-700",
   PERM:      "bg-violet-100 text-violet-700",
@@ -36,69 +29,38 @@ const TAG_BADGE_COLOR: Record<GalleryTag, string> = {
   ETC:       "bg-muted text-muted-foreground",
 };
 
-const PHOTO_TYPE_BADGE_COLOR: Record<GalleryPhotoType, string> = {
-  BA:        "bg-blue-100 text-blue-700",
-  MODEL:     "bg-purple-100 text-purple-700",
-  PORTFOLIO: "bg-orange-100 text-orange-700",
+const PHOTO_TYPE_CONFIG: Record<GalleryPhotoType, { label: string; desc: string; badgeColor: string }> = {
+  BA:    { label: "B/A", desc: "시술 전후", badgeColor: "bg-blue-100 text-blue-700" },
+  MODEL: { label: "모델", desc: "헤어 모델", badgeColor: "bg-purple-100 text-purple-700" },
 };
 
-// ── After 이미지 캐러셀 (상세 모달용) ───────────────────────────────────────
+// ── After 이미지 캐러셀 ────────────────────────────────────────────────────────
 
 function AfterCarousel({ images, label }: { images: string[]; label: string }) {
   const [idx, setIdx] = useState(0);
   if (images.length === 0) return null;
 
-  const prev = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIdx((i) => (i - 1 + images.length) % images.length);
-  };
-  const next = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIdx((i) => (i + 1) % images.length);
-  };
+  const prev = (e: React.MouseEvent) => { e.stopPropagation(); setIdx((i) => (i - 1 + images.length) % images.length); };
+  const next = (e: React.MouseEvent) => { e.stopPropagation(); setIdx((i) => (i + 1) % images.length); };
 
   return (
     <div className="relative w-full h-full bg-gradient-to-br from-neutral-100 via-neutral-50 to-white">
-      <Image
-        src={images[idx]}
-        alt={`${label} ${idx + 1}`}
-        fill
-        className="object-contain"
-        sizes="(max-width: 1024px) 100vw, 50vw"
-      />
+      <Image src={images[idx]} alt={`${label} ${idx + 1}`} fill className="object-contain" sizes="(max-width: 1024px) 100vw, 50vw" />
       {images.length > 1 && (
         <>
           <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={prev}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md text-black hover:bg-black/30 transition-colors"
-              aria-label="이전"
-            >
+            <button type="button" onClick={prev} className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md text-black hover:bg-black/30 transition-colors" aria-label="이전">
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <button
-              type="button"
-              onClick={next}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md text-black hover:bg-black/30 transition-colors"
-              aria-label="다음"
-            >
+            <button type="button" onClick={next} className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/20 backdrop-blur-md text-black hover:bg-black/30 transition-colors" aria-label="다음">
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
             {images.map((_, i) => (
-              <button
-                key={i}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIdx(i);
-                }}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === idx ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"
-                }`}
-                aria-label={`${i + 1}번 이미지`}
-              />
+              <button key={i} onClick={(e) => { e.stopPropagation(); setIdx(i); }}
+                className={`h-1.5 rounded-full transition-all ${i === idx ? "w-6 bg-white" : "w-1.5 bg-white/50 hover:bg-white/80"}`}
+                aria-label={`${i + 1}번 이미지`} />
             ))}
           </div>
         </>
@@ -109,49 +71,25 @@ function AfterCarousel({ images, label }: { images: string[]; label: string }) {
 
 // ── 상세 모달 ─────────────────────────────────────────────────────────────────
 
-function GalleryDetailModal({
-  item,
-  onClose,
-}: {
-  item: GalleryItem;
-  onClose: () => void;
-}) {
+function GalleryDetailModal({ item, onClose }: { item: GalleryItem; onClose: () => void }) {
   const hasBefore = !!item.beforeImageUrl;
   const afterImages = item.imageUrls ?? [];
+  const ptCfg = PHOTO_TYPE_CONFIG[item.photoType];
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 sm:p-8"
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-6xl max-h-[92vh] flex flex-col rounded-2xl border border-black/12 bg-card shadow-2xl overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-          aria-label="닫기"
-        >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 sm:p-8" onClick={onClose}>
+      <div className="w-full max-w-6xl max-h-[92vh] flex flex-col rounded-2xl border border-black/12 bg-card shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <button type="button" onClick={onClose}
+          className="absolute top-4 right-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors" aria-label="닫기">
           <X className="h-5 w-5" />
         </button>
 
-        {/* 이미지 영역 */}
         <div className="relative w-full bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex-shrink-0">
           {hasBefore ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x divide-slate-700/50">
               <div className="relative aspect-[4/3] lg:aspect-[4/5]">
-                <Image
-                  src={item.beforeImageUrl!}
-                  alt="Before"
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                />
-                <span className="absolute bottom-3 left-3 rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white">
-                  Before
-                </span>
+                <Image src={item.beforeImageUrl!} alt="Before" fill className="object-contain" sizes="(max-width: 1024px) 100vw, 50vw" />
+                <span className="absolute bottom-3 left-3 rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white">Before</span>
               </div>
               <div className="relative aspect-[4/3] lg:aspect-[4/5]">
                 <AfterCarousel images={afterImages} label="After" />
@@ -167,90 +105,65 @@ function GalleryDetailModal({
           )}
         </div>
 
-        {/* 정보 */}
         <div className="px-6 py-4 space-y-2 overflow-y-auto">
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-foreground">{item.title}</h2>
-              {item.designerName && (
-                <p className="mt-0.5 text-sm text-muted-foreground">디자이너 · {item.designerName}</p>
-              )}
+              {item.designerName && <p className="mt-0.5 text-sm text-muted-foreground">디자이너 · {item.designerName}</p>}
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${PHOTO_TYPE_BADGE_COLOR[item.photoType]}`}>
-                {GALLERY_PHOTO_TYPE_LABEL[item.photoType]}
+              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ptCfg.badgeColor}`}>
+                {ptCfg.label}
               </span>
               <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${TAG_BADGE_COLOR[item.tag]}`}>
                 {GALLERY_TAG_LABEL[item.tag]}
               </span>
             </div>
           </div>
-
-          {item.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-              {item.description}
-            </p>
-          )}
+          {item.description && <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{item.description}</p>}
         </div>
       </div>
     </div>
   );
 }
 
-// ── 갤러리 카드 ──────────────────────────────────────────────────────────────
+// ── 갤러리 카드 ───────────────────────────────────────────────────────────────
 
 function GalleryCard({ item, onClick }: { item: GalleryItem; onClick: () => void }) {
   const thumb = item.imageUrls?.[0];
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group relative overflow-hidden rounded-2xl border border-black/10 bg-card shadow-sm hover:shadow-md transition-all duration-200 text-left"
-    >
+    <button type="button" onClick={onClick}
+      className="group relative overflow-hidden rounded-2xl border border-black/10 bg-card shadow-sm hover:shadow-md transition-all duration-200 text-left">
       <div className="relative aspect-square w-full overflow-hidden">
-        {thumb && (
-          <Image
-            src={thumb}
-            alt={item.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-        )}
-        {/* photoType 배지 (좌상단) */}
-        <span className={`absolute top-2 left-2 rounded-full px-2 py-0.5 text-xs font-medium ${PHOTO_TYPE_BADGE_COLOR[item.photoType]}`}>
-          {GALLERY_PHOTO_TYPE_LABEL[item.photoType]}
-        </span>
+        {thumb && <Image src={thumb} alt={item.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" />}
         {item.imageUrls.length > 1 && (
           <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white">
             +{item.imageUrls.length - 1}
           </span>
         )}
-        {/* tag 배지 (우상단) */}
         <span className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-xs font-medium ${TAG_BADGE_COLOR[item.tag]}`}>
           {GALLERY_TAG_LABEL[item.tag]}
         </span>
       </div>
       <div className="px-3 py-2.5">
         <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-        {item.designerName && (
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.designerName}</p>
-        )}
+        {item.designerName && <p className="mt-0.5 truncate text-xs text-muted-foreground">{item.designerName}</p>}
       </div>
     </button>
   );
 }
 
-// ── 메인 페이지 ──────────────────────────────────────────────────────────────
+// ── 메인 페이지 ───────────────────────────────────────────────────────────────
 
 export default function GalleryPage() {
+  const [photoType, setPhotoType] = useState<GalleryPhotoType>("BA");
   const [selectedTag, setSelectedTag] = useState<GalleryTag | "ALL">("ALL");
-  const [selectedPhotoType, setSelectedPhotoType] = useState<GalleryPhotoType | "ALL">("ALL");
   const [page, setPage] = useState(0);
   const [detailItem, setDetailItem] = useState<GalleryItem | null>(null);
 
   const { data, isLoading } = usePublicGallery(
     selectedTag === "ALL" ? undefined : selectedTag,
-    selectedPhotoType === "ALL" ? undefined : selectedPhotoType,
+    photoType,
     undefined,
     page
   );
@@ -258,15 +171,8 @@ export default function GalleryPage() {
   const items = data?.content ?? [];
   const totalPages = data?.totalPages ?? 1;
 
-  const handleTagChange = (tag: GalleryTag | "ALL") => {
-    setSelectedTag(tag);
-    setPage(0);
-  };
-
-  const handlePhotoTypeChange = (photoType: GalleryPhotoType | "ALL") => {
-    setSelectedPhotoType(photoType);
-    setPage(0);
-  };
+  const handlePhotoTypeChange = (pt: GalleryPhotoType) => { setPhotoType(pt); setPage(0); };
+  const handleTagChange = (tag: GalleryTag | "ALL") => { setSelectedTag(tag); setPage(0); };
 
   return (
     <CustomerShell
@@ -274,24 +180,33 @@ export default function GalleryPage() {
       title="헤어 갤러리"
       description="디자이너들의 헤어 작품을 확인해보세요."
     >
-      {/* 사진 유형 필터 */}
-      <div className="flex flex-wrap gap-2 mb-3">
-        {PHOTO_TYPE_OPTIONS.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => handlePhotoTypeChange(value)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              selectedPhotoType === value
-                ? "bg-foreground text-background"
-                : "border border-border text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      {/* 1차: 사진 유형 탭 토글 */}
+      <div className="mb-5 flex rounded-2xl border border-black/10 bg-muted/40 p-1 gap-1">
+        {(["BA", "MODEL"] as GalleryPhotoType[]).map((pt) => {
+          const cfg = PHOTO_TYPE_CONFIG[pt];
+          const active = photoType === pt;
+          return (
+            <button
+              key={pt}
+              onClick={() => handlePhotoTypeChange(pt)}
+              className={`flex-1 flex flex-col items-center justify-center rounded-xl py-3.5 transition-all duration-200 ${
+                active
+                  ? "bg-background shadow-sm border border-black/8"
+                  : "hover:bg-background/60"
+              }`}
+            >
+              <span className={`text-base font-bold tracking-tight ${active ? "text-foreground" : "text-muted-foreground"}`}>
+                {cfg.label}
+              </span>
+              <span className={`mt-0.5 text-xs ${active ? "text-muted-foreground" : "text-muted-foreground/50"}`}>
+                {cfg.desc}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* 스타일 태그 필터 */}
+      {/* 2차: 스타일 태그 필터 */}
       <div className="flex flex-wrap gap-2 mb-5">
         {TAG_OPTIONS.map(({ value, label }) => (
           <button
@@ -325,25 +240,17 @@ export default function GalleryPage() {
       {totalPages > 1 && (
         <div className="mt-6 flex justify-center gap-2">
           {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setPage(i)}
+            <button key={i} onClick={() => setPage(i)}
               className={`h-8 w-8 rounded-full text-sm font-medium transition-colors ${
-                i === page
-                  ? "bg-foreground text-background"
-                  : "border border-border text-muted-foreground hover:bg-muted"
-              }`}
-            >
+                i === page ? "bg-foreground text-background" : "border border-border text-muted-foreground hover:bg-muted"
+              }`}>
               {i + 1}
             </button>
           ))}
         </div>
       )}
 
-      {/* 상세 모달 */}
-      {detailItem && (
-        <GalleryDetailModal item={detailItem} onClose={() => setDetailItem(null)} />
-      )}
+      {detailItem && <GalleryDetailModal item={detailItem} onClose={() => setDetailItem(null)} />}
     </CustomerShell>
   );
 }
