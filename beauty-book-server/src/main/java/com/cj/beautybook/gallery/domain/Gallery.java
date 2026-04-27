@@ -64,7 +64,7 @@ public class Gallery {
     private GalleryTag tag = GalleryTag.ETC;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
+    @Column(nullable = false, length = 30, columnDefinition = "VARCHAR(30) NOT NULL DEFAULT 'BA'")
     private GalleryPhotoType photoType = GalleryPhotoType.BA;
 
     @Column(nullable = false)
