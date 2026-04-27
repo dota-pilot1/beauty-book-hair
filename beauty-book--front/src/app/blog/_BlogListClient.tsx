@@ -121,10 +121,8 @@ export default function BlogListClient() {
       title="헤어 다이어리"
       description="디자이너들의 스타일 노하우와 헤어 이야기를 확인해보세요."
       aside={<BlogAside selectedCategory={selectedCategory} onCategoryClick={handleCategoryClick} />}
-      showHeader={false}
-    >
-      {canPost ? (
-        <div className="mb-4 flex justify-end">
+      action={
+        canPost ? (
           <Link
             href="/blog-management/new"
             className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
@@ -132,8 +130,9 @@ export default function BlogListClient() {
             <PenSquare className="h-3.5 w-3.5" />
             포스트 작성
           </Link>
-        </div>
-      ) : null}
+        ) : undefined
+      }
+    >
 
       {/* 피드 */}
       {isLoading ? (
