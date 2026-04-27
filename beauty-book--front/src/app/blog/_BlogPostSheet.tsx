@@ -4,7 +4,7 @@ import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, Loader2, Wand2 } from "lucide-react";
 import { LexicalEditor } from "@/shared/ui/lexical/lexical-editor";
-import { useCreateBlogPost } from "@/entities/blog/model/useBlog";
+import { useCreateBlogPost, useBlogCategories } from "@/entities/blog/model/useBlog";
 import { useAuth } from "@/entities/user/model/authStore";
 import { blogApi } from "@/entities/blog/api/blogApi";
 
@@ -62,16 +62,18 @@ function TagInput({
 export function BlogPostSheet({ open, onOpenChange }: Props) {
   const createPost = useCreateBlogPost();
   const { user } = useAuth();
+  const { data: categories = [] } = useBlogCategories();
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [content, setContent] = useState("");
   const [summary, setSummary] = useState("");
   const [tagNames, setTagNames] = useState<string[]>([]);
+  const [categoryId, setCategoryId] = useState<number | undefined>();
 
   const reset = () => {
     setTitle(""); setSlug(""); setContent("");
-    setSummary(""); setTagNames([]);
+    setSummary(""); setTagNames([]); setCategoryId(undefined);
   };
 
   const handleSuggestSlug = async () => {
@@ -85,7 +87,7 @@ export function BlogPostSheet({ open, onOpenChange }: Props) {
   const handleSubmit = (status: "DRAFT" | "PUBLISHED") => {
     if (!title.trim() || !slug.trim()) return;
     createPost.mutate(
-      { title: title.trim(), slug: slug.trim(), content, summary: summary.trim() || undefined, authorName: user?.username || undefined, status, isPinned: false, tagNames },
+      { title: title.trim(), slug: slug.trim(), content, summary: summary.trim() || undefined, authorName: user?.username || undefined, status, isPinned: false, tagNames, categoryId },
       { onSuccess: () => { reset(); onOpenChange(false); } }
     );
   };
@@ -149,6 +151,37 @@ export function BlogPostSheet({ open, onOpenChange }: Props) {
                   >
                     <Wand2 className="h-3.5 w-3.5" />
                   </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">카테고리</label>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setCategoryId(undefined)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      categoryId === undefined
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-border text-muted-foreground hover:bg-muted"
+                    }`}
+                  >
+                    없음
+                  </button>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setCategoryId(cat.id)}
+                      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                        categoryId === cat.id
+                          ? "bg-primary text-primary-foreground"
+                          : "border border-border text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
                 </div>
               </div>
 
