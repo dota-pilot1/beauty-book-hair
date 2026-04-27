@@ -5,8 +5,8 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
 import { usePublicGallery } from "@/entities/gallery/model/useGallery";
-import type { GalleryItem, GalleryTag } from "@/entities/gallery/model/types";
-import { GALLERY_TAG_LABEL } from "@/entities/gallery/model/types";
+import type { GalleryItem, GalleryPhotoType, GalleryTag } from "@/entities/gallery/model/types";
+import { GALLERY_PHOTO_TYPE_LABEL, GALLERY_TAG_LABEL } from "@/entities/gallery/model/types";
 
 const TAG_OPTIONS: Array<{ value: GalleryTag | "ALL"; label: string }> = [
   { value: "ALL", label: "전체" },
@@ -19,6 +19,13 @@ const TAG_OPTIONS: Array<{ value: GalleryTag | "ALL"; label: string }> = [
   { value: "ETC", label: "기타" },
 ];
 
+const PHOTO_TYPE_OPTIONS: Array<{ value: GalleryPhotoType | "ALL"; label: string }> = [
+  { value: "ALL", label: "전체" },
+  { value: "BA", label: "B/A" },
+  { value: "MODEL", label: "모델" },
+  { value: "PORTFOLIO", label: "포트폴리오" },
+];
+
 const TAG_BADGE_COLOR: Record<GalleryTag, string> = {
   CUT:       "bg-sky-100 text-sky-700",
   PERM:      "bg-violet-100 text-violet-700",
@@ -27,6 +34,12 @@ const TAG_BADGE_COLOR: Record<GalleryTag, string> = {
   SCALP:     "bg-teal-100 text-teal-700",
   STYLING:   "bg-pink-100 text-pink-700",
   ETC:       "bg-muted text-muted-foreground",
+};
+
+const PHOTO_TYPE_BADGE_COLOR: Record<GalleryPhotoType, string> = {
+  BA:        "bg-blue-100 text-blue-700",
+  MODEL:     "bg-purple-100 text-purple-700",
+  PORTFOLIO: "bg-orange-100 text-orange-700",
 };
 
 // ── After 이미지 캐러셀 (상세 모달용) ───────────────────────────────────────
@@ -94,7 +107,7 @@ function AfterCarousel({ images, label }: { images: string[]; label: string }) {
   );
 }
 
-// ── 상세 모달 — 더 크게, Before|After 동시 표시 ─────────────────────────────
+// ── 상세 모달 ─────────────────────────────────────────────────────────────────
 
 function GalleryDetailModal({
   item,
@@ -115,7 +128,6 @@ function GalleryDetailModal({
         className="w-full max-w-6xl max-h-[92vh] flex flex-col rounded-2xl border border-black/12 bg-card shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 닫기 버튼 (우상단 절대 위치) */}
         <button
           type="button"
           onClick={onClose}
@@ -125,7 +137,7 @@ function GalleryDetailModal({
           <X className="h-5 w-5" />
         </button>
 
-        {/* 이미지 영역 — Before(좌, 단일) | After(우, 캐러셀) */}
+        {/* 이미지 영역 */}
         <div className="relative w-full bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex-shrink-0">
           {hasBefore ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 lg:divide-x divide-slate-700/50">
@@ -164,9 +176,14 @@ function GalleryDetailModal({
                 <p className="mt-0.5 text-sm text-muted-foreground">디자이너 · {item.designerName}</p>
               )}
             </div>
-            <span className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${TAG_BADGE_COLOR[item.tag]}`}>
-              {GALLERY_TAG_LABEL[item.tag]}
-            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${PHOTO_TYPE_BADGE_COLOR[item.photoType]}`}>
+                {GALLERY_PHOTO_TYPE_LABEL[item.photoType]}
+              </span>
+              <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${TAG_BADGE_COLOR[item.tag]}`}>
+                {GALLERY_TAG_LABEL[item.tag]}
+              </span>
+            </div>
           </div>
 
           {item.description && (
@@ -199,16 +216,16 @@ function GalleryCard({ item, onClick }: { item: GalleryItem; onClick: () => void
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         )}
-        {item.beforeImageUrl && (
-          <span className="absolute top-2 left-2 rounded-full bg-black/50 px-2 py-0.5 text-xs text-white">
-            B/A
-          </span>
-        )}
+        {/* photoType 배지 (좌상단) */}
+        <span className={`absolute top-2 left-2 rounded-full px-2 py-0.5 text-xs font-medium ${PHOTO_TYPE_BADGE_COLOR[item.photoType]}`}>
+          {GALLERY_PHOTO_TYPE_LABEL[item.photoType]}
+        </span>
         {item.imageUrls.length > 1 && (
           <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-xs font-medium text-white">
             +{item.imageUrls.length - 1}
           </span>
         )}
+        {/* tag 배지 (우상단) */}
         <span className={`absolute top-2 right-2 rounded-full px-2 py-0.5 text-xs font-medium ${TAG_BADGE_COLOR[item.tag]}`}>
           {GALLERY_TAG_LABEL[item.tag]}
         </span>
@@ -227,11 +244,13 @@ function GalleryCard({ item, onClick }: { item: GalleryItem; onClick: () => void
 
 export default function GalleryPage() {
   const [selectedTag, setSelectedTag] = useState<GalleryTag | "ALL">("ALL");
+  const [selectedPhotoType, setSelectedPhotoType] = useState<GalleryPhotoType | "ALL">("ALL");
   const [page, setPage] = useState(0);
   const [detailItem, setDetailItem] = useState<GalleryItem | null>(null);
 
   const { data, isLoading } = usePublicGallery(
     selectedTag === "ALL" ? undefined : selectedTag,
+    selectedPhotoType === "ALL" ? undefined : selectedPhotoType,
     undefined,
     page
   );
@@ -244,13 +263,35 @@ export default function GalleryPage() {
     setPage(0);
   };
 
+  const handlePhotoTypeChange = (photoType: GalleryPhotoType | "ALL") => {
+    setSelectedPhotoType(photoType);
+    setPage(0);
+  };
+
   return (
     <CustomerShell
       eyebrow="Gallery"
-      title="시술 갤러리"
-      description="디자이너들의 시술 작품을 확인해보세요."
+      title="헤어 갤러리"
+      description="디자이너들의 헤어 작품을 확인해보세요."
     >
-      {/* 태그 필터 */}
+      {/* 사진 유형 필터 */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {PHOTO_TYPE_OPTIONS.map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => handlePhotoTypeChange(value)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              selectedPhotoType === value
+                ? "bg-foreground text-background"
+                : "border border-border text-muted-foreground hover:bg-muted"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* 스타일 태그 필터 */}
       <div className="flex flex-wrap gap-2 mb-5">
         {TAG_OPTIONS.map(({ value, label }) => (
           <button

@@ -13,10 +13,11 @@ import {
   useToggleGalleryPublish,
   useDeleteGallery,
 } from "@/entities/gallery/model/useGallery";
-import type { GalleryItem, GalleryTag } from "@/entities/gallery/model/types";
-import { GALLERY_TAG_LABEL } from "@/entities/gallery/model/types";
+import type { GalleryItem, GalleryPhotoType, GalleryTag } from "@/entities/gallery/model/types";
+import { GALLERY_PHOTO_TYPE_LABEL, GALLERY_TAG_LABEL } from "@/entities/gallery/model/types";
 
 const TAG_OPTIONS: GalleryTag[] = ["CUT", "PERM", "COLOR", "TREATMENT", "SCALP", "STYLING", "ETC"];
+const PHOTO_TYPE_OPTIONS: GalleryPhotoType[] = ["BA", "MODEL", "PORTFOLIO"];
 
 const TAG_BADGE: Record<GalleryTag, string> = {
   CUT:       "bg-sky-100 text-sky-700",
@@ -26,6 +27,12 @@ const TAG_BADGE: Record<GalleryTag, string> = {
   SCALP:     "bg-teal-100 text-teal-700",
   STYLING:   "bg-pink-100 text-pink-700",
   ETC:       "bg-muted text-muted-foreground",
+};
+
+const PHOTO_TYPE_BADGE: Record<GalleryPhotoType, string> = {
+  BA:        "bg-blue-100 text-blue-700",
+  MODEL:     "bg-purple-100 text-purple-700",
+  PORTFOLIO: "bg-orange-100 text-orange-700",
 };
 
 function formatDate(iso: string) {
@@ -341,6 +348,7 @@ type FormState = {
   beforeImageUrl: string;
   designerName: string;
   tag: GalleryTag;
+  photoType: GalleryPhotoType;
   isPublished: boolean;
 };
 
@@ -351,6 +359,7 @@ const EMPTY_FORM: FormState = {
   beforeImageUrl: "",
   designerName: "",
   tag: "ETC",
+  photoType: "PORTFOLIO",
   isPublished: true,
 };
 
@@ -418,8 +427,20 @@ function GalleryFormDialog({
             </div>
           </div>
 
-          {/* 태그 + 디자이너명 */}
+          {/* 사진 유형 + 스타일 태그 */}
           <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-muted-foreground mb-1">사진 유형</label>
+              <select
+                value={form.photoType}
+                onChange={(e) => set("photoType", e.target.value as GalleryPhotoType)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {PHOTO_TYPE_OPTIONS.map((t) => (
+                  <option key={t} value={t}>{GALLERY_PHOTO_TYPE_LABEL[t]}</option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-xs font-medium text-muted-foreground mb-1">스타일 태그</label>
               <select
@@ -432,15 +453,17 @@ function GalleryFormDialog({
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1">디자이너명 (선택)</label>
-              <input
-                value={form.designerName}
-                onChange={(e) => set("designerName", e.target.value)}
-                placeholder="홍길동"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
+          </div>
+
+          {/* 디자이너명 */}
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1">디자이너명 (선택)</label>
+            <input
+              value={form.designerName}
+              onChange={(e) => set("designerName", e.target.value)}
+              placeholder="홍길동"
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
           </div>
 
           {/* 설명 */}
@@ -511,6 +534,7 @@ export default function GalleryManagementPage() {
         beforeImageUrl: form.beforeImageUrl || undefined,
         designerName: form.designerName || undefined,
         tag: form.tag,
+        photoType: form.photoType,
         isPublished: form.isPublished,
       },
       { onSuccess: () => setShowForm(false) }
@@ -529,6 +553,7 @@ export default function GalleryManagementPage() {
           beforeImageUrl: form.beforeImageUrl || undefined,
           designerName: form.designerName || undefined,
           tag: form.tag,
+          photoType: form.photoType,
           isPublished: form.isPublished,
         },
       },
@@ -603,11 +628,9 @@ export default function GalleryManagementPage() {
                         +{item.imageUrls.length - 1}
                       </span>
                     )}
-                    {item.beforeImageUrl && (
-                      <span className="absolute top-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
-                        B/A
-                      </span>
-                    )}
+                    <span className={`absolute top-2 left-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${PHOTO_TYPE_BADGE[item.photoType]}`}>
+                      {GALLERY_PHOTO_TYPE_LABEL[item.photoType]}
+                    </span>
                     <span className={`absolute top-2 right-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${TAG_BADGE[item.tag]}`}>
                       {GALLERY_TAG_LABEL[item.tag]}
                     </span>
@@ -684,6 +707,7 @@ export default function GalleryManagementPage() {
                 <tr className="border-b border-black/8 bg-muted/30 text-left text-xs text-muted-foreground">
                   <th className="px-4 py-3 w-16">이미지</th>
                   <th className="px-4 py-3">제목</th>
+                  <th className="px-4 py-3 w-24">유형</th>
                   <th className="px-4 py-3 w-24">태그</th>
                   <th className="px-4 py-3 w-24">디자이너</th>
                   <th className="px-4 py-3 w-20 text-center">공개</th>
@@ -708,6 +732,11 @@ export default function GalleryManagementPage() {
                     </td>
                     <td className="px-4 py-3 font-medium text-foreground max-w-[220px] truncate">
                       {item.title}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${PHOTO_TYPE_BADGE[item.photoType]}`}>
+                        {GALLERY_PHOTO_TYPE_LABEL[item.photoType]}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TAG_BADGE[item.tag]}`}>
@@ -796,6 +825,7 @@ export default function GalleryManagementPage() {
             beforeImageUrl: editTarget.beforeImageUrl ?? "",
             designerName: editTarget.designerName ?? "",
             tag: editTarget.tag,
+            photoType: editTarget.photoType,
             isPublished: editTarget.isPublished,
           }}
           onClose={() => setEditTarget(null)}

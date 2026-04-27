@@ -10,6 +10,14 @@ export const GALLERY_TAG_LABEL: Record<GalleryTag, string> = {
   ETC: "기타",
 };
 
+export type GalleryPhotoType = "BA" | "MODEL" | "PORTFOLIO";
+
+export const GALLERY_PHOTO_TYPE_LABEL: Record<GalleryPhotoType, string> = {
+  BA: "B/A",
+  MODEL: "모델",
+  PORTFOLIO: "포트폴리오",
+};
+
 export type GalleryItem = {
   id: number;
   title: string;
@@ -19,6 +27,7 @@ export type GalleryItem = {
   designerId?: number | null;
   designerName?: string | null;
   tag: GalleryTag;
+  photoType: GalleryPhotoType;
   isPublished: boolean;
   viewCount: number;
   createdAt: string;

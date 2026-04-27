@@ -1,6 +1,7 @@
 package com.cj.beautybook.gallery.presentation;
 
 import com.cj.beautybook.gallery.application.GalleryService;
+import com.cj.beautybook.gallery.domain.GalleryPhotoType;
 import com.cj.beautybook.gallery.domain.GalleryTag;
 import com.cj.beautybook.gallery.presentation.dto.GalleryCreateRequest;
 import com.cj.beautybook.gallery.presentation.dto.GalleryResponse;
@@ -37,12 +38,13 @@ public class GalleryController {
     @GetMapping("/api/gallery")
     public Page<GalleryResponse> listPublic(
             @RequestParam(required = false) GalleryTag tag,
+            @RequestParam(required = false) GalleryPhotoType photoType,
             @RequestParam(required = false) Long designerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Order.desc("createdAt")));
-        return galleryService.listPublic(tag, designerId, pageable);
+        return galleryService.listPublic(tag, photoType, designerId, pageable);
     }
 
     @GetMapping("/api/gallery/{id}")
