@@ -149,6 +149,7 @@ function BookingFlowPage() {
   const [appliedServiceQuery, setAppliedServiceQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | "all">("all");
   const [oneShotOpen, setOneShotOpen] = useState(false);
+  const [exhaustedToday, setExhaustedToday] = useState(false);
 
   // 서비스 목록에서 카테고리 추출 (중복 제거 + displayOrder 정렬)
   const categoryOptions = useMemo(() => {
@@ -203,13 +204,14 @@ function BookingFlowPage() {
     bookingFlowActions.hydrate();
   }, []);
 
-  // 오늘 슬롯이 전부 PAST이면 내일로 자동 이동
+  // 오늘 슬롯이 전부 PAST이면 내일로 자동 이동 + 오늘 버튼 비활성화
   useEffect(() => {
     if (slotsLoading || reservationSlots.length === 0) return;
     const today = formatDateInput(new Date());
     if (selectedDate !== today) return;
     const allPast = reservationSlots.every((s) => s.status === "PAST");
     if (allPast) {
+      setExhaustedToday(true);
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       bookingFlowActions.setSelectedDate(formatDateInput(tomorrow));
@@ -525,21 +527,33 @@ function BookingFlowPage() {
             >
               {/* 날짜 선택 */}
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
-                {dateOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => bookingFlowActions.setSelectedDate(option.value)}
-                    className={`rounded-xl border px-2 py-2.5 text-center transition-colors ${
-                      selectedDate === option.value
-                        ? "border-black/25 bg-primary text-primary-foreground"
-                        : "border-black/10 bg-background hover:bg-accent"
-                    }`}
-                  >
-                    <span className="block text-xs font-medium">{option.shortLabel}</span>
-                    <span className="mt-0.5 block text-[11px] opacity-70">{option.label}</span>
-                  </button>
-                ))}
+                {dateOptions.map((option) => {
+                  const isToday = option.value === formatDateInput(new Date());
+                  const isDisabled = isToday && exhaustedToday;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => bookingFlowActions.setSelectedDate(option.value)}
+                      className={`w-full rounded-xl border px-2 py-2 text-center transition-colors ${
+                        isDisabled
+                          ? "border-black/8 bg-black/[0.03] text-foreground/25 cursor-not-allowed"
+                          : selectedDate === option.value
+                          ? "border-black/25 bg-primary text-primary-foreground"
+                          : "border-black/10 bg-background hover:bg-accent"
+                      }`}
+                    >
+                      <span className="block text-xs font-medium">{option.shortLabel}</span>
+                      <span className="mt-0.5 block text-[11px] opacity-70">{option.label}</span>
+                      {isDisabled && (
+                        <span className="mt-1 block text-[9px] font-semibold uppercase tracking-wide text-foreground/30">
+                          영업종료
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* 슬롯 목록 */}
