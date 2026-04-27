@@ -23,7 +23,7 @@ import {
 import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { CSS } from "@dnd-kit/utilities";
 import * as Dialog from "@radix-ui/react-dialog";
-import * as Switch from "@radix-ui/react-switch";
+import { ToggleSwitch } from "@/shared/ui/ToggleSwitch";
 import * as Select from "@radix-ui/react-select";
 import { ChevronDown, X, UserCircle2, CalendarClock, LayoutList, LayoutGrid, Camera, GripVertical } from "lucide-react";
 import { RequireRole } from "@/widgets/guards/RequireRole";
@@ -566,14 +566,10 @@ function StaffAdminPage() {
                   <div className="grid gap-2 sm:grid-cols-[88px_minmax(0,1fr)] sm:items-center">
                     <label className="text-sm font-medium">활성 여부</label>
                     <div className="flex items-center gap-2">
-                      <Switch.Root
+                      <ToggleSwitch
                         checked={form.active}
                         onCheckedChange={(v) => setForm({ ...form, active: v })}
-                        className="relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full bg-muted data-[state=checked]:bg-primary"
-                      >
-                        <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
-                      </Switch.Root>
-                      <span className="text-sm text-muted-foreground">{form.active ? "ON" : "OFF"}</span>
+                      />
                     </div>
                   </div>
                 </div>
@@ -663,14 +659,11 @@ function StaffServiceAssignmentPanel({ staff }: { staff: StaffMember | null }) {
                   {service.active ? "예약 선택 가능" : "예약 선택 제외"}
                 </span>
               </span>
-              <Switch.Root
+              <ToggleSwitch
                 checked={service.active}
                 onCheckedChange={() => toggleService(service.beautyServiceId, service.active)}
                 disabled={replaceServicesMutation.isPending}
-                className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full bg-muted data-[state=checked]:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
-              </Switch.Root>
+              />
             </label>
           ))}
         </div>
@@ -892,13 +885,11 @@ function StaffDetailPanel({
       <div className="mb-4 space-y-2 text-sm">
         <div className="flex items-center gap-2">
           <span className="w-14 shrink-0 text-muted-foreground">활성</span>
-          <Switch.Root
+          <ToggleSwitch
             checked={staff.active}
+            onCheckedChange={() => {}}
             disabled
-            className="relative inline-flex h-5 w-9 cursor-not-allowed items-center rounded-full bg-muted data-[state=checked]:bg-primary"
-          >
-            <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
-          </Switch.Root>
+          />
         </div>
         {staff.introduction && (
           <div className="flex gap-2">
@@ -923,14 +914,11 @@ function StaffDetailPanel({
           <ul className="grid grid-cols-3 gap-x-4 gap-y-2">
             {services.map((svc) => (
               <li key={svc.beautyServiceId} className="flex items-center gap-2">
-                <Switch.Root
+                <ToggleSwitch
                   checked={svc.active}
                   onCheckedChange={() => toggleService(svc.beautyServiceId, svc.active)}
                   disabled={replaceServicesMutation.isPending}
-                  className="relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full bg-muted data-[state=checked]:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
-                </Switch.Root>
+                />
                 <span className={`text-sm ${svc.active ? "text-foreground" : "text-muted-foreground line-through"}`}>
                   {svc.beautyServiceName}
                 </span>
@@ -1021,13 +1009,10 @@ function StaffScheduleModal({ staff, onClose }: { staff: StaffMember; onClose: (
                 <span className="w-5 text-center text-sm font-medium text-muted-foreground">
                   {DAY_LABELS[row.dayOfWeek]}
                 </span>
-                <Switch.Root
+                <ToggleSwitch
                   checked={row.working}
                   onCheckedChange={(v) => updateRow(row.dayOfWeek, { working: v })}
-                  className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full bg-muted data-[state=checked]:bg-primary"
-                >
-                  <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
-                </Switch.Root>
+                />
                 {row.working ? (
                   <>
                     {/* 프리셋 칩 */}

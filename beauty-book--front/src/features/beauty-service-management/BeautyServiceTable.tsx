@@ -25,6 +25,7 @@ import { beautyServiceApi } from "@/entities/beauty-service/api/beautyServiceApi
 import type { BeautyService, BeautyServiceCategory, BeautyServiceTargetGender } from "@/entities/beauty-service/model/types";
 import { toast, toastError } from "@/shared/lib/toast";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { ToggleSwitch } from "@/shared/ui/ToggleSwitch";
 import { BeautyServiceFormDialog } from "./BeautyServiceFormDialog";
 import { ServiceImageDialog } from "@/shared/ui/ServiceImageDialog";
 
@@ -335,11 +336,13 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
                       key={service.id}
                       service={service}
                       selectedIds={selectedIds}
+                      visibilityLoading={visibilityMutation.isPending}
                       onToggleSelect={(id, checked) => {
                         const next = new Set(selectedIds);
                         checked ? next.add(id) : next.delete(id);
                         setSelectedIds(next);
                       }}
+                      onToggleVisible={() => visibilityMutation.mutate(service)}
                       onEdit={setFormTarget}
                       onDelete={setDeleteTarget}
                     />
@@ -414,13 +417,17 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
 function SortableServiceRow({
   service,
   selectedIds,
+  visibilityLoading,
   onToggleSelect,
+  onToggleVisible,
   onEdit,
   onDelete,
 }: {
   service: BeautyService;
   selectedIds: Set<number>;
+  visibilityLoading: boolean;
   onToggleSelect: (id: number, checked: boolean) => void;
+  onToggleVisible: () => void;
   onEdit: (service: BeautyService) => void;
   onDelete: (service: BeautyService) => void;
 }) {
@@ -467,7 +474,15 @@ function SortableServiceRow({
       <Td>{service.durationMinutes}분</Td>
       <Td>{Number(service.price).toLocaleString()}원</Td>
       <Td>{genderLabel(service.targetGender)}</Td>
-      <Td>{service.visible ? "노출" : "숨김"}</Td>
+      <Td>
+        <ToggleSwitch
+          checked={service.visible}
+          onCheckedChange={onToggleVisible}
+          loading={visibilityLoading}
+          labelOn="노출"
+          labelOff="숨김"
+        />
+      </Td>
       <Td className="text-right">
         <ServiceActions service={service} onEdit={onEdit} onDelete={onDelete} />
       </Td>
@@ -550,10 +565,12 @@ function SortableServiceCard({
               <p className="mt-1 font-mono text-xs text-muted-foreground">{service.code}</p>
             </div>
           </div>
-          <VisibilityToggle
-            service={service}
+          <ToggleSwitch
+            checked={service.visible}
+            onCheckedChange={onToggleVisibility}
             loading={visibilityLoading}
-            onToggle={onToggleVisibility}
+            labelOn="노출"
+            labelOff="숨김"
           />
         </div>
 
@@ -624,42 +641,6 @@ function ServiceActions({
   );
 }
 
-function VisibilityToggle({
-  service,
-  loading,
-  onToggle,
-}: {
-  service: BeautyService;
-  loading: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      disabled={loading}
-      className="inline-flex h-7 shrink-0 items-center gap-2 rounded-full border border-border bg-background px-2 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:bg-muted/40 disabled:opacity-60"
-      aria-pressed={service.visible}
-      aria-label={`${service.name} ${service.visible ? "숨김 처리" : "노출 처리"}`}
-      title={service.visible ? "노출 중" : "숨김"}
-    >
-      <span className={service.visible ? "text-foreground" : "text-muted-foreground"}>
-        {service.visible ? "노출" : "숨김"}
-      </span>
-      <span
-        className={`relative h-4 w-8 overflow-hidden rounded-full transition-colors ${
-          service.visible ? "bg-emerald-500" : "bg-muted-foreground/25"
-        }`}
-      >
-        <span
-          className={`absolute left-0.5 top-0.5 h-3 w-3 rounded-full bg-background shadow-sm transition-transform ${
-            service.visible ? "translate-x-4" : "translate-x-0"
-          }`}
-        />
-      </span>
-    </button>
-  );
-}
 
 function Th({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
   return <th className={`px-4 py-2.5 text-left text-xs font-medium text-muted-foreground ${className}`}>{children}</th>;

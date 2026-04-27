@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { userApi } from "@/entities/user/api/userApi";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { ToggleSwitch } from "@/shared/ui/ToggleSwitch";
 import { toast, toastError } from "@/shared/lib/toast";
 
 type Props = {
@@ -27,18 +28,13 @@ export function ActiveToggle({ userId, active }: Props) {
 
   return (
     <>
-      <button
-        type="button"
-        disabled={mutation.isPending}
-        onClick={() => setOpen(true)}
-        className={`rounded-md border px-2.5 py-1 text-xs font-medium disabled:opacity-60 transition-colors ${
-          active
-            ? "border-input hover:bg-accent"
-            : "border-destructive/50 text-destructive hover:bg-destructive/10"
-        }`}
-      >
-        {active ? "비활성화" : "활성화"}
-      </button>
+      <ToggleSwitch
+        checked={active}
+        onCheckedChange={() => setOpen(true)}
+        loading={mutation.isPending}
+        labelOn="활성"
+        labelOff="비활성"
+      />
       <ConfirmDialog
         open={open}
         title={active ? "비활성화하시겠습니까?" : "활성화하시겠습니까?"}
