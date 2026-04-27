@@ -16,5 +16,5 @@ public record CreateBlogPostRequest(
         BlogPostStatus status,
         boolean isPinned,
         Long categoryId,
-        List<Long> tagIds
+        List<String> tagNames
 ) {}

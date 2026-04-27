@@ -2,20 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Trash2, Pencil, Tag, FolderOpen } from "lucide-react";
+import { Plus, Trash2, Pencil, FolderOpen } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import {
   useAdminBlogPosts,
   useDeleteBlogPost,
-  useBlogTags,
-  useCreateBlogTag,
-  useDeleteBlogTag,
   useBlogCategories,
   useCreateBlogCategory,
   useDeleteBlogCategory,
 } from "@/entities/blog/model/useBlog";
-import { blogApi } from "@/entities/blog/api/blogApi";
 
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -24,98 +20,6 @@ function formatDate(iso: string) {
     day: "2-digit",
     timeZone: "Asia/Seoul",
   }).format(new Date(iso));
-}
-
-// ── 태그 관리 섹션 ─────────────────────────────────────────────────────────────
-
-function TagManagementSection() {
-  const { data: tags = [] } = useBlogTags();
-  const createTag = useCreateBlogTag();
-  const deleteTag = useDeleteBlogTag();
-
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-
-  const handleNameChange = async (value: string) => {
-    setName(value);
-    if (value.trim()) {
-      try {
-        const suggested = await blogApi.suggestSlug(value);
-        setSlug(suggested);
-      } catch {
-        // 무시
-      }
-    }
-  };
-
-  const handleCreate = () => {
-    if (!name.trim() || !slug.trim()) return;
-    createTag.mutate(
-      { name: name.trim(), slug: slug.trim() },
-      {
-        onSuccess: () => {
-          setName("");
-          setSlug("");
-        },
-      }
-    );
-  };
-
-  return (
-    <section className="rounded-2xl border border-black/10 bg-card p-6 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
-        <Tag className="h-4 w-4 text-muted-foreground" />
-        <h2 className="text-base font-semibold text-foreground">태그 관리</h2>
-      </div>
-
-      {/* 태그 목록 */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {tags.length === 0 ? (
-          <p className="text-xs text-muted-foreground">등록된 태그가 없습니다.</p>
-        ) : (
-          tags.map((tag) => (
-            <span
-              key={tag.id}
-              className="flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs"
-            >
-              {tag.name}
-              <span className="text-muted-foreground/50">({tag.slug})</span>
-              <button
-                onClick={() => deleteTag.mutate(tag.id)}
-                className="ml-0.5 text-muted-foreground/50 hover:text-destructive transition-colors"
-              >
-                ×
-              </button>
-            </span>
-          ))
-        )}
-      </div>
-
-      {/* 태그 추가 폼 */}
-      <div className="flex gap-2">
-        <input
-          value={name}
-          onChange={(e) => handleNameChange(e.target.value)}
-          placeholder="태그명 (예: 커트)"
-          className="h-9 flex-1 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-        <input
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-          placeholder="slug (예: cut)"
-          className="h-9 w-36 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-        <button
-          onClick={handleCreate}
-          disabled={createTag.isPending || !name.trim() || !slug.trim()}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          추가
-        </button>
-      </div>
-    </section>
-  );
 }
 
 // ── 카테고리 관리 섹션 ────────────────────────────────────────────────────────
@@ -317,7 +221,6 @@ export default function BlogManagementPage() {
       >
         <div className="space-y-6">
           <CategoryManagementSection />
-          <TagManagementSection />
           <PostListSection />
         </div>
       </AdminShell>

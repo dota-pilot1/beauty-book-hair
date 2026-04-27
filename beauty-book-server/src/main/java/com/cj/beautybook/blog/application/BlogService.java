@@ -89,7 +89,7 @@ public class BlogService {
         if (blogPostRepository.existsBySlug(req.slug())) {
             throw new BusinessException(ErrorCode.BLOG_POST_SLUG_DUPLICATE);
         }
-        Set<BlogTag> tags = resolveTagIds(req.tagIds());
+        Set<BlogTag> tags = resolveTagNames(req.tagNames());
         BlogCategory category = resolveCategory(req.categoryId());
         BlogPost post = BlogPost.create(
                 req.slug(), req.title(), req.content(), req.summary(),
@@ -118,8 +118,8 @@ public class BlogService {
                 req.isPinned() != null ? req.isPinned() : post.isPinned(),
                 category
         );
-        if (req.tagIds() != null) {
-            post.setTags(resolveTagIds(req.tagIds()));
+        if (req.tagNames() != null) {
+            post.setTags(resolveTagNames(req.tagNames()));
         }
         return BlogPostDetailResponse.from(blogPostRepository.save(post));
     }
@@ -177,9 +177,26 @@ public class BlogService {
         blogCategoryRepository.deleteById(id);
     }
 
-    private Set<BlogTag> resolveTagIds(List<Long> tagIds) {
-        if (tagIds == null || tagIds.isEmpty()) return new LinkedHashSet<>();
-        return new LinkedHashSet<>(blogTagRepository.findAllByIdIn(tagIds));
+    private Set<BlogTag> resolveTagNames(List<String> tagNames) {
+        if (tagNames == null || tagNames.isEmpty()) return new LinkedHashSet<>();
+        Set<BlogTag> result = new LinkedHashSet<>();
+        for (String rawName : tagNames) {
+            String name = rawName.trim();
+            if (name.isBlank()) continue;
+            BlogTag tag = blogTagRepository.findByName(name).orElseGet(() -> {
+                String slug = name.toLowerCase(Locale.ROOT)
+                        .replaceAll("[^a-z0-9가-힣]", "-")
+                        .replaceAll("-+", "-")
+                        .replaceAll("^-|-$", "");
+                if (slug.isBlank()) slug = "tag";
+                int i = 1;
+                String candidate = slug;
+                while (blogTagRepository.existsBySlug(candidate)) candidate = slug + "-" + (i++);
+                return blogTagRepository.save(BlogTag.create(name, candidate));
+            });
+            result.add(tag);
+        }
+        return result;
     }
 
     private BlogCategory resolveCategory(Long categoryId) {

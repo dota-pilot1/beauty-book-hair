@@ -3,13 +3,13 @@
 import { useRef, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ImagePlus, Loader2, ChevronLeft } from "lucide-react";
+import { ImagePlus, Loader2, ChevronLeft, X } from "lucide-react";
 import Link from "next/link";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { LexicalEditor } from "@/shared/ui/lexical/lexical-editor";
 import { uploadImage } from "@/shared/api/upload";
-import { useBlogTags, useUpdateBlogPost } from "@/entities/blog/model/useBlog";
+import { useUpdateBlogPost } from "@/entities/blog/model/useBlog";
 import { blogApi } from "@/entities/blog/api/blogApi";
 
 export default function BlogPostEditPage() {
@@ -17,7 +17,6 @@ export default function BlogPostEditPage() {
   const router = useRouter();
   const id = Number(params.id);
 
-  const { data: tags = [] } = useBlogTags();
   const updatePost = useUpdateBlogPost();
 
   const [title, setTitle] = useState("");
@@ -26,8 +25,8 @@ export default function BlogPostEditPage() {
   const [summary, setSummary] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [authorName, setAuthorName] = useState("");
-  const [, setStatus] = useState<"DRAFT" | "PUBLISHED">("DRAFT");
-  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [tagNames, setTagNames] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -43,7 +42,6 @@ export default function BlogPostEditPage() {
       setSummary(post.summary ?? "");
       setCoverImageUrl(post.coverImageUrl ?? "");
       setAuthorName(post.authorName ?? "");
-      setStatus(post.status);
       setLoaded(true);
     });
   }, [id]);
@@ -59,10 +57,21 @@ export default function BlogPostEditPage() {
     }
   };
 
-  const toggleTag = (tagId: number) => {
-    setSelectedTagIds((prev: number[]) =>
-      prev.includes(tagId) ? prev.filter((t: number) => t !== tagId) : [...prev, tagId]
-    );
+  const addTag = (value: string) => {
+    const trimmed = value.trim().replace(/,+$/, "").trim();
+    if (trimmed && !tagNames.includes(trimmed)) {
+      setTagNames((prev) => [...prev, trimmed]);
+    }
+    setTagInput("");
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addTag(tagInput);
+    } else if (e.key === "Backspace" && tagInput === "" && tagNames.length > 0) {
+      setTagNames((prev) => prev.slice(0, -1));
+    }
   };
 
   const handleSubmit = (submitStatus: "DRAFT" | "PUBLISHED") => {
@@ -78,7 +87,7 @@ export default function BlogPostEditPage() {
           coverImageUrl: coverImageUrl || undefined,
           authorName: authorName.trim() || undefined,
           status: submitStatus,
-          tagIds: selectedTagIds,
+          tagNames,
         },
       },
       { onSuccess: () => router.push("/blog-management") }
@@ -181,27 +190,29 @@ export default function BlogPostEditPage() {
             </div>
           </section>
 
-          {/* 태그 선택 */}
-          {tags.length > 0 && (
-            <section className="rounded-2xl border border-black/10 bg-card p-5 shadow-sm">
-              <p className="mb-3 text-sm font-medium text-foreground">태그</p>
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <button
-                    key={tag.id}
-                    onClick={() => toggleTag(tag.id)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      selectedTagIds.includes(tag.id)
-                        ? "bg-primary text-primary-foreground"
-                        : "border border-border text-muted-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {tag.name}
+          {/* 태그 입력 */}
+          <section className="rounded-2xl border border-black/10 bg-card p-5 shadow-sm">
+            <p className="mb-2 text-sm font-medium text-foreground">태그</p>
+            <p className="mb-3 text-xs text-muted-foreground">Enter 또는 쉼표로 추가</p>
+            <div className="flex flex-wrap gap-1.5 rounded-lg border border-input bg-background px-3 py-2 min-h-[42px] focus-within:ring-1 focus-within:ring-primary">
+              {tagNames.map((tag) => (
+                <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                  {tag}
+                  <button type="button" onClick={() => setTagNames((prev) => prev.filter((t) => t !== tag))} className="text-primary/60 hover:text-primary transition-colors">
+                    <X className="h-3 w-3" />
                   </button>
-                ))}
-              </div>
-            </section>
-          )}
+                </span>
+              ))}
+              <input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                onBlur={() => tagInput.trim() && addTag(tagInput)}
+                placeholder={tagNames.length === 0 ? "커트, 펌, 염색..." : ""}
+                className="flex-1 min-w-[80px] bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              />
+            </div>
+          </section>
 
           {/* 본문 에디터 */}
           <section className="rounded-2xl border border-black/10 bg-card shadow-sm overflow-hidden">

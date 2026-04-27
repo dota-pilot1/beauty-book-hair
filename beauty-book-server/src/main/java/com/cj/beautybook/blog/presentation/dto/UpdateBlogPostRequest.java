@@ -14,5 +14,5 @@ public record UpdateBlogPostRequest(
         BlogPostStatus status,
         Boolean isPinned,
         Long categoryId,
-        List<Long> tagIds
+        List<String> tagNames
 ) {}

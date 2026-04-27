@@ -11,7 +11,7 @@ export type CreateBlogPostBody = {
   authorName?: string;
   status: "DRAFT" | "PUBLISHED";
   isPinned?: boolean;
-  tagIds?: number[];
+  tagNames?: string[];
 };
 
 export type UpdateBlogPostBody = Partial<CreateBlogPostBody>;
