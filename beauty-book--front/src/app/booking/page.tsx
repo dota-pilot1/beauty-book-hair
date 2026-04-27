@@ -33,6 +33,20 @@ import {
 import { useCreateReservation } from "@/entities/reservation/model/useReservations";
 import { useBusinessHours } from "@/entities/schedule/model/useBusinessHours";
 
+function formatPhoneSuffix(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 4) return digits;
+  return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+}
+
+function toFullPhone(suffix: string) {
+  return suffix ? `010-${suffix}` : "";
+}
+
+function phoneSuffixFrom(full: string) {
+  return full.startsWith("010-") ? full.slice(4) : full.replace(/^010-?/, "");
+}
+
 const steps: Array<{
   key: BookingStepKey;
   title: string;
@@ -255,7 +269,7 @@ function BookingFlowPage() {
           selectedSlot={selectedStartAt ? selectedSlot : null}
           selectedNotice={selectedStartAt ? selectedNotice : null}
           phoneInput={phoneInput}
-          onPhoneChange={setPhoneInput}
+          onPhoneChange={(suffix) => setPhoneInput(toFullPhone(formatPhoneSuffix(suffix)))}
           isPending={createReservation.isPending}
           onReset={bookingFlowActions.reset}
           onRemoveService={(id) => bookingFlowActions.toggleService(id)}
@@ -1030,17 +1044,25 @@ function BookingStatusPanel({
               {selectedNotice}
             </p>
           ) : null}
-          <input
-            type="tel"
-            placeholder="연락처 (010-0000-0000)"
-            value={phoneInput}
-            onChange={(e) => onPhoneChange(e.target.value)}
-            className="mt-3 w-full rounded-xl border border-black/15 bg-white px-3 py-2 text-sm outline-none focus:border-primary"
-          />
+          <div className="mt-3 flex items-center overflow-hidden rounded-xl border border-black/15 bg-white focus-within:border-primary transition-colors">
+            <span className="shrink-0 border-r border-black/10 bg-black/[0.03] px-3 py-2 text-sm font-semibold text-foreground select-none">
+              010
+            </span>
+            <span className="shrink-0 px-1.5 text-sm text-foreground/30 select-none">-</span>
+            <input
+              type="tel"
+              inputMode="numeric"
+              placeholder="0000-0000"
+              maxLength={9}
+              value={phoneSuffixFrom(phoneInput)}
+              onChange={(e) => onPhoneChange(e.target.value)}
+              className="flex-1 bg-transparent py-2 pr-3 text-sm outline-none"
+            />
+          </div>
           <button
             type="button"
             onClick={onSubmit}
-            disabled={isPending || !phoneInput.trim()}
+            disabled={isPending || phoneInput.replace(/\D/g, "").length < 11}
             className="mt-2 w-full rounded-xl bg-primary py-2.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPending ? "요청 중..." : "예약 요청 보내기"}
@@ -1583,17 +1605,28 @@ function OneShotBookingDialog({
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
-                  <input
-                    type="tel"
-                    placeholder="연락처 (010-0000-0000)"
-                    value={phoneInput}
-                    onChange={(e) => setPhoneInput(e.target.value)}
-                    className="flex-1 rounded-full border border-black/15 bg-muted/30 px-4 py-2 text-sm outline-none focus:border-black/30"
-                  />
+                  <div className="flex flex-1 items-center overflow-hidden rounded-full border border-black/15 bg-muted/30 focus-within:border-black/30 transition-colors">
+                    <span className="shrink-0 border-r border-black/10 px-3 py-2 text-sm font-semibold text-foreground select-none">
+                      010
+                    </span>
+                    <span className="shrink-0 px-1.5 text-sm text-foreground/30 select-none">-</span>
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      placeholder="0000-0000"
+                      maxLength={9}
+                      value={phoneSuffixFrom(phoneInput)}
+                      onChange={(e) => {
+                        const suffix = formatPhoneSuffix(e.target.value);
+                        setPhoneInput(toFullPhone(suffix));
+                      }}
+                      className="flex-1 bg-transparent py-2 pr-3 text-sm outline-none"
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={() => onSubmit(phoneInput)}
-                    disabled={isPending || !phoneInput.trim()}
+                    disabled={isPending || phoneInput.replace(/\D/g, "").length < 11}
                     className="shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:bg-primary/90"
                   >
                     {isPending ? "요청 중..." : "예약 요청"}
