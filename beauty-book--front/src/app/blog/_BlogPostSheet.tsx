@@ -94,7 +94,7 @@ export function BlogPostSheet({ open, onOpenChange }: Props) {
     <Dialog.Root open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[96vw] max-w-7xl h-[92vh] bg-background rounded-2xl shadow-2xl flex flex-col overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[98vw] max-w-[1500px] h-[94vh] bg-background rounded-2xl shadow-2xl flex flex-col overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200">
 
           {/* 헤더 */}
           <div className="flex items-center justify-between border-b border-black/8 px-6 py-4 shrink-0">
@@ -118,7 +118,7 @@ export function BlogPostSheet({ open, onOpenChange }: Props) {
           <div className="flex flex-1 min-h-0">
 
             {/* 왼쪽 — 메타 정보 */}
-            <div className="w-[340px] shrink-0 flex flex-col border-r border-black/8 overflow-y-auto px-6 py-5 space-y-5">
+            <div className="w-[420px] shrink-0 flex flex-col border-r border-black/8 overflow-y-auto px-6 py-5 space-y-5">
 
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">제목 *</label>
