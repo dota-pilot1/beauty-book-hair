@@ -462,7 +462,7 @@ function BookingFlowPage() {
               ) : staffList.length === 0 ? (
                 <p className="text-sm text-muted-foreground">메인 시술을 진행할 수 있는 디자이너가 없습니다. 메인 시술을 변경해주세요.</p>
               ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {staffList.map((staff) => (
                     <DesignerCard
                       key={staff.id}
@@ -615,12 +615,12 @@ function DesignerCard({
       }`}
     >
       {/* 이미지 영역 */}
-      <div className="h-32 w-full bg-muted flex items-center justify-center overflow-hidden">
+      <div className="aspect-[4/3] w-full bg-muted flex items-center justify-center overflow-hidden">
         {staff.profileImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={staff.profileImageUrl} alt={staff.name} className="h-full w-full object-cover" />
         ) : (
-          <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-background text-xl font-bold text-foreground shadow-sm">
+          <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-background text-2xl font-bold text-foreground shadow-sm">
             {staff.name[0]}
           </span>
         )}
@@ -628,16 +628,16 @@ function DesignerCard({
 
       {/* 선택됨 배지 */}
       {selected && (
-        <span className="absolute top-2 right-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+        <span className="absolute top-2 right-2 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
           선택됨
         </span>
       )}
 
       {/* 정보 영역 */}
-      <div className="p-3">
-        <h3 className="font-semibold text-sm text-foreground">{staff.name}</h3>
+      <div className="p-4">
+        <h3 className="font-semibold text-[15px] text-foreground">{staff.name}</h3>
         {staff.introduction && (
-          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{staff.introduction}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-3">{staff.introduction}</p>
         )}
       </div>
     </button>
