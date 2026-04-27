@@ -42,7 +42,7 @@ function AuthorAvatar({ name }: { name: string }) {
 function BlogCard({ post }: { post: BlogPostSummary }) {
   return (
     <motion.div
-      whileHover={{ y: -3, boxShadow: "0 8px 24px -4px rgba(0,0,0,0.10)" }}
+      whileHover={{ y: -3, boxShadow: "0 12px 32px -4px rgba(0,0,0,0.25)" }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 400, damping: 28 }}
       className="h-full rounded-2xl overflow-hidden"
@@ -93,7 +93,7 @@ function BlogCard({ post }: { post: BlogPostSummary }) {
       </div>
 
       {/* 푸터 메타 */}
-      <div className="flex items-center gap-2.5 border-t border-black/6 px-5 py-3 text-xs text-muted-foreground bg-muted/20">
+      <div className="flex items-center gap-2.5 border-t border-black/6 px-5 py-3 text-xs text-muted-foreground bg-black/[0.04]">
         <AuthorAvatar name={post.authorName ?? "B"} />
         <span className="font-medium text-foreground/70">{post.authorName ?? "BeautyBook"}</span>
         <span className="text-muted-foreground/30">·</span>
