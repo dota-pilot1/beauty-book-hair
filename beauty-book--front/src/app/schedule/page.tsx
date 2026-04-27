@@ -7,6 +7,7 @@ import { RequireRole } from "@/widgets/guards/RequireRole";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { SelectInput } from "@/shared/ui/SelectInput";
 import { Toggle } from "@/shared/ui/Toggle";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/shared/ui/Tabs";
 import { api } from "@/shared/api/axios";
 import type { Reservation } from "@/entities/reservation/model/types";
 
@@ -129,34 +130,21 @@ export default function SchedulePage() {
         title="영업시간 관리"
         description="요일별 매장 영업시간을 설정하고, 특정 날짜의 예약 차단 시간을 관리합니다."
       >
-        <div className="mb-6 inline-flex gap-0.5 rounded-xl border border-border bg-muted/60 p-1.5">
-          {([
-            { key: "hours", label: "영업시간" },
-            { key: "blocked", label: "예약 차단 시간" },
-          ] as const).map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={[
-                "rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200",
-                tab === key
-                  ? "bg-background text-foreground shadow-md"
-                  : "text-foreground/60 hover:text-foreground hover:bg-background/40",
-              ].join(" ")}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "hours" | "blocked")}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="hours">영업시간</TabsTrigger>
+            <TabsTrigger value="blocked">예약 차단 시간</TabsTrigger>
+          </TabsList>
 
-        {tab === "hours" ? (
-          <div className="space-y-8">
+          <TabsContent value="hours" className="space-y-8">
             <BusinessHoursForm />
             <RecurringBlockedTimeSection />
-          </div>
-        ) : (
-          <BlockedTimeSection />
-        )}
+          </TabsContent>
+
+          <TabsContent value="blocked">
+            <BlockedTimeSection />
+          </TabsContent>
+        </Tabs>
       </AdminShell>
     </RequireRole>
   );
