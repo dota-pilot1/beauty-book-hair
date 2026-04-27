@@ -460,7 +460,7 @@ function BookingFlowPage() {
               ) : staffList.length === 0 ? (
                 <p className="text-sm text-muted-foreground">메인 시술을 진행할 수 있는 디자이너가 없습니다. 메인 시술을 변경해주세요.</p>
               ) : (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {staffList.map((staff) => (
                     <DesignerCard
                       key={staff.id}
@@ -606,29 +606,37 @@ function DesignerCard({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-2xl border p-4 text-left transition-colors ${
-        selected ? "border-black/25 bg-primary/10" : "border-black/12 bg-background hover:bg-accent"
+      className={`relative w-full rounded-2xl border overflow-hidden text-left transition-all ${
+        selected
+          ? "border-primary ring-2 ring-primary/30"
+          : "border-black/12 bg-background hover:border-black/20 hover:shadow-sm"
       }`}
     >
-      <div className="flex items-start gap-3">
-        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-foreground">
-          {staff.name[0]}
+      {/* 이미지 영역 */}
+      <div className="h-32 w-full bg-muted flex items-center justify-center overflow-hidden">
+        {staff.profileImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={staff.profileImageUrl} alt={staff.name} className="h-full w-full object-cover" />
+        ) : (
+          <span className="inline-flex h-14 w-14 items-center justify-center rounded-full bg-background text-xl font-bold text-foreground shadow-sm">
+            {staff.name[0]}
+          </span>
+        )}
+      </div>
+
+      {/* 선택됨 배지 */}
+      {selected && (
+        <span className="absolute top-2 right-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+          선택됨
         </span>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="text-base font-semibold text-foreground">{staff.name}</h3>
-            {selected && (
-              <span className="inline-flex shrink-0 rounded-full bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
-                선택됨
-              </span>
-            )}
-          </div>
-          {staff.introduction && (
-            <p className="mt-1 text-sm leading-5 text-muted-foreground line-clamp-2">
-              {staff.introduction}
-            </p>
-          )}
-        </div>
+      )}
+
+      {/* 정보 영역 */}
+      <div className="p-3">
+        <h3 className="font-semibold text-sm text-foreground">{staff.name}</h3>
+        {staff.introduction && (
+          <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{staff.introduction}</p>
+        )}
       </div>
     </button>
   );

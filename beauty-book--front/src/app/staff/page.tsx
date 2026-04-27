@@ -225,17 +225,18 @@ function StaffAdminPage() {
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex rounded-md border border-border overflow-hidden">
+              <div className="flex h-8 items-stretch rounded-md border border-border overflow-hidden">
                 <button
                   onClick={() => setViewMode("table")}
-                  className={`p-1.5 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
-                  title="테이블 뷰"
+                  className={`flex items-center px-2.5 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                  title="목록 뷰"
                 >
                   <LayoutList className="h-4 w-4" />
                 </button>
+                <div className="w-px bg-border" />
                 <button
                   onClick={() => setViewMode("card")}
-                  className={`p-1.5 transition-colors ${viewMode === "card" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                  className={`flex items-center px-2.5 transition-colors ${viewMode === "card" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
                   title="카드 뷰"
                 >
                   <LayoutGrid className="h-4 w-4" />
