@@ -69,7 +69,7 @@ export default function DesignersPage() {
         {isLoading ? (
           <div className={viewMode === "card" ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-4"}>
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="aspect-[3/4] w-full animate-pulse rounded-2xl bg-muted/50" />
+              <div key={i} className="h-64 w-full animate-pulse rounded-2xl bg-muted/50" />
             ))}
           </div>
         ) : designers.length === 0 ? (
@@ -128,7 +128,7 @@ export default function DesignersPage() {
                 <button
                   type="button"
                   onClick={() => setSelectedDesigner(designer)}
-                  className="relative aspect-[3/4] w-full bg-muted flex items-center justify-center overflow-hidden text-left"
+                  className="relative w-full h-64 bg-muted flex items-center justify-center overflow-hidden text-left"
                   aria-label={`${designer.name} 상세 보기`}
                 >
                   {designer.profileImageUrl ? (
