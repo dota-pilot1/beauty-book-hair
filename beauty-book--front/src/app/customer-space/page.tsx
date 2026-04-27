@@ -112,7 +112,7 @@ function WeeklyScheduleCard() {
         <table className="w-full min-w-[760px] table-fixed text-sm">
           <thead className="bg-muted/35">
             <tr>
-              <th className="w-24 px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
+              <th className="w-24 px-4 py-3 text-center text-xs font-semibold text-muted-foreground">
                 구분
               </th>
               {ALL_DAYS.map((day) => {
@@ -138,7 +138,7 @@ function WeeklyScheduleCard() {
           <tbody>
             <tr className="border-t border-black/8 bg-muted/15 transition-colors hover:bg-muted/25">
               <td className="px-4 py-3 text-xs font-semibold text-muted-foreground whitespace-nowrap">
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-center gap-1.5">
                   <Clock className="h-3 w-3" />
                   영업
                 </div>
@@ -173,7 +173,7 @@ function WeeklyScheduleCard() {
               schedules.map((staff, idx) => (
                 <tr key={staff.staffId} className={["border-t border-black/8 transition-colors hover:bg-muted/20", idx % 2 === 0 ? "" : "bg-muted/[0.07]"].join(" ")}>
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-center gap-1.5">
                       <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
                         {staff.staffName.slice(0, 1)}
                       </div>
