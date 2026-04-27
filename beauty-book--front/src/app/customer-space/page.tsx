@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   Clock,
+  CalendarDays,
   MessageCircleMore,
   Users,
 } from "lucide-react";
@@ -10,6 +12,8 @@ import { useQuery } from "@tanstack/react-query";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
 import { api } from "@/shared/api/axios";
+import { BusinessHoursDialog } from "@/features/customer-business-hours/ui/BusinessHoursDialog";
+import { StaffScheduleDialog } from "@/features/customer-staff-schedule/ui/StaffScheduleDialog";
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
 
@@ -216,28 +220,50 @@ function WeeklyScheduleCard() {
 // ── 페이지 ────────────────────────────────────────────────────────────────────
 
 export default function CustomerSpacePage() {
+  const [businessHoursOpen, setBusinessHoursOpen] = useState(false);
+  const [staffScheduleOpen, setStaffScheduleOpen] = useState(false);
+
   return (
-    <RequireAuth>
+    <>
+      <BusinessHoursDialog open={businessHoursOpen} onClose={() => setBusinessHoursOpen(false)} />
+      <StaffScheduleDialog open={staffScheduleOpen} onClose={() => setStaffScheduleOpen(false)} />
+      <RequireAuth>
       <CustomerShell
         eyebrow="Salon Intro"
         title="미용실 소개"
         description="매장 소개와 시술 정보를 확인하고, 바로 예약을 시작하거나 상담 채팅으로 일정 조율을 요청할 수 있습니다."
         showSidebarIntro={false}
         action={
-          <>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setBusinessHoursOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-black/20 bg-white px-4 py-2 text-sm font-medium text-foreground hover:bg-black/[0.03] transition-colors"
+            >
+              <Clock className="h-3.5 w-3.5" />
+              영업 시간
+            </button>
+            <button
+              type="button"
+              onClick={() => setStaffScheduleOpen(true)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-md border border-black/20 bg-white px-4 py-2 text-sm font-medium text-foreground hover:bg-black/[0.03] transition-colors"
+            >
+              <CalendarDays className="h-3.5 w-3.5" />
+              직원 스케쥴
+            </button>
             <Link
               href="/booking"
-              className="inline-flex items-center justify-center rounded-md bg-foreground px-5 py-2 text-sm font-semibold text-background hover:opacity-80 transition-opacity"
+              className="inline-flex items-center justify-center rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background hover:opacity-80 transition-opacity"
             >
-              예약하기
+              예약 하기
             </Link>
             <Link
               href="/reservations"
-              className="inline-flex items-center justify-center rounded-md border border-black/20 bg-white px-5 py-2 text-sm font-medium text-foreground hover:bg-black/[0.03] transition-colors"
+              className="inline-flex items-center justify-center rounded-md border border-black/20 bg-white px-4 py-2 text-sm font-medium text-foreground hover:bg-black/[0.03] transition-colors"
             >
               예약 현황
             </Link>
-          </>
+          </div>
         }
         aside={
           <div className="space-y-4">
@@ -276,5 +302,6 @@ export default function CustomerSpacePage() {
         <WeeklyScheduleCard />
       </CustomerShell>
     </RequireAuth>
+    </>
   );
 }
