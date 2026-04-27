@@ -158,6 +158,7 @@ function MyReservationsContent() {
                   key={r.id}
                   reservation={r}
                   onCancel={["REQUESTED", "CONFIRMED"].includes(r.status) ? () => handleCancel(r) : undefined}
+                  actionLabel={r.status === "REQUESTED" ? "삭제" : "취소"}
                   isPending={changeStatus.isPending || deleteReservation.isPending}
                 />
               ))}
@@ -172,10 +173,12 @@ function MyReservationsContent() {
 function ReservationRow({
   reservation: r,
   onCancel,
+  actionLabel = "취소",
   isPending,
 }: {
   reservation: Reservation;
   onCancel?: () => void;
+  actionLabel?: string;
   isPending: boolean;
 }) {
   const meta = STATUS_META[r.status];
@@ -209,7 +212,7 @@ function ReservationRow({
             onClick={onCancel}
             className="h-6 rounded border border-black/12 px-2 text-[11px] text-foreground/35 hover:border-black/25 hover:text-foreground/70 transition-colors disabled:opacity-30"
           >
-            취소
+            {actionLabel}
           </button>
         )}
         <span className={`inline-flex rounded px-2 py-0.5 text-[11px] font-medium ${meta.className}`}>
