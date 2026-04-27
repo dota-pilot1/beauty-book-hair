@@ -293,16 +293,16 @@ function StaffAdminPage() {
     >
       <section className="rounded-2xl border border-black/8 bg-card shadow-sm">
         <div className="p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex gap-2">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
               {(["ALL", "DESIGNER", "STAFF", "DESK"] as const).map((role) => (
                 <button
                   key={role}
                   onClick={() => setRoleFilter(role)}
-                  className={`rounded-md px-3 py-1 text-sm font-medium transition-colors ${
+                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
                     roleFilter === role
                       ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      : "bg-muted/70 text-muted-foreground hover:bg-muted"
                   }`}
                 >
                   {role === "ALL" ? "전체" : ROLE_LABELS[role]}
@@ -313,10 +313,10 @@ function StaffAdminPage() {
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex h-8 items-stretch rounded-md border border-border overflow-hidden">
+              <div className="flex h-9 items-stretch overflow-hidden rounded-lg border border-border bg-background">
                 <button
                   onClick={() => setViewMode("table")}
-                  className={`flex items-center px-2.5 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                  className={`flex items-center px-3 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
                   title="목록 뷰"
                 >
                   <LayoutList className="h-4 w-4" />
@@ -324,7 +324,7 @@ function StaffAdminPage() {
                 <div className="w-px bg-border" />
                 <button
                   onClick={() => setViewMode("card")}
-                  className={`flex items-center px-2.5 transition-colors ${viewMode === "card" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"}`}
+                  className={`flex items-center px-3 transition-colors ${viewMode === "card" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
                   title="카드 뷰"
                 >
                   <LayoutGrid className="h-4 w-4" />
@@ -332,7 +332,7 @@ function StaffAdminPage() {
               </div>
               <button
                 onClick={openCreate}
-                className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 + 직원 등록
               </button>
@@ -349,13 +349,13 @@ function StaffAdminPage() {
               >
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border text-left text-muted-foreground">
-                      <th className="w-16 pb-2 pr-4 font-medium">순서</th>
-                      <th className="pb-2 pr-4 font-medium">이름</th>
-                      <th className="pb-2 pr-4 font-medium">직무</th>
-                      <th className="pb-2 pr-4 font-medium">소개</th>
-                      <th className="pb-2 pr-4 font-medium">활성</th>
-                      <th className="pb-2 font-medium">관리</th>
+                    <tr className="border-b border-border/80 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      <th className="w-14 pb-3 pr-4 font-semibold">정렬</th>
+                      <th className="pb-3 pr-4 font-semibold">직원</th>
+                      <th className="pb-3 pr-4 font-semibold">직무</th>
+                      <th className="pb-3 pr-4 font-semibold">소개</th>
+                      <th className="pb-3 pr-4 font-semibold">상태</th>
+                      <th className="pb-3 font-semibold">관리</th>
                     </tr>
                   </thead>
                   <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
@@ -711,66 +711,65 @@ function SortableStaffRow({
         transition,
       }}
       onClick={() => onDetail(staff)}
-      className={`cursor-pointer border-b border-border/50 bg-card last:border-0 transition-colors hover:bg-muted/40 ${
-        selected ? "bg-muted/60" : ""
-      } ${isDragging ? "relative z-10 shadow-md" : ""}`}
+      className={`group cursor-pointer border-b border-border/40 bg-card last:border-0 transition-colors hover:bg-muted/35 ${
+        selected ? "bg-muted/50" : ""
+      } ${isDragging ? "relative z-10 shadow-lg" : ""}`}
     >
-      <td className="py-3 pr-4 text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex h-7 w-7 cursor-grab items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-accent active:cursor-grabbing"
-            aria-label={`${staff.name} 순서 변경`}
-            {...attributes}
-            {...listeners}
-          >
-            <GripVertical className="h-4 w-4" />
-          </button>
-          <span>{staff.displayOrder}</span>
-        </div>
+      <td className="py-3.5 pr-4 text-muted-foreground">
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex h-8 w-8 cursor-grab items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:border-primary/35 hover:bg-accent hover:text-foreground active:cursor-grabbing"
+          aria-label={`${staff.name} 순서 변경`}
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
       </td>
-      <td className="py-3 pr-4">
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+      <td className="py-3.5 pr-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border/60">
             {staff.profileImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={staff.profileImageUrl} alt={staff.name} className="h-8 w-8 object-cover" />
+              <img src={staff.profileImageUrl} alt={staff.name} className="h-full w-full object-cover" />
             ) : (
               <UserCircle2 className="h-5 w-5 text-muted-foreground" />
             )}
           </div>
-          <span className="font-medium">{staff.name}</span>
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-foreground">{staff.name}</p>
+            <p className="text-xs text-muted-foreground">드래그로 노출 순서 변경</p>
+          </div>
         </div>
       </td>
-      <td className="py-3 pr-4">
+      <td className="py-3.5 pr-4">
         <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[staff.role]}`}>
           {ROLE_LABELS[staff.role]}
         </span>
       </td>
-      <td className="max-w-[240px] truncate py-3 pr-4 text-muted-foreground">
+      <td className="max-w-[360px] truncate py-3.5 pr-4 text-muted-foreground">
         {staff.introduction ?? "-"}
       </td>
-      <td className="py-3 pr-4">
-        <Switch.Root
-          checked={staff.active}
-          disabled
-          className="relative inline-flex h-5 w-9 cursor-not-allowed items-center rounded-full bg-muted data-[state=checked]:bg-primary"
-        >
-          <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
-        </Switch.Root>
+      <td className="py-3.5 pr-4">
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+          staff.active ? "bg-emerald-50 text-emerald-700" : "bg-muted text-muted-foreground"
+        }`}>
+          <span className={`h-1.5 w-1.5 rounded-full ${staff.active ? "bg-emerald-500" : "bg-muted-foreground/50"}`} />
+          {staff.active ? "활성" : "비활성"}
+        </span>
       </td>
-      <td className="py-3">
+      <td className="py-3.5">
         <div className="flex gap-1">
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(staff); }}
-            className="rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+            className="rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
           >
             수정
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); onSchedule(staff); }}
-            className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+            className="flex items-center gap-1 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
           >
             <CalendarClock className="h-3 w-3" />
             스케쥴

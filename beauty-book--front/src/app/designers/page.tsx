@@ -10,6 +10,8 @@ import { staffApi } from "@/entities/staff/api/staffApi";
 import type { Staff } from "@/entities/staff/model/types";
 import { beautyServiceApi } from "@/entities/beauty-service/api/beautyServiceApi";
 import type { BeautyService } from "@/entities/beauty-service/model/types";
+import { reservationSlotApi } from "@/entities/reservation/api/reservationSlotApi";
+import type { ReservationSlot, ReservationSlotStatus } from "@/entities/reservation/model/types";
 
 export default function DesignersPage() {
   const [viewMode, setViewMode] = useState<"list" | "card">("card");
@@ -206,17 +208,17 @@ function DesignerDetailDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-8 py-8">
       <div className="flex h-[760px] max-h-[calc(100vh-96px)] w-[calc(100vw-96px)] max-w-6xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
-        <div className="flex h-24 shrink-0 items-center justify-between border-b border-border px-7 py-5">
+        <div className="flex h-[72px] shrink-0 items-center justify-between border-b border-border px-7 py-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
               Designer Profile
             </p>
-            <h2 className="mt-1 text-2xl font-semibold text-foreground">{designer.name}</h2>
+            <h2 className="mt-0.5 text-xl font-semibold text-foreground">{designer.name}</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
             aria-label="닫기"
           >
             <X className="h-4 w-4" />
@@ -264,7 +266,7 @@ function DesignerDetailDialog({
               ) : (
                 <DesignerReservationStatusPanel
                   designer={designer}
-                  serviceCount={availableServices.length}
+                  services={availableServices}
                   isLoading={servicesLoading}
                 />
               )}
@@ -370,40 +372,206 @@ function DesignerServicesPanel({
 
 function DesignerReservationStatusPanel({
   designer,
-  serviceCount,
+  services,
   isLoading,
 }: {
   designer: Staff;
-  serviceCount: number;
+  services: BeautyService[];
   isLoading: boolean;
 }) {
+  const [date, setDate] = useState(() => formatKoreaDate(new Date()));
+  const baseService = services[0] ?? null;
+
+  const { data: slots = [], isLoading: slotsLoading } = useQuery({
+    queryKey: ["designer-reservation-slots", designer.id, baseService?.id, date],
+    queryFn: () =>
+      reservationSlotApi.list({
+        beautyServiceIds: [baseService!.id],
+        date,
+        staffId: designer.id,
+      }),
+    enabled: !isLoading && baseService != null,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="h-full space-y-2 overflow-y-auto pr-1">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className="h-14 animate-pulse rounded-xl bg-muted/60" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!baseService) {
+    return (
+      <div className="rounded-2xl border border-border bg-background p-5 text-sm text-muted-foreground">
+        예약 가능한 시술이 없습니다.
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div className="rounded-2xl border border-border bg-background p-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <BadgeCheck className="h-4 w-4 text-primary" />
-          프로필 상태
-        </div>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {designer.active ? "예약 가능한 디자이너입니다." : "현재 비활성 상태입니다."}
+    <div className="flex h-full min-h-0 flex-col gap-3">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          {baseService.name} 기준
         </p>
+        <input
+          type="date"
+          value={date}
+          onChange={(event) => setDate(event.target.value)}
+          className="h-9 rounded-full border border-border bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+        />
       </div>
-      <div className="rounded-2xl border border-border bg-background p-4">
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-          <CalendarDays className="h-4 w-4 text-primary" />
-          예약 가능 범위
-        </div>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {isLoading ? "시술 연결 정보를 확인 중입니다." : `${serviceCount}개 시술 기준으로 예약을 진행할 수 있습니다.`}
-        </p>
-      </div>
-      <div className="rounded-2xl border border-border bg-background p-4 sm:col-span-2">
-        <h3 className="text-sm font-medium text-foreground">시간 확인</h3>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          실제 가능한 날짜와 시간은 예약 페이지에서 시술을 선택한 뒤 확인됩니다.
-          같은 디자이너라도 시술 시간에 따라 가능한 슬롯이 달라질 수 있습니다.
-        </p>
+
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+        {slotsLoading ? (
+          Array.from({ length: 10 }).map((_, index) => (
+            <div key={index} className="h-20 animate-pulse rounded-xl bg-muted/60" />
+          ))
+        ) : slots.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-background p-5 text-center text-sm text-muted-foreground sm:col-span-2">
+            해당 날짜에 표시할 예약 시간이 없습니다.
+          </div>
+        ) : (
+          slots.map((slot) => (
+            <ReservationSlotRow key={slot.slotId} slot={slot} />
+          ))
+        )}
       </div>
     </div>
   );
+}
+
+function ReservationSlotRow({ slot }: { slot: ReservationSlot }) {
+  const meta = SLOT_STATUS_META[slot.status];
+  const timeRange = formatSlotWindow(slot);
+  const treatmentRange = formatTreatmentWindow(slot);
+  const multiCell = slot.occupiedUnitCount > 1;
+
+  return (
+    <article className={`rounded-2xl border p-4 text-left ${meta.className}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs text-muted-foreground">{formatDateLabelFromIso(slot.startAt)}</p>
+          <h3 className="mt-1 text-base font-semibold text-foreground">{timeRange}</h3>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            시술 예상 {treatmentRange}
+          </p>
+          {multiCell ? (
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              약 {slot.durationMinutes}분 · {slot.occupiedUnitCount}칸 사용
+            </p>
+          ) : null}
+        </div>
+        <span className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-medium ${meta.badgeClassName}`}>
+          {meta.label}
+        </span>
+      </div>
+
+      <div className="mt-3 space-y-1">
+        {slot.status === "BLOCKED" && slot.reason ? (
+          <p className="text-sm text-muted-foreground">{compactBlockReason(slot.reason)}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">{meta.description}</p>
+        )}
+      </div>
+
+      <div className={`mt-3 grid gap-1 ${slot.occupiedUnitCount > 2 ? "grid-cols-3" : "grid-cols-2"}`}>
+        {Array.from({ length: Math.max(slot.occupiedUnitCount, 1) }).map((_, index) => (
+          <span
+            key={index}
+            className={`h-1.5 rounded-full ${slot.selectable ? "bg-emerald-300" : "bg-muted"}`}
+          />
+        ))}
+      </div>
+
+      {slot.availableStaff.length > 0 ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {slot.availableStaff.length}명 가능 · {slot.occupiedUnitCount}칸 점유
+        </p>
+      ) : null}
+    </article>
+  );
+}
+
+const SLOT_STATUS_META: Record<
+  ReservationSlotStatus,
+  { label: string; description: string; className: string; badgeClassName: string }
+> = {
+  AVAILABLE: {
+    label: "예약 요청 가능",
+    description: "선택 후 승인 요청을 보낼 수 있습니다.",
+    className: "border-black/12 bg-background hover:bg-accent",
+    badgeClassName: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+  },
+  REQUESTED: {
+    label: "요청 중",
+    description: "다른 고객이 승인 대기 중이에요.",
+    className: "border-amber-200 bg-amber-50/60 text-muted-foreground",
+    badgeClassName: "bg-amber-100 text-amber-800",
+  },
+  RESERVED: {
+    label: "예약됨",
+    description: "이미 예약된 시간이에요.",
+    className: "border-black/10 bg-muted/40 text-muted-foreground",
+    badgeClassName: "bg-muted text-muted-foreground",
+  },
+  BLOCKED: {
+    label: "예약 불가",
+    description: "이 시간엔 예약이 어려워요.",
+    className: "border-black/10 bg-muted/30 text-muted-foreground",
+    badgeClassName: "bg-muted text-muted-foreground",
+  },
+  PAST: {
+    label: "지난 시간",
+    description: "지나간 시간이에요.",
+    className: "border-black/6 bg-muted/20 text-muted-foreground/50 opacity-50",
+    badgeClassName: "bg-muted/60 text-muted-foreground/60",
+  },
+};
+
+function formatKoreaDate(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+function formatDateLabelFromIso(value: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+    timeZone: "Asia/Seoul",
+  }).format(new Date(value));
+}
+
+function formatSlotWindow(slot: ReservationSlot) {
+  const start = new Date(slot.startAt);
+  const end = new Date(start.getTime() + slot.unitMinutes * 60 * 1000);
+  const formatter = new Intl.DateTimeFormat("ko-KR", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Seoul",
+  });
+  return `${formatter.format(start)} ~ ${formatter.format(end)}`;
+}
+
+function formatTreatmentWindow(slot: ReservationSlot) {
+  const formatter = new Intl.DateTimeFormat("ko-KR", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Seoul",
+  });
+  return `${formatter.format(new Date(slot.startAt))} ~ ${formatter.format(new Date(slot.endAt))}`;
+}
+
+function compactBlockReason(reason: string) {
+  return reason.split(" · ")[0] || reason;
 }

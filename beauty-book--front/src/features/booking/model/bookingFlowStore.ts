@@ -181,6 +181,7 @@ export const bookingFlowActions = {
       selectedSlot: "선택 전",
       selectedSlotAvailableDesigners: [],
       selectedOccupiedUnitCount: 0,
+      selectedNotice: null,
     });
   },
 

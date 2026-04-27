@@ -110,6 +110,7 @@ function BookingFlowPage() {
     selectedStartAt,
     selectedEndAt,
     selectedSlot,
+    selectedNotice,
   } = useBookingFlow();
 
   const { data: services = [], isLoading: servicesLoading } = useVisibleBeautyServices("booking");
@@ -252,6 +253,7 @@ function BookingFlowPage() {
           totalPrice={totalPrice}
           selectedDesigner={selectedDesignerId ? selectedDesigner : null}
           selectedSlot={selectedStartAt ? selectedSlot : null}
+          selectedNotice={selectedStartAt ? selectedNotice : null}
           phoneInput={phoneInput}
           onPhoneChange={setPhoneInput}
           isPending={createReservation.isPending}
@@ -890,6 +892,7 @@ function BookingStatusPanel({
   totalPrice,
   selectedDesigner,
   selectedSlot,
+  selectedNotice,
   phoneInput,
   onPhoneChange,
   isPending,
@@ -904,6 +907,7 @@ function BookingStatusPanel({
   totalPrice: number;
   selectedDesigner: string | null;
   selectedSlot: string | null;
+  selectedNotice: string | null;
   phoneInput: string;
   onPhoneChange: (v: string) => void;
   isPending: boolean;
@@ -1021,6 +1025,11 @@ function BookingStatusPanel({
           <p className="mt-1 text-sm text-emerald-900">
             {selectedDesigner} · {selectedSlot}
           </p>
+          {selectedNotice ? (
+            <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+              {selectedNotice}
+            </p>
+          ) : null}
           <input
             type="tel"
             placeholder="연락처 (010-0000-0000)"
@@ -1120,14 +1129,9 @@ function SlotSelectableCard({
           <>
             <p className="text-sm text-muted-foreground">{meta.description}</p>
             {designerNames && <p className="text-sm text-muted-foreground">{designerNames}</p>}
-            {slot.notice && (
-              <p className="rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-700 ring-1 ring-amber-200">
-                {slot.notice}
-              </p>
-            )}
           </>
         ) : slot.status === "BLOCKED" ? (
-          <p className="text-sm text-muted-foreground">{slot.reason}</p>
+          <p className="text-sm text-muted-foreground">{compactBlockReason(slot.reason)}</p>
         ) : (
           <p className="text-sm text-muted-foreground">{meta.description}</p>
         )}
@@ -1225,6 +1229,10 @@ function formatTimeRangeFromIso(startAt: string | null, endAt: string | null) {
   return `${formatter.format(new Date(startAt))} ~ ${formatter.format(new Date(endAt))}`;
 }
 
+function compactBlockReason(reason: string) {
+  return reason.split(" · ")[0] || reason;
+}
+
 // ─── 원샷 예약 다이어로그 ───────────────────────────────────────────
 
 const ONE_SHOT_STEPS = ["시술 선택", "디자이너 선택", "날짜·시간 선택", "예약 요청"] as const;
@@ -1298,8 +1306,6 @@ function OneShotBookingDialog({
       return s.name.toLowerCase().includes(q) || (s.description ?? "").toLowerCase().includes(q);
     });
   }, [services, query, catFilter]);
-
-  const allDone = selectedServiceIds.length > 0 && !!selectedDesignerId && !!selectedStartAt;
 
   function handleDesignerClick(id: number, name: string) {
     bookingFlowActions.setSelectedDesigner(id, name);
@@ -1563,12 +1569,12 @@ function OneShotBookingDialog({
                       <span className="shrink-0">{totalDuration}분 / {totalPrice.toLocaleString()}원</span>
                     </div>
                   </div>
-                  {selectedNotice && (
-                    <span className="shrink-0 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 ring-1 ring-amber-200">
-                      {selectedNotice}
-                    </span>
-                  )}
                 </div>
+                {selectedNotice ? (
+                  <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                    {selectedNotice}
+                  </p>
+                ) : null}
                 <div className="flex gap-2">
                   <button
                     type="button"
