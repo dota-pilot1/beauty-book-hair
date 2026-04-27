@@ -340,7 +340,7 @@ public class ReservationSlotService {
         String start = blockedTime.getStartAt().atZone(STORE_ZONE).toLocalTime().format(formatter);
         String end = blockedTime.getEndAt().atZone(STORE_ZONE).toLocalTime().format(formatter);
         String label = blockTypeLabel(blockedTime.getBlockType());
-        return "⚠️ " + label + "(" + start + "~" + end + ")이 시술 중에 포함돼요";
+        return "⚠️ " + label + "(" + start + "~" + end + ") 포함";
     }
 
     private String blockTypeLabel(BlockedTimeType type) {
