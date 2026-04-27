@@ -10,6 +10,7 @@ import {
   ChartNoAxesColumn,
   CircleUserRound,
   Clock,
+  GalleryHorizontal,
   LayoutDashboard,
   MonitorCog,
   Newspaper,
@@ -90,6 +91,12 @@ const adminNavItems: AdminNavItem[] = [
     label: "게시판 관리",
     description: "게시판과 게시글을 관리합니다.",
     icon: Newspaper,
+  },
+  {
+    href: "/gallery-management",
+    label: "갤러리 관리",
+    description: "시술 사진과 포트폴리오를 관리합니다.",
+    icon: GalleryHorizontal,
   },
   {
     href: "/booking",

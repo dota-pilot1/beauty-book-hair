@@ -2,10 +2,30 @@
 
 import { useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  type DragEndEvent,
+  type DraggableAttributes,
+  type DraggableSyntheticListeners,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { CSS } from "@dnd-kit/utilities";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Switch from "@radix-ui/react-switch";
 import * as Select from "@radix-ui/react-select";
-import { ChevronDown, X, UserCircle2, CalendarClock, LayoutList, LayoutGrid, Camera } from "lucide-react";
+import { ChevronDown, X, UserCircle2, CalendarClock, LayoutList, LayoutGrid, Camera, GripVertical } from "lucide-react";
 import { RequireRole } from "@/widgets/guards/RequireRole";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import { api } from "@/shared/api/axios";
@@ -39,6 +59,11 @@ type StaffForm = {
   introduction: string;
   active: boolean;
   displayOrder: number;
+};
+
+type SortableHandleProps = {
+  attributes: DraggableAttributes;
+  listeners: DraggableSyntheticListeners;
 };
 
 const ROLE_LABELS: Record<StaffRole, string> = {
@@ -112,6 +137,10 @@ export default function StaffPage() {
 
 function StaffAdminPage() {
   const qc = useQueryClient();
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
   const [roleFilter, setRoleFilter] = useState<StaffRole | "ALL">("ALL");
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
@@ -141,7 +170,66 @@ function StaffAdminPage() {
     },
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (nextStaffList: StaffMember[]) => {
+      const updates = nextStaffList
+        .map((staff, index) => ({ staff, displayOrder: index }))
+        .filter(({ staff, displayOrder }) => staff.displayOrder !== displayOrder);
+
+      await Promise.all(
+        updates.map(({ staff, displayOrder }) =>
+          staffApi.update(staff.id, {
+            name: staff.name,
+            role: staff.role,
+            profileImageUrl: staff.profileImageUrl ?? "",
+            introduction: staff.introduction ?? "",
+            active: staff.active,
+            displayOrder,
+          })
+        )
+      );
+    },
+    onMutate: async (nextStaffList) => {
+      await qc.cancelQueries({ queryKey: ["admin-staff"] });
+      const previous = qc.getQueryData<StaffMember[]>(["admin-staff"]);
+      qc.setQueryData<StaffMember[]>(
+        ["admin-staff"],
+        nextStaffList.map((staff, index) => ({ ...staff, displayOrder: index }))
+      );
+      return { previous };
+    },
+    onError: (_error, _nextStaffList, context) => {
+      if (context?.previous) qc.setQueryData(["admin-staff"], context.previous);
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["admin-staff"] }),
+  });
+
   const filtered = roleFilter === "ALL" ? staffList : staffList.filter((s) => s.role === roleFilter);
+  const sortableIds = filtered.map((staff) => staff.id);
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id || reorderMutation.isPending) return;
+
+    const oldIndex = filtered.findIndex((staff) => staff.id === active.id);
+    const newIndex = filtered.findIndex((staff) => staff.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    const reorderedFiltered = arrayMove(filtered, oldIndex, newIndex);
+    const reorderedIds = new Set(reorderedFiltered.map((staff) => staff.id));
+    let filteredCursor = 0;
+    const reorderedFull =
+      roleFilter === "ALL"
+        ? reorderedFiltered
+        : staffList.map((staff) => {
+            if (!reorderedIds.has(staff.id)) return staff;
+            const nextStaff = reorderedFiltered[filteredCursor];
+            filteredCursor += 1;
+            return nextStaff ?? staff;
+          });
+
+    reorderMutation.mutate(reorderedFull);
+  }
 
   function openCreate() {
     setEditTarget(null);
@@ -253,104 +341,76 @@ function StaffAdminPage() {
 
           {viewMode === "table" ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left text-muted-foreground">
-                    <th className="pb-2 pr-4 font-medium">순서</th>
-                    <th className="pb-2 pr-4 font-medium">이름</th>
-                    <th className="pb-2 pr-4 font-medium">직무</th>
-                    <th className="pb-2 pr-4 font-medium">소개</th>
-                    <th className="pb-2 pr-4 font-medium">활성</th>
-                    <th className="pb-2 font-medium">관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                        등록된 직원이 없습니다.
-                      </td>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                onDragEnd={handleDragEnd}
+              >
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-muted-foreground">
+                      <th className="w-16 pb-2 pr-4 font-medium">순서</th>
+                      <th className="pb-2 pr-4 font-medium">이름</th>
+                      <th className="pb-2 pr-4 font-medium">직무</th>
+                      <th className="pb-2 pr-4 font-medium">소개</th>
+                      <th className="pb-2 pr-4 font-medium">활성</th>
+                      <th className="pb-2 font-medium">관리</th>
                     </tr>
-                  ) : (
-                    filtered.map((staff) => (
-                      <tr
-                        key={staff.id}
-                        onClick={() => { setSelectedStaff(staff); setDetailOpen(true); }}
-                        className={`cursor-pointer border-b border-border/50 last:border-0 transition-colors hover:bg-muted/40 ${
-                          selectedStaff?.id === staff.id ? "bg-muted/60" : ""
-                        }`}
-                      >
-                        <td className="py-3 pr-4 text-muted-foreground">{staff.displayOrder}</td>
-                        <td className="py-3 pr-4">
-                          <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center">
-                              {staff.profileImageUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={staff.profileImageUrl} alt={staff.name} className="h-8 w-8 object-cover" />
-                              ) : (
-                                <UserCircle2 className="h-5 w-5 text-muted-foreground" />
-                              )}
-                            </div>
-                            <span className="font-medium">{staff.name}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 pr-4">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[staff.role]}`}>
-                            {ROLE_LABELS[staff.role]}
-                          </span>
-                        </td>
-                        <td className="max-w-[240px] truncate py-3 pr-4 text-muted-foreground">
-                          {staff.introduction ?? "-"}
-                        </td>
-                        <td className="py-3 pr-4">
-                          <Switch.Root
-                            checked={staff.active}
-                            disabled
-                            className="relative inline-flex h-5 w-9 cursor-not-allowed items-center rounded-full bg-muted data-[state=checked]:bg-primary"
-                          >
-                            <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
-                          </Switch.Root>
-                        </td>
-                        <td className="py-3">
-                          <div className="flex gap-1">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); openEdit(staff); }}
-                              className="rounded border border-border px-2 py-1 text-xs hover:bg-muted"
-                            >
-                              수정
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setScheduleTarget(staff); setScheduleOpen(true); }}
-                              className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-muted"
-                            >
-                              <CalendarClock className="h-3 w-3" />
-                              스케쥴
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+                  <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+                    <tbody>
+                      {filtered.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                            등록된 직원이 없습니다.
+                          </td>
+                        </tr>
+                      ) : (
+                        filtered.map((staff) => (
+                          <SortableStaffRow
+                            key={staff.id}
+                            staff={staff}
+                            selected={selectedStaff?.id === staff.id}
+                            disabled={reorderMutation.isPending}
+                            onDetail={(s) => { setSelectedStaff(s); setDetailOpen(true); }}
+                            onEdit={openEdit}
+                            onSchedule={(s) => { setScheduleTarget(s); setScheduleOpen(true); }}
+                          />
+                        ))
+                      )}
+                    </tbody>
+                  </SortableContext>
+                </table>
+              </DndContext>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {filtered.length === 0 ? (
-                <p className="col-span-full py-8 text-center text-sm text-muted-foreground">등록된 직원이 없습니다.</p>
-              ) : (
-                filtered.map((staff) => (
-                  <StaffCard
-                    key={staff.id}
-                    staff={staff}
-                    onEdit={openEdit}
-                    onSchedule={(s) => { setScheduleTarget(s); setScheduleOpen(true); }}
-                    onDetail={(s) => { setSelectedStaff(s); setDetailOpen(true); }}
-                    onImageUpdated={() => qc.invalidateQueries({ queryKey: ["admin-staff"] })}
-                  />
-                ))
-              )}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              modifiers={[restrictToParentElement]}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                  {filtered.length === 0 ? (
+                    <p className="col-span-full py-8 text-center text-sm text-muted-foreground">등록된 직원이 없습니다.</p>
+                  ) : (
+                    filtered.map((staff) => (
+                      <SortableStaffCard
+                        key={staff.id}
+                        staff={staff}
+                        disabled={reorderMutation.isPending}
+                        onEdit={openEdit}
+                        onSchedule={(s) => { setScheduleTarget(s); setScheduleOpen(true); }}
+                        onDetail={(s) => { setSelectedStaff(s); setDetailOpen(true); }}
+                        onImageUpdated={() => qc.invalidateQueries({ queryKey: ["admin-staff"] })}
+                      />
+                    ))
+                  )}
+                </div>
+              </SortableContext>
+            </DndContext>
           )}
         </div>
       </section>
@@ -392,8 +452,8 @@ function StaffAdminPage() {
       <Dialog.Root open={dialogOpen} onOpenChange={(open) => !open && closeDialog()}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg border border-border bg-background p-6 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-2rem)] max-w-6xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-lg">
+            <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-5">
               <Dialog.Title className="text-base font-semibold">
                 {editTarget ? "직원 수정" : "직원 등록"}
               </Dialog.Title>
@@ -402,123 +462,127 @@ function StaffAdminPage() {
               </Dialog.Close>
             </div>
 
-            <div className="grid gap-4">
-              <div className="grid gap-1.5">
-                <label className="text-sm font-medium">이름 *</label>
-                <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="예) 하린"
-                  className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-
-              <div className="grid gap-1.5">
-                <label className="text-sm font-medium">직무 *</label>
-                <Select.Root
-                  value={form.role}
-                  onValueChange={(v) => setForm({ ...form, role: v as StaffRole })}
-                >
-                  <Select.Trigger className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30">
-                    <Select.Value />
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </Select.Trigger>
-                  <Select.Portal>
-                    <Select.Content className="z-50 rounded-md border border-border bg-background shadow-md">
-                      <Select.Viewport className="p-1">
-                        {(["DESIGNER", "STAFF", "DESK"] as StaffRole[]).map((r) => (
-                          <Select.Item
-                            key={r}
-                            value={r}
-                            className="cursor-pointer rounded px-3 py-1.5 text-sm outline-none hover:bg-muted focus:bg-muted"
-                          >
-                            <Select.ItemText>{ROLE_LABELS[r]}</Select.ItemText>
-                          </Select.Item>
-                        ))}
-                      </Select.Viewport>
-                    </Select.Content>
-                  </Select.Portal>
-                </Select.Root>
-              </div>
-
-              <div className="grid gap-1.5">
-                <label className="text-sm font-medium">소개</label>
-                <input
-                  value={form.introduction}
-                  onChange={(e) => setForm({ ...form, introduction: e.target.value })}
-                  placeholder="짧은 소개 문구"
-                  className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                />
-              </div>
-
-              <div className="grid gap-1.5">
-                <label className="text-sm font-medium">프로필 이미지</label>
-                <div className="flex items-center gap-3">
-                  <div className="h-16 w-16 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border">
-                    {form.profileImageUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={form.profileImageUrl} alt="preview" className="h-16 w-16 object-cover" />
-                    ) : (
-                      <UserCircle2 className="h-9 w-9 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1.5 flex-1 min-w-0">
-                    <input
-                      ref={imageInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFormImageUpload}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => imageInputRef.current?.click()}
-                      disabled={imageUploading}
-                      className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted disabled:opacity-50"
-                    >
-                      <Camera className="h-3.5 w-3.5" />
-                      {imageUploading ? "업로드 중..." : "이미지 선택"}
-                    </button>
-                    {form.profileImageUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setForm((prev) => ({ ...prev, profileImageUrl: "" }))}
-                        className="text-xs text-muted-foreground hover:text-destructive text-left"
-                      >
-                        이미지 제거
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="grid gap-1.5">
-                  <label className="text-sm font-medium">노출 순서</label>
+            <div className="grid min-h-0 flex-1 gap-0 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_560px]">
+              <div className="grid gap-4 p-6">
+                <div className="grid gap-2 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center">
+                  <label className="text-sm font-medium">이름 *</label>
                   <input
-                    type="number"
-                    value={form.displayOrder}
-                    onChange={(e) => setForm({ ...form, displayOrder: Number(e.target.value) })}
+                    value={form.name}
+                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    placeholder="예) 하린"
                     className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">활성 여부</label>
-                  <div className="flex items-center gap-2 pt-1">
-                    <Switch.Root
-                      checked={form.active}
-                      onCheckedChange={(v) => setForm({ ...form, active: v })}
-                      className="relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full bg-muted data-[state=checked]:bg-primary"
-                    >
-                      <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
-                    </Switch.Root>
-                    <span className="text-sm text-muted-foreground">{form.active ? "ON" : "OFF"}</span>
+
+                <div className="grid gap-2 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center">
+                  <label className="text-sm font-medium">직무 *</label>
+                  <Select.Root
+                    value={form.role}
+                    onValueChange={(v) => setForm({ ...form, role: v as StaffRole })}
+                  >
+                    <Select.Trigger className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30">
+                      <Select.Value />
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </Select.Trigger>
+                    <Select.Portal>
+                      <Select.Content className="z-50 rounded-md border border-border bg-background shadow-md">
+                        <Select.Viewport className="p-1">
+                          {(["DESIGNER", "STAFF", "DESK"] as StaffRole[]).map((r) => (
+                            <Select.Item
+                              key={r}
+                              value={r}
+                              className="cursor-pointer rounded px-3 py-1.5 text-sm outline-none hover:bg-muted focus:bg-muted"
+                            >
+                              <Select.ItemText>{ROLE_LABELS[r]}</Select.ItemText>
+                            </Select.Item>
+                          ))}
+                        </Select.Viewport>
+                      </Select.Content>
+                    </Select.Portal>
+                  </Select.Root>
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center">
+                  <label className="text-sm font-medium">소개</label>
+                  <input
+                    value={form.introduction}
+                    onChange={(e) => setForm({ ...form, introduction: e.target.value })}
+                    placeholder="짧은 소개 문구"
+                    className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                  />
+                </div>
+
+                <div className="grid gap-2 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-start">
+                  <label className="pt-2 text-sm font-medium">프로필 이미지</label>
+                  <div className="flex items-center gap-3">
+                    <div className="h-16 w-16 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border">
+                      {form.profileImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={form.profileImageUrl} alt="preview" className="h-16 w-16 object-cover" />
+                      ) : (
+                        <UserCircle2 className="h-9 w-9 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFormImageUpload}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => imageInputRef.current?.click()}
+                        disabled={imageUploading}
+                        className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted disabled:opacity-50"
+                      >
+                        <Camera className="h-3.5 w-3.5" />
+                        {imageUploading ? "업로드 중..." : "이미지 선택"}
+                      </button>
+                      {form.profileImageUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setForm((prev) => ({ ...prev, profileImageUrl: "" }))}
+                          className="text-xs text-muted-foreground hover:text-destructive text-left"
+                        >
+                          이미지 제거
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-2 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-center">
+                    <label className="text-sm font-medium">노출 순서</label>
+                    <input
+                      type="number"
+                      value={form.displayOrder}
+                      onChange={(e) => setForm({ ...form, displayOrder: Number(e.target.value) })}
+                      className="rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <div className="grid gap-2 sm:grid-cols-[88px_minmax(0,1fr)] sm:items-center">
+                    <label className="text-sm font-medium">활성 여부</label>
+                    <div className="flex items-center gap-2">
+                      <Switch.Root
+                        checked={form.active}
+                        onCheckedChange={(v) => setForm({ ...form, active: v })}
+                        className="relative inline-flex h-5 w-9 cursor-pointer items-center rounded-full bg-muted data-[state=checked]:bg-primary"
+                      >
+                        <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
+                      </Switch.Root>
+                      <span className="text-sm text-muted-foreground">{form.active ? "ON" : "OFF"}</span>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              <StaffServiceAssignmentPanel staff={editTarget} />
             </div>
 
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="flex shrink-0 justify-end gap-2 border-t border-border px-6 py-4">
               <button onClick={closeDialog} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-muted">
                 취소
               </button>
@@ -534,6 +598,231 @@ function StaffAdminPage() {
         </Dialog.Portal>
       </Dialog.Root>
     </AdminShell>
+  );
+}
+
+function StaffServiceAssignmentPanel({ staff }: { staff: StaffMember | null }) {
+  const qc = useQueryClient();
+  const { data: services = [], isLoading } = useQuery({
+    queryKey: ["admin-staff-services", staff?.id],
+    queryFn: () => staffApi.listServices(staff!.id),
+    enabled: staff != null,
+  });
+
+  const replaceServicesMutation = useMutation({
+    mutationFn: (ids: number[]) => staffApi.replaceServices(staff!.id, ids),
+    onSuccess: () => {
+      if (staff) qc.invalidateQueries({ queryKey: ["admin-staff-services", staff.id] });
+    },
+  });
+
+  function toggleService(beautyServiceId: number, currentActive: boolean) {
+    const next = services.map((service) =>
+      service.beautyServiceId === beautyServiceId
+        ? { ...service, active: !currentActive }
+        : service
+    );
+    replaceServicesMutation.mutate(next.filter((service) => service.active).map((service) => service.beautyServiceId));
+  }
+
+  return (
+    <aside className="border-t border-border bg-muted/25 p-6 lg:border-l lg:border-t-0">
+      <div className="mb-4">
+        <p className="text-base font-semibold text-foreground">시술 가능 정보</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          오른쪽에서 직원이 담당 가능한 시술을 바로 켜고 끌 수 있습니다.
+        </p>
+      </div>
+
+      {!staff ? (
+        <div className="rounded-2xl border border-border bg-background p-4 text-sm leading-6 text-muted-foreground">
+          직원 등록 후 수정 화면에서 가능한 시술을 연결할 수 있습니다.
+        </div>
+      ) : isLoading ? (
+        <div className="space-y-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="h-12 animate-pulse rounded-xl bg-background" />
+          ))}
+        </div>
+      ) : services.length === 0 ? (
+        <div className="rounded-2xl border border-border bg-background p-4 text-sm leading-6 text-muted-foreground">
+          연결 가능한 시술 항목이 없습니다. 먼저 시술/가격 화면에서 시술을 등록해주세요.
+        </div>
+      ) : (
+        <div className="grid max-h-[52vh] grid-cols-1 gap-2 overflow-y-auto pr-1 xl:grid-cols-2">
+          {services.map((service) => (
+            <label
+              key={service.beautyServiceId}
+              className="flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-background px-3 py-2.5 transition-colors hover:bg-accent"
+            >
+              <span className="min-w-0">
+                <span className={`block truncate text-sm font-medium ${service.active ? "text-foreground" : "text-muted-foreground"}`}>
+                  {service.beautyServiceName}
+                </span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">
+                  {service.active ? "예약 선택 가능" : "예약 선택 제외"}
+                </span>
+              </span>
+              <Switch.Root
+                checked={service.active}
+                onCheckedChange={() => toggleService(service.beautyServiceId, service.active)}
+                disabled={replaceServicesMutation.isPending}
+                className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full bg-muted data-[state=checked]:bg-primary disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
+              </Switch.Root>
+            </label>
+          ))}
+        </div>
+      )}
+    </aside>
+  );
+}
+
+function SortableStaffRow({
+  staff,
+  selected,
+  disabled,
+  onDetail,
+  onEdit,
+  onSchedule,
+}: {
+  staff: StaffMember;
+  selected: boolean;
+  disabled: boolean;
+  onDetail: (s: StaffMember) => void;
+  onEdit: (s: StaffMember) => void;
+  onSchedule: (s: StaffMember) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: staff.id, disabled });
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      onClick={() => onDetail(staff)}
+      className={`cursor-pointer border-b border-border/50 bg-card last:border-0 transition-colors hover:bg-muted/40 ${
+        selected ? "bg-muted/60" : ""
+      } ${isDragging ? "relative z-10 shadow-md" : ""}`}
+    >
+      <td className="py-3 pr-4 text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex h-7 w-7 cursor-grab items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:bg-accent active:cursor-grabbing"
+            aria-label={`${staff.name} 순서 변경`}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <span>{staff.displayOrder}</span>
+        </div>
+      </td>
+      <td className="py-3 pr-4">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-8 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center">
+            {staff.profileImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={staff.profileImageUrl} alt={staff.name} className="h-8 w-8 object-cover" />
+            ) : (
+              <UserCircle2 className="h-5 w-5 text-muted-foreground" />
+            )}
+          </div>
+          <span className="font-medium">{staff.name}</span>
+        </div>
+      </td>
+      <td className="py-3 pr-4">
+        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[staff.role]}`}>
+          {ROLE_LABELS[staff.role]}
+        </span>
+      </td>
+      <td className="max-w-[240px] truncate py-3 pr-4 text-muted-foreground">
+        {staff.introduction ?? "-"}
+      </td>
+      <td className="py-3 pr-4">
+        <Switch.Root
+          checked={staff.active}
+          disabled
+          className="relative inline-flex h-5 w-9 cursor-not-allowed items-center rounded-full bg-muted data-[state=checked]:bg-primary"
+        >
+          <Switch.Thumb className="block h-4 w-4 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-4" />
+        </Switch.Root>
+      </td>
+      <td className="py-3">
+        <div className="flex gap-1">
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(staff); }}
+            className="rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+          >
+            수정
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onSchedule(staff); }}
+            className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-muted"
+          >
+            <CalendarClock className="h-3 w-3" />
+            스케쥴
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function SortableStaffCard({
+  staff,
+  disabled,
+  onEdit,
+  onSchedule,
+  onDetail,
+  onImageUpdated,
+}: {
+  staff: StaffMember;
+  disabled: boolean;
+  onEdit: (s: StaffMember) => void;
+  onSchedule: (s: StaffMember) => void;
+  onDetail: (s: StaffMember) => void;
+  onImageUpdated: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: staff.id, disabled });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+      className={isDragging ? "relative z-10 opacity-90 shadow-md" : ""}
+    >
+      <StaffCard
+        staff={staff}
+        dragHandleProps={{ attributes, listeners }}
+        onEdit={onEdit}
+        onSchedule={onSchedule}
+        onDetail={onDetail}
+        onImageUpdated={onImageUpdated}
+      />
+    </div>
   );
 }
 
@@ -809,12 +1098,14 @@ function StaffScheduleModal({ staff, onClose }: { staff: StaffMember; onClose: (
 
 function StaffCard({
   staff,
+  dragHandleProps,
   onEdit,
   onSchedule,
   onDetail,
   onImageUpdated,
 }: {
   staff: StaffMember;
+  dragHandleProps?: SortableHandleProps;
   onEdit: (s: StaffMember) => void;
   onSchedule: (s: StaffMember) => void;
   onDetail: (s: StaffMember) => void;
@@ -873,6 +1164,18 @@ function StaffCard({
           </button>
         </div>
         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+        {dragHandleProps ? (
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="absolute left-2 top-2 z-10 inline-flex h-8 w-8 cursor-grab items-center justify-center rounded-md border border-white/70 bg-white/90 text-muted-foreground shadow-sm hover:bg-white active:cursor-grabbing"
+            aria-label={`${staff.name} 순서 변경`}
+            {...dragHandleProps.attributes}
+            {...dragHandleProps.listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+        ) : null}
         {/* 활성 표시 */}
         <div className={`absolute top-2 right-2 h-2.5 w-2.5 rounded-full border-2 border-card ${staff.active ? "bg-green-500" : "bg-muted-foreground/50"}`} title={staff.active ? "활성" : "비활성"} />
       </div>

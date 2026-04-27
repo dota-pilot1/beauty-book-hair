@@ -87,8 +87,8 @@ function WeeklyScheduleCard() {
   const isOpenToday = todayItem && !todayItem.closed;
 
   return (
-    <div className="rounded-xl border border-black/10 bg-card p-4 shadow-sm">
-      <div className="mb-3 flex items-center justify-between">
+    <div className="rounded-2xl border border-black/10 bg-card p-4 shadow-sm">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <div className="inline-flex rounded-lg bg-primary/10 p-2 text-primary">
             <Users className="h-4 w-4" />
@@ -108,11 +108,11 @@ function WeeklyScheduleCard() {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 bg-white">
+      <div className="overflow-x-auto rounded-xl border border-black/10 bg-white">
         <table className="w-full min-w-[760px] table-fixed text-sm">
           <thead className="bg-muted/35">
             <tr>
-              <th className="w-24 px-3 py-2 text-left text-xs font-semibold text-muted-foreground">
+              <th className="w-24 px-4 py-3 text-left text-xs font-semibold text-muted-foreground">
                 구분
               </th>
               {ALL_DAYS.map((day) => {
@@ -121,7 +121,7 @@ function WeeklyScheduleCard() {
                   <th
                     key={day}
                     className={[
-                      "px-2 py-2 text-center text-xs font-semibold",
+                      "px-2 py-3 text-center text-xs font-semibold",
                       isToday ? "bg-primary/8 shadow-[inset_0_-1px_0_rgb(17_24_39_/_0.14)]" : "",
                       day === "SATURDAY" ? "text-blue-600" : "",
                       day === "SUNDAY" ? "text-rose-600" : "",
@@ -137,7 +137,7 @@ function WeeklyScheduleCard() {
           </thead>
           <tbody>
             <tr className="border-t border-black/8 bg-muted/15 transition-colors hover:bg-muted/25">
-              <td className="px-3 py-2 text-xs font-semibold text-muted-foreground whitespace-nowrap">
+              <td className="px-4 py-3 text-xs font-semibold text-muted-foreground whitespace-nowrap">
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-3 w-3" />
                   영업
@@ -147,7 +147,7 @@ function WeeklyScheduleCard() {
                 const item = hours.find((h) => h.dayOfWeek === day);
                 const isToday = day === today;
                 return (
-                  <td key={day} className={["px-1.5 py-2 text-center", isToday ? "bg-primary/8" : ""].join(" ")}>
+                  <td key={day} className={["px-2 py-3 text-center", isToday ? "bg-primary/8" : ""].join(" ")}>
                     {!item ? (
                       <span className="inline-flex h-6 min-w-10 items-center justify-center rounded-md bg-muted/40 px-2 text-xs text-muted-foreground/40">—</span>
                     ) : item.closed ? (
@@ -165,14 +165,14 @@ function WeeklyScheduleCard() {
 
             {schedules.length === 0 ? (
               <tr className="border-t border-black/8">
-                <td colSpan={8} className="px-3 py-4 text-center text-xs text-muted-foreground">
+                <td colSpan={8} className="px-4 py-5 text-center text-xs text-muted-foreground">
                   디자이너 스케쥴 정보가 없습니다.
                 </td>
               </tr>
             ) : (
               schedules.map((staff, idx) => (
                 <tr key={staff.staffId} className={["border-t border-black/8 transition-colors hover:bg-muted/20", idx % 2 === 0 ? "" : "bg-muted/[0.07]"].join(" ")}>
-                  <td className="px-3 py-2">
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
                       <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
                         {staff.staffName.slice(0, 1)}
@@ -185,7 +185,7 @@ function WeeklyScheduleCard() {
                     const isToday = day === today;
                     const works = w?.working ?? false;
                     return (
-                      <td key={day} className={["px-1.5 py-2 text-center", isToday ? "bg-primary/8" : ""].join(" ")}>
+                      <td key={day} className={["px-2 py-3 text-center", isToday ? "bg-primary/8" : ""].join(" ")}>
                         {works ? (
                           <span className={[
                             "inline-flex h-6 min-w-11 items-center justify-center rounded-md px-2 text-[11px] font-semibold",
@@ -236,8 +236,8 @@ export default function CustomerSpacePage() {
           </>
         }
         aside={
-          <div className="space-y-4">
-            <article className="rounded-2xl border border-black/12 bg-card p-6 shadow-sm">
+          <div className="space-y-5">
+            <article className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <MessageCircleMore className="h-4 w-4" />
                 상담 채팅 바로가기
@@ -247,18 +247,18 @@ export default function CustomerSpacePage() {
                   원하는 시간대가 없으면 채팅으로 일정 조율을 요청할 수 있습니다.
                 </div>
                 <div className="rounded-2xl border border-black/10 bg-background p-3 text-sm text-foreground">
-                  "주말 오전 타임이 비면 알려주세요."
+                  &quot;주말 오전 타임이 비면 알려주세요.&quot;
                 </div>
                 <button
                   type="button"
-                  className="inline-flex items-center justify-center rounded-full border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+                  className="inline-flex items-center justify-center rounded-full border border-black/15 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
                 >
                   채팅 열기
                 </button>
               </div>
             </article>
 
-            <article className="rounded-2xl border border-black/12 bg-card p-6 shadow-sm">
+            <article className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
               <h2 className="text-sm font-medium text-foreground">최근 예약 상태</h2>
               <div className="mt-4 rounded-2xl border border-black/10 bg-background p-4">
                 <p className="text-xs text-muted-foreground">가장 최근 예약</p>

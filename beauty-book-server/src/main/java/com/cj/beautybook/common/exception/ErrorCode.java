@@ -49,6 +49,7 @@ public enum ErrorCode {
     BOARD_CONFIG_NOT_FOUND(HttpStatus.NOT_FOUND, "BOARD_001", "게시판 설정을 찾을 수 없습니다."),
     BOARD_CONFIG_CODE_DUPLICATE(HttpStatus.CONFLICT, "BOARD_002", "이미 존재하는 게시판 코드입니다."),
     BOARD_POST_NOT_FOUND(HttpStatus.NOT_FOUND, "BOARD_003", "게시글을 찾을 수 없습니다."),
+    GALLERY_NOT_FOUND(HttpStatus.NOT_FOUND, "GAL_001", "갤러리 항목을 찾을 수 없습니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_999", "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;

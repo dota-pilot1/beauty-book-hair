@@ -8,6 +8,7 @@ import {
   CalendarCheck2,
   CalendarDays,
   CircleUserRound,
+  GalleryHorizontal,
   LayoutGrid,
   PanelLeftClose,
   PanelLeftOpen,
@@ -66,6 +67,12 @@ const customerNavItems: CustomerNavItem[] = [
     icon: UserRoundSearch,
   },
   {
+    href: "/gallery",
+    label: "갤러리",
+    description: "시술 전후 사진 보기",
+    icon: GalleryHorizontal,
+  },
+  {
     href: "/my-info",
     label: "내 정보",
     description: "프로필 및 요청사항 관리",
@@ -97,7 +104,7 @@ export function CustomerShell({
   };
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-[1760px] gap-3 px-2 py-5 lg:px-3">
+    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-[1760px] gap-4 px-3 py-5 lg:px-5">
       <aside
         className={cn(
           "hidden shrink-0 lg:block transition-[width] duration-300 ease-in-out",
@@ -107,7 +114,7 @@ export function CustomerShell({
         <div
           className={cn(
             "sticky top-20 rounded-3xl border border-black/12 bg-sidebar/90 shadow-sm transition-[padding] duration-300",
-            collapsed ? "p-2 flex flex-col items-center gap-1.5" : "p-4"
+            collapsed ? "p-2 flex flex-col items-center gap-2" : "p-4"
           )}
         >
           {showSidebarIntro ? (
@@ -116,10 +123,10 @@ export function CustomerShell({
                 href="/customer-space"
                 title="미용실 소개"
                 className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border bg-background/70 transition-colors",
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
                   normalizedPathname === "/customer-space"
-                    ? "border-primary/30 bg-primary/10 text-primary"
-                    : "border-black/10 text-muted-foreground hover:bg-accent hover:text-foreground"
+                    ? "border-primary bg-primary text-primary-foreground shadow-md"
+                    : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
               >
                 <LayoutGrid className="h-5 w-5" />
@@ -128,19 +135,40 @@ export function CustomerShell({
               <Link
                 href="/customer-space"
                 className={cn(
-                  "block rounded-2xl border bg-background/70 p-4 transition-colors",
+                  "block rounded-2xl border p-4 transition-colors",
                   normalizedPathname === "/customer-space"
-                    ? "border-primary/30 bg-primary/10 text-primary"
-                    : "border-black/12 hover:border-primary/20 hover:bg-primary/5"
+                    ? "border-primary bg-primary text-primary-foreground shadow-md"
+                    : "border-border bg-card hover:border-primary hover:bg-accent"
                 )}
               >
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                <p
+                  className={cn(
+                    "text-xs font-medium uppercase tracking-[0.16em]",
+                    normalizedPathname === "/customer-space"
+                      ? "text-primary-foreground/70"
+                      : "text-muted-foreground"
+                  )}
+                >
                   BeautyBook
                 </p>
-                <h2 className="mt-3 text-xl font-semibold tracking-tight text-foreground">
+                <h2
+                  className={cn(
+                    "mt-3 text-xl font-semibold tracking-tight",
+                    normalizedPathname === "/customer-space"
+                      ? "text-primary-foreground"
+                      : "text-foreground"
+                  )}
+                >
                   미용실 소개
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                <p
+                  className={cn(
+                    "mt-2 text-sm leading-6",
+                    normalizedPathname === "/customer-space"
+                      ? "text-primary-foreground/70"
+                      : "text-muted-foreground"
+                  )}
+                >
                   매장 분위기와 시술 정보를 보고 예약을 시작합니다.
                 </p>
               </Link>
@@ -152,7 +180,7 @@ export function CustomerShell({
           <nav
             className={cn(
               "flex flex-col",
-              collapsed ? "items-center gap-1.5 w-full" : "w-full gap-2",
+              collapsed ? "items-center gap-2 w-full" : "w-full gap-2.5",
               showSidebarIntro ? "mt-4" : "mt-0",
               collapsed && "mt-0"
             )}
@@ -178,30 +206,28 @@ export function CustomerShell({
                       ? cn(
                           "h-10 w-10 justify-center rounded-xl",
                           active
-                            ? "border-primary/30 bg-primary/10 text-primary shadow-sm"
-                            : "border-black/8 bg-background/50 text-muted-foreground hover:bg-accent hover:text-foreground"
+                            ? "border-primary bg-primary text-primary-foreground shadow-md"
+                            : "border-border bg-card text-muted-foreground hover:border-primary hover:bg-accent hover:text-foreground"
                         )
                       : cn(
                           "w-full rounded-2xl px-3 py-3",
                           active
-                            ? "border-black/15 bg-foreground/[0.07] shadow-sm"
-                            : "border-black/10 bg-background/60 hover:border-black/20 hover:bg-accent"
+                            ? "border-primary bg-primary text-primary-foreground shadow-md"
+                            : "border-border bg-card hover:border-primary hover:bg-accent"
                         )
                   )}
                 >
-                  {/* 활성 인디케이터 바 */}
-                  <span
-                    className={cn(
-                      "absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full bg-primary transition-opacity duration-200",
-                      active && !collapsed ? "opacity-100 delay-[200ms]" : "opacity-0"
-                    )}
-                  />
                   <span
                     className={cn(
                       "shrink-0 inline-flex rounded-xl transition-all duration-300",
                       collapsed
                         ? "p-0"
-                        : cn("p-2", active ? "bg-foreground/10 text-foreground" : "bg-muted/70 text-muted-foreground")
+                        : cn(
+                            "p-2",
+                            active
+                              ? "bg-primary-foreground/15 text-primary-foreground"
+                              : "bg-muted text-muted-foreground"
+                          )
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -214,8 +240,20 @@ export function CustomerShell({
                         : "w-full opacity-100 duration-200 delay-[160ms] ml-3"
                     )}
                   >
-                    <p className={cn("whitespace-nowrap text-sm font-semibold", active ? "text-foreground" : "text-foreground/80")}>{label}</p>
-                    <p className={cn("mt-0.5 whitespace-nowrap text-xs", active ? "text-foreground/60" : "text-muted-foreground")}>
+                    <p
+                      className={cn(
+                        "whitespace-nowrap text-sm font-semibold",
+                        active ? "text-primary-foreground" : "text-foreground"
+                      )}
+                    >
+                      {label}
+                    </p>
+                    <p
+                      className={cn(
+                        "mt-0.5 whitespace-nowrap text-xs",
+                        active ? "text-primary-foreground/70" : "text-muted-foreground"
+                      )}
+                    >
                       {desc}
                     </p>
                   </div>
@@ -233,7 +271,7 @@ export function CustomerShell({
               "shrink-0 flex items-center overflow-hidden border border-black/10 bg-background/60 text-xs text-muted-foreground transition-all duration-300 ease-in-out hover:border-black/20 hover:bg-accent",
               collapsed
                 ? "h-10 w-10 justify-center rounded-xl"
-                : "mt-3 w-full rounded-2xl px-3 py-2"
+                : "mt-3 w-full rounded-2xl px-3 py-2.5"
             )}
           >
             <div className="relative h-4 w-4 shrink-0">
@@ -264,10 +302,10 @@ export function CustomerShell({
         </div>
       </aside>
 
-      <section className="min-w-0 flex-1 space-y-6">
+      <section className="min-w-0 flex-1 space-y-5">
         {showHeader ? (
-          <header className="rounded-3xl border border-black/10 bg-background p-6 shadow-sm">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <header className="rounded-3xl border border-black/10 bg-background p-5 shadow-sm">
+            <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
               <div className="max-w-3xl">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                   {eyebrow}
@@ -279,12 +317,12 @@ export function CustomerShell({
                   {description}
                 </p>
               </div>
-              {action ? <div className="flex shrink-0 items-center gap-3">{action}</div> : null}
+              {action ? <div className="flex shrink-0 flex-wrap items-center gap-3">{action}</div> : null}
             </div>
           </header>
         ) : null}
 
-        <div className={cn("grid gap-4", aside ? "xl:grid-cols-[minmax(0,1fr)_360px]" : "grid-cols-1")}>
+        <div className={cn("grid gap-5", aside ? "xl:grid-cols-[minmax(0,1fr)_360px]" : "grid-cols-1")}>
           <div className="min-w-0">{children}</div>
           {aside ? (
             <div className="min-w-0">

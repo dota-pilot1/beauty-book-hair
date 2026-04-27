@@ -1,30 +1,43 @@
 # Gradle
 .gradle/
 build/
-twilio-callcenter-server/.gradle/
-twilio-callcenter-server/build/
+beauty-book-server/.gradle/
+beauty-book-server/build/
 
 # IntelliJ
 .idea/
 *.iml
 
 # Node
-twilio-callcenter-front/node_modules/
-twilio-callcenter-front/.next/
+node_modules/
+.next/
+out/
+beauty-book--front/node_modules/
+beauty-book--front/.next/
+beauty-book--front/out/
 
-# Env (민감 정보 — 절대 커밋 금지)
+# Env
 .env
 .env.local
 .env*.local
-twilio-callcenter-server/.env
+beauty-book-server/.env
+beauty-book--front/.env*
 
 # Secrets / keys
 *.pem
 *.key
 배포 가이드/
 
+# Documentation (Exclude from background indexing to prevent hangs)
+docs-for-*/
+개발 관리/
+구현 계획 관리/
+페이지 구조 설계/
+프로젝트 컨셉 설명/
+
 # Claude Code
 .claude/
 
 # OS
 .DS_Store
+
