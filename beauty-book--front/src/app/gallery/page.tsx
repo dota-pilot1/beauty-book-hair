@@ -175,30 +175,34 @@ export default function GalleryPage() {
   const handleTagChange = (tag: GalleryTag | "ALL") => { setSelectedTag(tag); setPage(0); };
 
   return (
-    <CustomerShell
-      eyebrow="Gallery"
-      title="헤어 갤러리"
-      description="디자이너들의 헤어 작품을 확인해보세요."
-    >
-      {/* 1차: 사진 유형 탭 토글 */}
-      <div className="mb-5 flex rounded-2xl border border-black/10 bg-muted/40 p-1 gap-1">
+    <CustomerShell showHeader={false} title="헤어 갤러리" description="">
+      {/* 컴팩트 헤더 */}
+      <div className="mb-4 flex items-end justify-between">
+        <div>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">Gallery</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-foreground">헤어 갤러리</h1>
+        </div>
+        <p className="hidden sm:block text-xs text-muted-foreground pb-0.5">디자이너들의 헤어 작품</p>
+      </div>
+
+      {/* 1차: 사진 유형 탭 — 언더라인 탭 스타일 */}
+      <div className="flex border-b border-border mb-4">
         {(["BA", "MODEL"] as GalleryPhotoType[]).map((pt) => {
           const cfg = PHOTO_TYPE_CONFIG[pt];
           const active = photoType === pt;
+          const accent = pt === "BA" ? "border-blue-500 text-blue-600" : "border-purple-500 text-purple-600";
           return (
             <button
               key={pt}
               onClick={() => handlePhotoTypeChange(pt)}
-              className={`flex-1 flex flex-col items-center justify-center rounded-xl py-3.5 transition-all duration-200 ${
+              className={`flex items-center gap-2 px-5 pb-3 pt-1 text-sm font-semibold border-b-2 transition-colors ${
                 active
-                  ? "bg-background shadow-sm border border-black/8"
-                  : "hover:bg-background/60"
+                  ? `${accent} -mb-px`
+                  : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span className={`text-base font-bold tracking-tight ${active ? "text-foreground" : "text-muted-foreground"}`}>
-                {cfg.label}
-              </span>
-              <span className={`mt-0.5 text-xs ${active ? "text-muted-foreground" : "text-muted-foreground/50"}`}>
+              {cfg.label}
+              <span className={`text-xs font-normal ${active ? "" : "text-muted-foreground/70"}`}>
                 {cfg.desc}
               </span>
             </button>
