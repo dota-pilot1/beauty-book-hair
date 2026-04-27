@@ -3,12 +3,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { galleryApi } from "../api/galleryApi";
 import type { GalleryCreateBody, GalleryUpdateBody } from "../api/galleryApi";
-import type { GalleryTag } from "./types";
+import type { GalleryPhotoType, GalleryTag } from "./types";
 
-export function usePublicGallery(tag?: GalleryTag, designerId?: number, page = 0) {
+export function usePublicGallery(tag?: GalleryTag, photoType?: GalleryPhotoType, designerId?: number, page = 0) {
   return useQuery({
-    queryKey: ["gallery-public", tag, designerId, page],
-    queryFn: () => galleryApi.listPublic({ tag, designerId, page, size: 12 }),
+    queryKey: ["gallery-public", tag, photoType, designerId, page],
+    queryFn: () => galleryApi.listPublic({ tag, photoType, designerId, page, size: 12 }),
   });
 }
 

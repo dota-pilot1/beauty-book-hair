@@ -1,6 +1,7 @@
 package com.cj.beautybook.gallery.presentation.dto;
 
 import com.cj.beautybook.gallery.domain.Gallery;
+import com.cj.beautybook.gallery.domain.GalleryPhotoType;
 import com.cj.beautybook.gallery.domain.GalleryTag;
 
 import java.time.Instant;
@@ -15,6 +16,7 @@ public record GalleryResponse(
         Long designerId,
         String designerName,
         GalleryTag tag,
+        GalleryPhotoType photoType,
         boolean isPublished,
         int viewCount,
         Instant createdAt
@@ -29,6 +31,7 @@ public record GalleryResponse(
                 g.getDesignerId(),
                 g.getDesignerName(),
                 g.getTag(),
+                g.getPhotoType(),
                 g.isPublished(),
                 g.getViewCount(),
                 g.getCreatedAt()

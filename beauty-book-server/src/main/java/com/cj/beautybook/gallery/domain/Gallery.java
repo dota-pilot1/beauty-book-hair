@@ -63,6 +63,10 @@ public class Gallery {
     @Column(nullable = false, length = 30)
     private GalleryTag tag = GalleryTag.ETC;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private GalleryPhotoType photoType = GalleryPhotoType.PORTFOLIO;
+
     @Column(nullable = false)
     private boolean isPublished = true;
 
@@ -88,6 +92,7 @@ public class Gallery {
             Long designerId,
             String designerName,
             GalleryTag tag,
+            GalleryPhotoType photoType,
             boolean isPublished
     ) {
         Gallery g = new Gallery();
@@ -98,6 +103,7 @@ public class Gallery {
         g.designerId = designerId;
         g.designerName = designerName;
         g.tag = tag != null ? tag : GalleryTag.ETC;
+        g.photoType = photoType != null ? photoType : GalleryPhotoType.PORTFOLIO;
         g.isPublished = isPublished;
         g.viewCount = 0;
         return g;
@@ -111,6 +117,7 @@ public class Gallery {
             Long designerId,
             String designerName,
             GalleryTag tag,
+            GalleryPhotoType photoType,
             boolean isPublished
     ) {
         this.title = title;
@@ -120,6 +127,7 @@ public class Gallery {
         this.designerId = designerId;
         this.designerName = designerName;
         this.tag = tag != null ? tag : GalleryTag.ETC;
+        this.photoType = photoType != null ? photoType : GalleryPhotoType.PORTFOLIO;
         this.isPublished = isPublished;
     }
 

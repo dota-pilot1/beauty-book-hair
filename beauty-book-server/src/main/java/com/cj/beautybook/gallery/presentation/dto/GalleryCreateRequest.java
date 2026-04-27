@@ -1,5 +1,6 @@
 package com.cj.beautybook.gallery.presentation.dto;
 
+import com.cj.beautybook.gallery.domain.GalleryPhotoType;
 import com.cj.beautybook.gallery.domain.GalleryTag;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -16,5 +17,6 @@ public record GalleryCreateRequest(
         Long designerId,
         String designerName,
         @NotNull GalleryTag tag,
+        @NotNull GalleryPhotoType photoType,
         boolean isPublished
 ) {}

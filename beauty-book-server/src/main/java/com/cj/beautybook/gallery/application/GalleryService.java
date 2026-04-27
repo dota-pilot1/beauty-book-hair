@@ -3,6 +3,7 @@ package com.cj.beautybook.gallery.application;
 import com.cj.beautybook.common.exception.BusinessException;
 import com.cj.beautybook.common.exception.ErrorCode;
 import com.cj.beautybook.gallery.domain.Gallery;
+import com.cj.beautybook.gallery.domain.GalleryPhotoType;
 import com.cj.beautybook.gallery.domain.GalleryTag;
 import com.cj.beautybook.gallery.infrastructure.GalleryRepository;
 import com.cj.beautybook.gallery.presentation.dto.GalleryCreateRequest;
@@ -23,20 +24,8 @@ public class GalleryService {
     // ===== 공개 =====
 
     @Transactional(readOnly = true)
-    public Page<GalleryResponse> listPublic(GalleryTag tag, Long designerId, Pageable pageable) {
-        if (tag != null && designerId != null) {
-            return galleryRepository.findByIsPublishedTrueAndTagAndDesignerId(tag, designerId, pageable)
-                    .map(GalleryResponse::from);
-        }
-        if (tag != null) {
-            return galleryRepository.findByIsPublishedTrueAndTag(tag, pageable)
-                    .map(GalleryResponse::from);
-        }
-        if (designerId != null) {
-            return galleryRepository.findByIsPublishedTrueAndDesignerId(designerId, pageable)
-                    .map(GalleryResponse::from);
-        }
-        return galleryRepository.findByIsPublishedTrue(pageable)
+    public Page<GalleryResponse> listPublic(GalleryTag tag, GalleryPhotoType photoType, Long designerId, Pageable pageable) {
+        return galleryRepository.findPublicWithFilters(tag, photoType, designerId, pageable)
                 .map(GalleryResponse::from);
     }
 
@@ -65,6 +54,7 @@ public class GalleryService {
                 req.designerId(),
                 req.designerName(),
                 req.tag(),
+                req.photoType(),
                 req.isPublished()
         );
         return GalleryResponse.from(galleryRepository.save(gallery));
@@ -82,6 +72,7 @@ public class GalleryService {
                 req.designerId(),
                 req.designerName(),
                 req.tag(),
+                req.photoType(),
                 req.isPublished()
         );
         return GalleryResponse.from(galleryRepository.save(gallery));
