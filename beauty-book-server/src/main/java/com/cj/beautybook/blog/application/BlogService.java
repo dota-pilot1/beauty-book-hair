@@ -1,13 +1,17 @@
 package com.cj.beautybook.blog.application;
 
+import com.cj.beautybook.blog.domain.BlogCategory;
 import com.cj.beautybook.blog.domain.BlogPost;
 import com.cj.beautybook.blog.domain.BlogPostStatus;
 import com.cj.beautybook.blog.domain.BlogTag;
+import com.cj.beautybook.blog.infrastructure.BlogCategoryRepository;
 import com.cj.beautybook.blog.infrastructure.BlogPostRepository;
 import com.cj.beautybook.blog.infrastructure.BlogTagRepository;
+import com.cj.beautybook.blog.presentation.dto.BlogCategoryResponse;
 import com.cj.beautybook.blog.presentation.dto.BlogPostDetailResponse;
 import com.cj.beautybook.blog.presentation.dto.BlogPostSummaryResponse;
 import com.cj.beautybook.blog.presentation.dto.BlogTagResponse;
+import com.cj.beautybook.blog.presentation.dto.CreateBlogCategoryRequest;
 import com.cj.beautybook.blog.presentation.dto.CreateBlogPostRequest;
 import com.cj.beautybook.blog.presentation.dto.CreateBlogTagRequest;
 import com.cj.beautybook.blog.presentation.dto.UpdateBlogPostRequest;
@@ -30,11 +34,17 @@ public class BlogService {
 
     private final BlogPostRepository blogPostRepository;
     private final BlogTagRepository blogTagRepository;
+    private final BlogCategoryRepository blogCategoryRepository;
 
     // ── 공개 API ────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
-    public Page<BlogPostSummaryResponse> listPublished(String tagSlug, Pageable pageable) {
+    public Page<BlogPostSummaryResponse> listPublished(String categorySlug, String tagSlug, Pageable pageable) {
+        if (categorySlug != null && !categorySlug.isBlank()) {
+            return blogPostRepository
+                    .findByStatusAndCategorySlug(BlogPostStatus.PUBLISHED, categorySlug, pageable)
+                    .map(BlogPostSummaryResponse::from);
+        }
         if (tagSlug != null && !tagSlug.isBlank()) {
             return blogPostRepository
                     .findByStatusAndTagSlug(BlogPostStatus.PUBLISHED, tagSlug, pageable)
@@ -43,6 +53,12 @@ public class BlogService {
         return blogPostRepository
                 .findByStatus(BlogPostStatus.PUBLISHED, pageable)
                 .map(BlogPostSummaryResponse::from);
+    }
+
+    @Transactional(readOnly = true)
+    public List<BlogCategoryResponse> listCategories() {
+        return blogCategoryRepository.findAllByOrderByDisplayOrderAsc()
+                .stream().map(BlogCategoryResponse::from).toList();
     }
 
     @Transactional
@@ -74,10 +90,11 @@ public class BlogService {
             throw new BusinessException(ErrorCode.BLOG_POST_SLUG_DUPLICATE);
         }
         Set<BlogTag> tags = resolveTagIds(req.tagIds());
+        BlogCategory category = resolveCategory(req.categoryId());
         BlogPost post = BlogPost.create(
                 req.slug(), req.title(), req.content(), req.summary(),
                 req.coverImageUrl(), req.authorStaffId(), req.authorName(),
-                req.status(), req.isPinned()
+                req.status(), req.isPinned(), category
         );
         post.setTags(tags);
         return BlogPostDetailResponse.from(blogPostRepository.save(post));
@@ -87,6 +104,9 @@ public class BlogService {
     public BlogPostDetailResponse updatePost(Long id, UpdateBlogPostRequest req) {
         BlogPost post = blogPostRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.BLOG_POST_NOT_FOUND));
+        BlogCategory category = req.categoryId() != null
+                ? resolveCategory(req.categoryId())
+                : post.getCategory();
         post.update(
                 req.title() != null ? req.title() : post.getTitle(),
                 req.content() != null ? req.content() : post.getContent(),
@@ -95,7 +115,8 @@ public class BlogService {
                 req.authorStaffId() != null ? req.authorStaffId() : post.getAuthorStaffId(),
                 req.authorName() != null ? req.authorName() : post.getAuthorName(),
                 req.status(),
-                req.isPinned() != null ? req.isPinned() : post.isPinned()
+                req.isPinned() != null ? req.isPinned() : post.isPinned(),
+                category
         );
         if (req.tagIds() != null) {
             post.setTags(resolveTagIds(req.tagIds()));
@@ -138,8 +159,32 @@ public class BlogService {
         return base + "-" + i;
     }
 
+    @Transactional
+    public BlogCategoryResponse createCategory(CreateBlogCategoryRequest req) {
+        if (blogCategoryRepository.existsBySlug(req.slug()) || blogCategoryRepository.existsByName(req.name())) {
+            throw new BusinessException(ErrorCode.BLOG_CATEGORY_DUPLICATE);
+        }
+        return BlogCategoryResponse.from(
+                blogCategoryRepository.save(BlogCategory.create(req.name(), req.slug(), req.displayOrder()))
+        );
+    }
+
+    @Transactional
+    public void deleteCategory(Long id) {
+        if (!blogCategoryRepository.existsById(id)) {
+            throw new BusinessException(ErrorCode.BLOG_CATEGORY_NOT_FOUND);
+        }
+        blogCategoryRepository.deleteById(id);
+    }
+
     private Set<BlogTag> resolveTagIds(List<Long> tagIds) {
         if (tagIds == null || tagIds.isEmpty()) return new LinkedHashSet<>();
         return new LinkedHashSet<>(blogTagRepository.findAllByIdIn(tagIds));
+    }
+
+    private BlogCategory resolveCategory(Long categoryId) {
+        if (categoryId == null) return null;
+        return blogCategoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BLOG_CATEGORY_NOT_FOUND));
     }
 }

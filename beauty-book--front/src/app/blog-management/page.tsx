@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Trash2, Pencil, Tag } from "lucide-react";
+import { Plus, Trash2, Pencil, Tag, FolderOpen } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
 import {
@@ -11,6 +11,9 @@ import {
   useBlogTags,
   useCreateBlogTag,
   useDeleteBlogTag,
+  useBlogCategories,
+  useCreateBlogCategory,
+  useDeleteBlogCategory,
 } from "@/entities/blog/model/useBlog";
 import { blogApi } from "@/entities/blog/api/blogApi";
 
@@ -105,6 +108,93 @@ function TagManagementSection() {
         <button
           onClick={handleCreate}
           disabled={createTag.isPending || !name.trim() || !slug.trim()}
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          추가
+        </button>
+      </div>
+    </section>
+  );
+}
+
+// ── 카테고리 관리 섹션 ────────────────────────────────────────────────────────
+
+function CategoryManagementSection() {
+  const { data: categories = [] } = useBlogCategories();
+  const createCategory = useCreateBlogCategory();
+  const deleteCategory = useDeleteBlogCategory();
+
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [order, setOrder] = useState(0);
+
+  const handleCreate = () => {
+    if (!name.trim() || !slug.trim()) return;
+    createCategory.mutate(
+      { name: name.trim(), slug: slug.trim(), displayOrder: order },
+      {
+        onSuccess: () => {
+          setName("");
+          setSlug("");
+          setOrder(0);
+        },
+      }
+    );
+  };
+
+  return (
+    <section className="rounded-2xl border border-black/10 bg-card p-6 shadow-sm">
+      <div className="flex items-center gap-2 mb-4">
+        <FolderOpen className="h-4 w-4 text-muted-foreground" />
+        <h2 className="text-base font-semibold text-foreground">카테고리 관리</h2>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-4">
+        {categories.length === 0 ? (
+          <p className="text-xs text-muted-foreground">등록된 카테고리가 없습니다.</p>
+        ) : (
+          categories.map((cat) => (
+            <span
+              key={cat.id}
+              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-sm"
+            >
+              <span className="font-medium">{cat.name}</span>
+              <span className="text-muted-foreground/50 text-xs">({cat.slug})</span>
+              <button
+                onClick={() => deleteCategory.mutate(cat.id)}
+                className="ml-0.5 text-muted-foreground/50 hover:text-destructive transition-colors"
+              >
+                ×
+              </button>
+            </span>
+          ))
+        )}
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="카테고리명 (예: 헤어팁)"
+          className="h-9 flex-1 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+        <input
+          value={slug}
+          onChange={(e) => setSlug(e.target.value)}
+          placeholder="slug (예: hair-tip)"
+          className="h-9 w-36 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+        <input
+          type="number"
+          value={order}
+          onChange={(e) => setOrder(Number(e.target.value))}
+          placeholder="순서"
+          className="h-9 w-20 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+        <button
+          onClick={handleCreate}
+          disabled={createCategory.isPending || !name.trim() || !slug.trim()}
           className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
           <Plus className="h-3.5 w-3.5" />
@@ -226,6 +316,7 @@ export default function BlogManagementPage() {
         description="헤어 다이어리 포스트와 태그를 관리합니다."
       >
         <div className="space-y-6">
+          <CategoryManagementSection />
           <TagManagementSection />
           <PostListSection />
         </div>

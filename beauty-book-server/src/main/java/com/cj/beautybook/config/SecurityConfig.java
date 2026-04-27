@@ -92,6 +92,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/schedules/business-hours").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/boards/configs").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/blog/posts", "/api/blog/posts/**", "/api/blog/tags", "/api/blog/categories").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/gallery/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

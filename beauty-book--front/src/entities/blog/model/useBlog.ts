@@ -4,10 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { blogApi } from "../api/blogApi";
 import type { CreateBlogPostBody, UpdateBlogPostBody, CreateBlogTagBody } from "../api/blogApi";
 
-export function useBlogPosts(tag?: string, page = 0) {
+export function useBlogPosts(category?: string, page = 0) {
   return useQuery({
-    queryKey: ["blog-posts", tag, page],
-    queryFn: () => blogApi.listPosts({ tag, page, size: 9 }),
+    queryKey: ["blog-posts", category, page],
+    queryFn: () => blogApi.listPosts({ category, page, size: 9 }),
   });
 }
 
@@ -24,6 +24,39 @@ export function useBlogTags() {
     queryKey: ["blog-tags"],
     queryFn: blogApi.listTags,
     staleTime: 1000 * 60 * 10,
+  });
+}
+
+export function useBlogPopularPosts() {
+  return useQuery({
+    queryKey: ["blog-popular"],
+    queryFn: blogApi.listPopularPosts,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useBlogCategories() {
+  return useQuery({
+    queryKey: ["blog-categories"],
+    queryFn: blogApi.listCategories,
+    staleTime: 1000 * 60 * 10,
+  });
+}
+
+export function useCreateBlogCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: { name: string; slug: string; displayOrder: number }) =>
+      blogApi.adminCreateCategory(body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["blog-categories"] }),
+  });
+}
+
+export function useDeleteBlogCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => blogApi.adminDeleteCategory(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["blog-categories"] }),
   });
 }
 

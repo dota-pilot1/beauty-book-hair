@@ -15,5 +15,6 @@ public record CreateBlogPostRequest(
         String authorName,
         BlogPostStatus status,
         boolean isPinned,
+        Long categoryId,
         List<Long> tagIds
 ) {}

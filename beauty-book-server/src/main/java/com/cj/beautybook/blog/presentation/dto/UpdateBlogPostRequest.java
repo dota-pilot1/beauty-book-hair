@@ -13,5 +13,6 @@ public record UpdateBlogPostRequest(
         String authorName,
         BlogPostStatus status,
         Boolean isPinned,
+        Long categoryId,
         List<Long> tagIds
 ) {}

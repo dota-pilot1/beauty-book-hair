@@ -1,5 +1,5 @@
 import { api } from "@/shared/api/axios";
-import type { BlogTagItem, BlogPostSummary, BlogPostDetail, PageResult } from "../model/types";
+import type { BlogCategoryItem, BlogTagItem, BlogPostSummary, BlogPostDetail, PageResult } from "../model/types";
 
 export type CreateBlogPostBody = {
   title: string;
@@ -23,14 +23,27 @@ export type CreateBlogTagBody = {
 
 export const blogApi = {
   // 공개
-  listPosts: (params?: { tag?: string; page?: number; size?: number }) =>
+  listPosts: (params?: { category?: string; tag?: string; page?: number; size?: number }) =>
     api.get<PageResult<BlogPostSummary>>("/api/blog/posts", { params }).then((r) => r.data),
+
+  listPopularPosts: () =>
+    api
+      .get<PageResult<BlogPostSummary>>("/api/blog/posts", { params: { size: 5, popular: true } })
+      .then((r) => r.data.content),
+
+  listCategories: () =>
+    api.get<BlogCategoryItem[]>("/api/blog/categories").then((r) => r.data),
 
   getPost: (slug: string) =>
     api.get<BlogPostDetail>(`/api/blog/posts/${slug}`).then((r) => r.data),
 
   listTags: () =>
     api.get<BlogTagItem[]>("/api/blog/tags").then((r) => r.data),
+
+  adminCreateCategory: (body: { name: string; slug: string; displayOrder: number }) =>
+    api.post<BlogCategoryItem>("/api/admin/blog/categories", body).then((r) => r.data),
+
+  adminDeleteCategory: (id: number) => api.delete(`/api/admin/blog/categories/${id}`),
 
   suggestSlug: (title: string) =>
     api

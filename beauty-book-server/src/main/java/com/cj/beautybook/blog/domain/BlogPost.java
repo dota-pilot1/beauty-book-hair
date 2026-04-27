@@ -11,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -65,6 +66,10 @@ public class BlogPost {
     @Column(nullable = false)
     private boolean isPinned = false;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private BlogCategory category;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "blog_post_tags",
@@ -96,7 +101,8 @@ public class BlogPost {
             Long authorStaffId,
             String authorName,
             BlogPostStatus status,
-            boolean isPinned
+            boolean isPinned,
+            BlogCategory category
     ) {
         BlogPost post = new BlogPost();
         post.slug = slug;
@@ -108,6 +114,7 @@ public class BlogPost {
         post.authorName = authorName;
         post.status = status != null ? status : BlogPostStatus.DRAFT;
         post.isPinned = isPinned;
+        post.category = category;
         post.viewCount = 0;
         if (post.status == BlogPostStatus.PUBLISHED) {
             post.publishedAt = Instant.now();
@@ -123,7 +130,8 @@ public class BlogPost {
             Long authorStaffId,
             String authorName,
             BlogPostStatus status,
-            boolean isPinned
+            boolean isPinned,
+            BlogCategory category
     ) {
         this.title = title;
         this.content = content;
@@ -132,6 +140,7 @@ public class BlogPost {
         this.authorStaffId = authorStaffId;
         this.authorName = authorName;
         this.isPinned = isPinned;
+        this.category = category;
         if (status != null) {
             if (this.status != BlogPostStatus.PUBLISHED && status == BlogPostStatus.PUBLISHED) {
                 this.publishedAt = Instant.now();

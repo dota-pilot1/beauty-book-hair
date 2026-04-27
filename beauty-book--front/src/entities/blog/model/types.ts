@@ -6,11 +6,20 @@ export type BlogTagItem = {
   slug: string;
 };
 
+export type BlogCategoryItem = {
+  id: number;
+  name: string;
+  slug: string;
+  displayOrder: number;
+};
+
 export type BlogPostSummary = {
   id: number;
   slug: string;
   title: string;
   summary: string | null;
+  contentPreview: string | null;
+  previewJson: string | null;
   coverImageUrl: string | null;
   authorName: string | null;
   status: BlogPostStatus;
@@ -18,6 +27,7 @@ export type BlogPostSummary = {
   viewCount: number;
   publishedAt: string | null;
   createdAt: string;
+  category: BlogCategoryItem | null;
 };
 
 export type BlogPostDetail = BlogPostSummary & {

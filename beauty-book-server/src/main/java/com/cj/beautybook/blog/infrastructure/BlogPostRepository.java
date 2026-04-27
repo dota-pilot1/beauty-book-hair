@@ -15,6 +15,8 @@ public interface BlogPostRepository extends JpaRepository<BlogPost, Long> {
 
     Page<BlogPost> findByStatus(BlogPostStatus status, Pageable pageable);
 
+    Page<BlogPost> findByStatusAndCategorySlug(BlogPostStatus status, String categorySlug, Pageable pageable);
+
     @Query("SELECT DISTINCT p FROM BlogPost p JOIN p.tags t " +
            "WHERE p.status = :status AND t.slug = :tagSlug")
     Page<BlogPost> findByStatusAndTagSlug(
@@ -22,7 +24,7 @@ public interface BlogPostRepository extends JpaRepository<BlogPost, Long> {
             @Param("tagSlug") String tagSlug,
             Pageable pageable);
 
-    @EntityGraph(attributePaths = {"tags"})
+    @EntityGraph(attributePaths = {"tags", "category"})
     Optional<BlogPost> findWithTagsBySlug(String slug);
 
     Optional<BlogPost> findBySlug(String slug);

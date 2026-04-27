@@ -1,9 +1,11 @@
 package com.cj.beautybook.blog.presentation;
 
 import com.cj.beautybook.blog.application.BlogService;
+import com.cj.beautybook.blog.presentation.dto.BlogCategoryResponse;
 import com.cj.beautybook.blog.presentation.dto.BlogPostDetailResponse;
 import com.cj.beautybook.blog.presentation.dto.BlogPostSummaryResponse;
 import com.cj.beautybook.blog.presentation.dto.BlogTagResponse;
+import com.cj.beautybook.blog.presentation.dto.CreateBlogCategoryRequest;
 import com.cj.beautybook.blog.presentation.dto.CreateBlogPostRequest;
 import com.cj.beautybook.blog.presentation.dto.CreateBlogTagRequest;
 import com.cj.beautybook.blog.presentation.dto.UpdateBlogPostRequest;
@@ -40,13 +42,16 @@ public class BlogController {
 
     @GetMapping("/api/blog/posts")
     public Page<BlogPostSummaryResponse> listPublished(
+            @RequestParam(required = false) String category,
             @RequestParam(required = false) String tag,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "9") int size
+            @RequestParam(defaultValue = "9") int size,
+            @RequestParam(defaultValue = "false") boolean popular
     ) {
-        Pageable pageable = PageRequest.of(page, size,
-                Sort.by(Sort.Order.desc("isPinned"), Sort.Order.desc("publishedAt")));
-        return blogService.listPublished(tag, pageable);
+        Pageable pageable = popular
+                ? PageRequest.of(page, size, Sort.by(Sort.Order.desc("viewCount")))
+                : PageRequest.of(page, size, Sort.by(Sort.Order.desc("isPinned"), Sort.Order.desc("publishedAt")));
+        return blogService.listPublished(category, tag, pageable);
     }
 
     @GetMapping("/api/blog/posts/{slug}")
@@ -57,6 +62,11 @@ public class BlogController {
     @GetMapping("/api/blog/tags")
     public List<BlogTagResponse> listTags() {
         return blogService.listTags();
+    }
+
+    @GetMapping("/api/blog/categories")
+    public List<BlogCategoryResponse> listCategories() {
+        return blogService.listCategories();
     }
 
     // ── 어드민 API ───────────────────────────────────────────────────────────
@@ -99,15 +109,25 @@ public class BlogController {
 
     @PostMapping("/api/admin/blog/tags")
     @ResponseStatus(HttpStatus.CREATED)
-    public BlogTagResponse adminCreateTag(
-            @RequestBody @Valid CreateBlogTagRequest req
-    ) {
+    public BlogTagResponse adminCreateTag(@RequestBody @Valid CreateBlogTagRequest req) {
         return blogService.createTag(req);
     }
 
     @DeleteMapping("/api/admin/blog/tags/{id}")
     public ResponseEntity<Void> adminDeleteTag(@PathVariable Long id) {
         blogService.deleteTag(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/api/admin/blog/categories")
+    @ResponseStatus(HttpStatus.CREATED)
+    public BlogCategoryResponse adminCreateCategory(@RequestBody @Valid CreateBlogCategoryRequest req) {
+        return blogService.createCategory(req);
+    }
+
+    @DeleteMapping("/api/admin/blog/categories/{id}")
+    public ResponseEntity<Void> adminDeleteCategory(@PathVariable Long id) {
+        blogService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }
 }

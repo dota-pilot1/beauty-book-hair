@@ -54,6 +54,8 @@ public enum ErrorCode {
     BLOG_POST_SLUG_DUPLICATE(HttpStatus.CONFLICT, "BLOG_002", "이미 사용 중인 slug입니다."),
     BLOG_TAG_NOT_FOUND(HttpStatus.NOT_FOUND, "BLOG_003", "블로그 태그를 찾을 수 없습니다."),
     BLOG_TAG_DUPLICATE(HttpStatus.CONFLICT, "BLOG_004", "이미 존재하는 태그입니다."),
+    BLOG_CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "BLOG_005", "블로그 카테고리를 찾을 수 없습니다."),
+    BLOG_CATEGORY_DUPLICATE(HttpStatus.CONFLICT, "BLOG_006", "이미 존재하는 카테고리입니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON_999", "서버 오류가 발생했습니다.");
 
     private final HttpStatus status;
