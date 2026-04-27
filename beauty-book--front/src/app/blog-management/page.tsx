@@ -2,199 +2,265 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Trash2, Pencil, FolderOpen } from "lucide-react";
+import { motion } from "framer-motion";
+import { Eye, Pin, PenSquare, Pencil, Trash2 } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
+import { BlogAside } from "@/app/blog/_BlogAside";
+import { LexicalEditor } from "@/shared/ui/lexical/lexical-editor";
 import {
   useAdminBlogPosts,
   useDeleteBlogPost,
   useBlogCategories,
-  useCreateBlogCategory,
-  useDeleteBlogCategory,
 } from "@/entities/blog/model/useBlog";
+import type { BlogPostSummary } from "@/entities/blog/model/types";
 
-function formatDate(iso: string) {
+function formatDate(iso: string | null) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffMin < 1) return "방금 전";
+  if (diffMin < 60) return `${diffMin}분 전`;
+  if (diffHour < 24) return `${diffHour}시간 전`;
+  if (diffDay < 7) return `${diffDay}일 전`;
   return new Intl.DateTimeFormat("ko-KR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+    year: "numeric", month: "short", day: "numeric",
     timeZone: "Asia/Seoul",
-  }).format(new Date(iso));
+  }).format(d);
 }
 
-// ── 카테고리 관리 섹션 ────────────────────────────────────────────────────────
-
-function CategoryManagementSection() {
-  const { data: categories = [] } = useBlogCategories();
-  const createCategory = useCreateBlogCategory();
-  const deleteCategory = useDeleteBlogCategory();
-
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
-  const [order, setOrder] = useState(0);
-
-  const handleCreate = () => {
-    if (!name.trim() || !slug.trim()) return;
-    createCategory.mutate(
-      { name: name.trim(), slug: slug.trim(), displayOrder: order },
-      {
-        onSuccess: () => {
-          setName("");
-          setSlug("");
-          setOrder(0);
-        },
-      }
-    );
-  };
-
+function AuthorAvatar({ name }: { name: string }) {
   return (
-    <section className="rounded-2xl border border-black/10 bg-card p-6 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
-        <FolderOpen className="h-4 w-4 text-muted-foreground" />
-        <h2 className="text-base font-semibold text-foreground">카테고리 관리</h2>
-      </div>
-
-      <div className="flex flex-wrap gap-2 mb-4">
-        {categories.length === 0 ? (
-          <p className="text-xs text-muted-foreground">등록된 카테고리가 없습니다.</p>
-        ) : (
-          categories.map((cat) => (
-            <span
-              key={cat.id}
-              className="flex items-center gap-1.5 rounded-xl border border-border bg-muted/40 px-3 py-1.5 text-sm"
-            >
-              <span className="font-medium">{cat.name}</span>
-              <span className="text-muted-foreground/50 text-xs">({cat.slug})</span>
-              <button
-                onClick={() => deleteCategory.mutate(cat.id)}
-                className="ml-0.5 text-muted-foreground/50 hover:text-destructive transition-colors"
-              >
-                ×
-              </button>
-            </span>
-          ))
-        )}
-      </div>
-
-      <div className="flex gap-2">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="카테고리명 (예: 헤어팁)"
-          className="h-9 flex-1 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-        <input
-          value={slug}
-          onChange={(e) => setSlug(e.target.value)}
-          placeholder="slug (예: hair-tip)"
-          className="h-9 w-36 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-        <input
-          type="number"
-          value={order}
-          onChange={(e) => setOrder(Number(e.target.value))}
-          placeholder="순서"
-          className="h-9 w-20 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-        <button
-          onClick={handleCreate}
-          disabled={createCategory.isPending || !name.trim() || !slug.trim()}
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          추가
-        </button>
-      </div>
-    </section>
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+      {name.slice(0, 1)}
+    </span>
   );
 }
 
-// ── 포스트 목록 섹션 ──────────────────────────────────────────────────────────
+function AdminBlogCard({
+  post,
+  onDelete,
+}: {
+  post: BlogPostSummary;
+  onDelete: (id: number) => void;
+}) {
+  return (
+    <motion.div
+      whileHover={{ y: -3, boxShadow: "0 12px 32px -4px rgba(0,0,0,0.25)" }}
+      transition={{ type: "spring", stiffness: 400, damping: 28 }}
+      className="group h-full rounded-2xl overflow-hidden"
+    >
+      <div className="relative h-full flex flex-col rounded-2xl border border-black/8 bg-card overflow-hidden">
+        {/* 어드민 액션 오버레이 */}
+        <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+          <Link
+            href={`/blog-management/${post.id}/edit`}
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-background/95 text-muted-foreground shadow hover:bg-primary hover:text-primary-foreground transition-colors"
+            title="편집"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+          </Link>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (confirm("포스트를 삭제하시겠습니까?")) onDelete(post.id);
+            }}
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-background/95 text-muted-foreground shadow hover:bg-destructive hover:text-white transition-colors"
+            title="삭제"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
 
-function PostListSection() {
+        {/* 헤더 */}
+        <div className="px-4 pt-3 pb-2.5 border-b border-black/6">
+          <div className="flex items-center gap-1.5 mb-1 min-h-[18px]">
+            {post.category && (
+              <span className="rounded-full bg-background border border-black/8 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                {post.category.name}
+              </span>
+            )}
+            {post.isPinned && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                <Pin className="h-2.5 w-2.5" />
+                추천
+              </span>
+            )}
+            <span
+              className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                post.status === "PUBLISHED"
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {post.status === "PUBLISHED" ? "발행" : "임시저장"}
+            </span>
+          </div>
+          <h3 className="text-[14px] font-semibold leading-snug text-foreground line-clamp-2">
+            {post.title}
+          </h3>
+        </div>
+
+        {/* 본문 미리보기 */}
+        <div className="flex-1 px-4 py-3">
+          {post.previewJson ? (
+            <div className="relative max-h-44 overflow-hidden">
+              <LexicalEditor
+                key={`preview-${post.id}`}
+                initialState={post.previewJson}
+                readOnly
+                minHeight="0px"
+              />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card to-transparent" />
+            </div>
+          ) : post.contentPreview || post.summary ? (
+            <p className="text-sm leading-relaxed text-muted-foreground line-clamp-4">
+              {post.contentPreview || post.summary}
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground/40 italic">본문 없음</p>
+          )}
+        </div>
+
+        {/* 푸터 메타 */}
+        <div className="flex items-center gap-2 border-t border-black/6 px-4 py-2.5 text-xs text-muted-foreground bg-black/[0.04]">
+          <AuthorAvatar name={post.authorName ?? "B"} />
+          <span className="font-medium text-foreground/70">
+            {post.authorName ?? "BeautyBook"}
+          </span>
+          <span className="text-muted-foreground/30">·</span>
+          <span>{formatDate(post.publishedAt ?? post.createdAt)}</span>
+          <span className="ml-auto flex items-center gap-1">
+            <Eye className="h-3.5 w-3.5" />
+            {post.viewCount}
+          </span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function BlogPostGrid({
+  selectedCategory,
+  onCategoryChange,
+}: {
+  selectedCategory: string | undefined;
+  onCategoryChange: (slug: string | undefined) => void;
+}) {
   const [page, setPage] = useState(0);
   const { data, isLoading } = useAdminBlogPosts(page);
   const deletePost = useDeleteBlogPost();
+  const { data: categories } = useBlogCategories();
 
-  const posts = data?.content ?? [];
+  const allPosts = data?.content ?? [];
+  const posts = selectedCategory
+    ? allPosts.filter((p) => p.category?.slug === selectedCategory)
+    : allPosts;
   const totalPages = data?.totalPages ?? 1;
+  const selectedCategoryName = selectedCategory
+    ? categories?.find((c) => c.slug === selectedCategory)?.name
+    : undefined;
 
   return (
-    <section className="rounded-2xl border border-black/10 bg-card shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-black/8">
-        <h2 className="text-base font-semibold text-foreground">포스트 목록</h2>
-        <Link
-          href="/blog-management/new"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          새 포스트
-        </Link>
+    <div className="space-y-5">
+      {/* 에디토리얼 헤더 */}
+      <div className="pb-4 border-b border-black/8">
+        <p className="text-[11px] font-semibold tracking-[0.18em] text-primary/60 uppercase mb-1.5">
+          Hair Diary · Admin
+        </p>
+        <div className="flex items-end justify-between gap-2">
+          <h2 className="text-[26px] font-bold tracking-tight text-foreground leading-none">
+            {selectedCategoryName ?? "블로그 관리"}
+          </h2>
+          <div className="flex items-center gap-3 mb-0.5">
+            {!isLoading && (
+              <span className="text-xs text-muted-foreground">
+                {data?.totalElements ?? 0}개의 포스트
+              </span>
+            )}
+            <Link
+              href="/blog-management/new"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+            >
+              <PenSquare className="h-3.5 w-3.5" />
+              새 포스트
+            </Link>
+          </div>
+        </div>
+        {selectedCategoryName && (
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {selectedCategoryName} 카테고리의 포스트
+          </p>
+        )}
       </div>
 
+      {/* 피드 */}
       {isLoading ? (
-        <div className="space-y-2 p-4">
+        <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-12 animate-pulse rounded-lg bg-muted" />
-          ))}
-        </div>
-      ) : posts.length === 0 ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">
-          등록된 포스트가 없습니다.
-        </p>
-      ) : (
-        <div className="divide-y divide-black/8">
-          {posts.map((post) => (
             <div
-              key={post.id}
-              className="flex items-center gap-4 px-6 py-3 hover:bg-muted/20 transition-colors"
+              key={i}
+              className="flex gap-3 rounded-2xl border border-black/8 bg-card p-4"
             >
-              <div className="flex-1 min-w-0">
-                <p className="truncate text-sm font-medium text-foreground">{post.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {post.authorName && <span>{post.authorName} · </span>}
-                  {formatDate(post.createdAt)}
-                </p>
-              </div>
-              <span
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                  post.status === "PUBLISHED"
-                    ? "bg-emerald-50 text-emerald-700"
-                    : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {post.status === "PUBLISHED" ? "발행" : "임시저장"}
-              </span>
-              <div className="flex shrink-0 items-center gap-1">
-                <Link
-                  href={`/blog-management/${post.id}/edit`}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Link>
-                <button
-                  onClick={() => {
-                    if (confirm("포스트를 삭제하시겠습니까?")) {
-                      deletePost.mutate(post.id);
-                    }
-                  }}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+              <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-muted" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
+                <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-full animate-pulse rounded bg-muted" />
               </div>
             </div>
           ))}
         </div>
+      ) : posts.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 py-20 text-center">
+          <p className="text-sm text-muted-foreground">
+            {selectedCategory
+              ? "이 카테고리에 등록된 포스트가 없습니다."
+              : "아직 등록된 포스트가 없습니다."}
+          </p>
+          <Link
+            href="/blog-management/new"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
+          >
+            <PenSquare className="h-3.5 w-3.5" />
+            첫 포스트 작성하기
+          </Link>
+        </div>
+      ) : (
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 gap-3"
+          initial="hidden"
+          animate="visible"
+          variants={{ visible: { transition: { staggerChildren: 0.06 } } }}
+        >
+          {posts.map((post) => (
+            <motion.div
+              key={post.id}
+              variants={{ hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="h-full"
+            >
+              <AdminBlogCard
+                post={post}
+                onDelete={(id) => deletePost.mutate(id)}
+              />
+            </motion.div>
+          ))}
+        </motion.div>
       )}
 
+      {/* 페이지네이션 */}
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 px-6 py-4 border-t border-black/8">
+        <div className="flex justify-center gap-2">
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i}
               onClick={() => setPage(i)}
-              className={`h-7 w-7 rounded-full text-xs font-medium transition-colors ${
+              className={`h-8 w-8 rounded-full text-sm font-medium transition-colors ${
                 i === page
                   ? "bg-foreground text-background"
                   : "border border-border text-muted-foreground hover:bg-muted"
@@ -205,24 +271,30 @@ function PostListSection() {
           ))}
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
-// ── 페이지 ─────────────────────────────────────────────────────────────────────
-
 export default function BlogManagementPage() {
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
+
   return (
     <RequireAuth>
       <AdminShell
         eyebrow="Admin"
         title="블로그 관리"
         description="헤어 다이어리 포스트와 태그를 관리합니다."
+        aside={
+          <BlogAside
+            selectedCategory={selectedCategory}
+            onCategoryClick={setSelectedCategory}
+          />
+        }
       >
-        <div className="space-y-6">
-          <CategoryManagementSection />
-          <PostListSection />
-        </div>
+        <BlogPostGrid
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
       </AdminShell>
     </RequireAuth>
   );
