@@ -6,6 +6,7 @@ import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
 import {
   CalendarDays,
+  Check,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -306,30 +307,37 @@ function BookingFlowPage() {
                 key={key}
                 type="button"
                 onClick={() => bookingFlowActions.setStep(key)}
-                className={`rounded-2xl border p-4 text-left transition-colors ${
+                className={`rounded-xl border p-4 text-left transition-colors ${
                   active
                     ? "border-black/20 bg-primary/10"
-                    : "border-black/12 bg-card hover:bg-accent"
+                    : done
+                    ? "border-black/15 bg-white"
+                    : "border-black/10 bg-card hover:bg-accent"
                 }`}
               >
+                {/* 상단: 단계 번호 좌 + 체크 우 */}
                 <div className="flex items-center justify-between">
-                  <span
-                    className={`inline-flex rounded-xl p-2 ${
-                      active || done ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/35">
+                    {String(index + 1).padStart(2, "0")}
                   </span>
-                  {done ? (
-                    <span className="inline-flex rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                      완료
+                  {done && (
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-black text-white">
+                      <Check className="h-3 w-3" />
                     </span>
-                  ) : null}
+                  )}
                 </div>
-                <h2 className="mt-4 text-base font-semibold text-foreground">{title}</h2>
-                <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                  {index + 1}단계
-                </p>
+                {/* 아이콘 */}
+                <span className={`mt-3 inline-flex rounded-lg p-2 ${
+                  active
+                    ? "bg-primary text-primary-foreground"
+                    : done
+                    ? "bg-black/8 text-foreground"
+                    : "bg-muted text-foreground"
+                }`}>
+                  <Icon className="h-4 w-4" />
+                </span>
+                {/* 타이틀 */}
+                <h2 className="mt-2.5 text-sm font-semibold text-foreground">{title}</h2>
               </button>
             );
           })}
