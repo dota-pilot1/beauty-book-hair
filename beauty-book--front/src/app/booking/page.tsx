@@ -300,7 +300,11 @@ function BookingFlowPage() {
           <section className="grid gap-3 xl:grid-cols-3">
           {steps.map(({ key, title, icon: Icon }, index) => {
             const active = step === key;
-            const done = index < currentIndex;
+            const completed =
+              key === "service"   ? selectedServiceIds.length > 0 :
+              key === "designer"  ? selectedDesignerId != null :
+              key === "schedule"  ? selectedStartAt != null :
+              false;
 
             return (
               <button
@@ -310,8 +314,8 @@ function BookingFlowPage() {
                 className={`rounded-xl border p-4 text-left transition-colors ${
                   active
                     ? "border-black/20 bg-primary/10"
-                    : done
-                    ? "border-black/15 bg-white"
+                    : completed
+                    ? "border-emerald-200 bg-emerald-50/40"
                     : "border-black/10 bg-card hover:bg-accent"
                 }`}
               >
@@ -320,8 +324,8 @@ function BookingFlowPage() {
                   <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/35">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  {done && (
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-black text-white">
+                  {completed && (
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
                       <Check className="h-3 w-3" />
                     </span>
                   )}
@@ -330,8 +334,8 @@ function BookingFlowPage() {
                 <span className={`mt-3 inline-flex rounded-lg p-2 ${
                   active
                     ? "bg-primary text-primary-foreground"
-                    : done
-                    ? "bg-black/8 text-foreground"
+                    : completed
+                    ? "bg-emerald-100 text-emerald-700"
                     : "bg-muted text-foreground"
                 }`}>
                   <Icon className="h-4 w-4" />
