@@ -57,13 +57,11 @@ export function LanguageSelect() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Language"
-        className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/50 px-3 py-1.5 text-foreground hover:bg-muted transition-colors"
+        className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 text-foreground hover:bg-muted transition-colors"
       >
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground ring-2 ring-background shadow-sm">
-          <Globe className="h-3.5 w-3.5" />
-        </span>
+        <Globe className="h-3.5 w-3.5 text-muted-foreground" />
         <span
-          className="hidden sm:inline text-sm font-medium leading-none"
+          className="hidden sm:inline text-[13px] font-medium leading-none"
           suppressHydrationWarning
         >
           {mounted ? current.short : "KO"}

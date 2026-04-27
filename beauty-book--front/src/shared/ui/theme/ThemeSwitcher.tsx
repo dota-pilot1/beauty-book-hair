@@ -26,15 +26,13 @@ export function ThemeSwitcher() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="테마 색상 변경"
-        className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/50 px-3 py-1.5 text-foreground hover:bg-muted transition-colors"
+        className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 text-foreground hover:bg-muted transition-colors"
       >
         <span
-          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full ring-2 ring-background shadow-sm"
+          className="h-3 w-3 shrink-0 rounded-sm ring-1 ring-border/60"
           style={{ backgroundColor: active.color }}
-        >
-          <Palette className="h-3 w-3 text-white/90" />
-        </span>
-        <span className="hidden sm:inline text-sm font-medium leading-none">
+        />
+        <span className="hidden sm:inline text-[13px] font-medium leading-none">
           {active.label}
         </span>
       </button>
