@@ -8,6 +8,7 @@ import com.cj.beautybook.blog.presentation.dto.BlogTagResponse;
 import com.cj.beautybook.blog.presentation.dto.CreateBlogCategoryRequest;
 import com.cj.beautybook.blog.presentation.dto.CreateBlogPostRequest;
 import com.cj.beautybook.blog.presentation.dto.CreateBlogTagRequest;
+import com.cj.beautybook.blog.presentation.dto.UpdateBlogCategoryRequest;
 import com.cj.beautybook.blog.presentation.dto.UpdateBlogPostRequest;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -132,6 +133,13 @@ public class BlogController {
     @ResponseStatus(HttpStatus.CREATED)
     public BlogCategoryResponse adminCreateCategory(@RequestBody @Valid CreateBlogCategoryRequest req) {
         return blogService.createCategory(req);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/api/admin/blog/categories/{id}")
+    public BlogCategoryResponse adminUpdateCategory(@PathVariable Long id,
+                                                    @RequestBody @Valid UpdateBlogCategoryRequest req) {
+        return blogService.updateCategory(id, req);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

@@ -14,6 +14,7 @@ import com.cj.beautybook.blog.presentation.dto.BlogTagResponse;
 import com.cj.beautybook.blog.presentation.dto.CreateBlogCategoryRequest;
 import com.cj.beautybook.blog.presentation.dto.CreateBlogPostRequest;
 import com.cj.beautybook.blog.presentation.dto.CreateBlogTagRequest;
+import com.cj.beautybook.blog.presentation.dto.UpdateBlogCategoryRequest;
 import com.cj.beautybook.blog.presentation.dto.UpdateBlogPostRequest;
 import com.cj.beautybook.common.exception.BusinessException;
 import com.cj.beautybook.common.exception.ErrorCode;
@@ -58,7 +59,10 @@ public class BlogService {
     @Transactional(readOnly = true)
     public List<BlogCategoryResponse> listCategories() {
         return blogCategoryRepository.findAllByOrderByDisplayOrderAsc()
-                .stream().map(BlogCategoryResponse::from).toList();
+                .stream()
+                .map(c -> BlogCategoryResponse.from(c,
+                        blogPostRepository.countByCategoryIdAndStatus(c.getId(), BlogPostStatus.PUBLISHED)))
+                .toList();
     }
 
     @Transactional
@@ -167,6 +171,15 @@ public class BlogService {
         return BlogCategoryResponse.from(
                 blogCategoryRepository.save(BlogCategory.create(req.name(), req.slug(), req.displayOrder()))
         );
+    }
+
+    @Transactional
+    public BlogCategoryResponse updateCategory(Long id, UpdateBlogCategoryRequest req) {
+        BlogCategory category = blogCategoryRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BLOG_CATEGORY_NOT_FOUND));
+        category.update(req.name(), req.slug(), req.displayOrder());
+        return BlogCategoryResponse.from(category,
+                blogPostRepository.countByCategoryIdAndStatus(id, BlogPostStatus.PUBLISHED));
     }
 
     @Transactional

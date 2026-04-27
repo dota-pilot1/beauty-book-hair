@@ -30,4 +30,6 @@ public interface BlogPostRepository extends JpaRepository<BlogPost, Long> {
     Optional<BlogPost> findBySlug(String slug);
 
     boolean existsBySlug(String slug);
+
+    long countByCategoryIdAndStatus(Long categoryId, BlogPostStatus status);
 }

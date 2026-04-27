@@ -44,6 +44,9 @@ export const blogApi = {
   adminCreateCategory: (body: { name: string; slug: string; displayOrder: number }) =>
     api.post<BlogCategoryItem>("/api/admin/blog/categories", body).then((r) => r.data),
 
+  adminUpdateCategory: (id: number, body: { name: string; slug: string; displayOrder: number }) =>
+    api.patch<BlogCategoryItem>(`/api/admin/blog/categories/${id}`, body).then((r) => r.data),
+
   adminDeleteCategory: (id: number) => api.delete(`/api/admin/blog/categories/${id}`),
 
   suggestSlug: (title: string) =>

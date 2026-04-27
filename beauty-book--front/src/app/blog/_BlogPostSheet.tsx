@@ -120,7 +120,7 @@ export function BlogPostSheet({ open, onOpenChange }: Props) {
           <div className="flex flex-1 min-h-0">
 
             {/* 왼쪽 — 메타 정보 */}
-            <div className="w-[420px] shrink-0 flex flex-col border-r border-black/8 overflow-y-auto px-6 py-5 space-y-5">
+            <div className="w-[480px] shrink-0 flex flex-col border-r border-black/8 overflow-y-auto px-6 py-5 space-y-5">
 
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-muted-foreground">제목 *</label>

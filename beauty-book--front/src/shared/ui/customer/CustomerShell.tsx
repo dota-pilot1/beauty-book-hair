@@ -111,7 +111,7 @@ export function CustomerShell({
   };
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-[1760px] gap-4 px-3 py-5 lg:px-5">
+    <main className={cn("mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-[1760px] gap-4 px-3 lg:px-5", showHeader ? "py-5" : "pt-3 pb-5")}>
       <aside
         className={cn(
           "hidden shrink-0 lg:block transition-[width] duration-300 ease-in-out",
@@ -120,7 +120,7 @@ export function CustomerShell({
       >
         <div
           className={cn(
-            "sticky top-20 rounded-3xl border border-black/12 bg-sidebar/90 shadow-sm transition-[padding] duration-300",
+            "sticky top-[3.75rem] rounded-3xl border border-black/12 bg-sidebar/90 shadow-sm transition-[padding] duration-300",
             collapsed ? "p-2 flex flex-col items-center gap-2" : "p-4"
           )}
         >
@@ -333,7 +333,7 @@ export function CustomerShell({
           <div className="min-w-0">{children}</div>
           {aside ? (
             <div className="min-w-0">
-              <div className="xl:sticky xl:top-6">{aside}</div>
+              <div className="xl:sticky xl:top-[3.75rem]">{aside}</div>
             </div>
           ) : null}
         </div>

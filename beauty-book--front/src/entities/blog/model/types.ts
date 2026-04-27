@@ -11,6 +11,7 @@ export type BlogCategoryItem = {
   name: string;
   slug: string;
   displayOrder: number;
+  postCount: number;
 };
 
 export type BlogPostSummary = {

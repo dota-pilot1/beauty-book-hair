@@ -123,18 +123,8 @@ export default function BlogListClient() {
       eyebrow="Hair Diary"
       title="헤어 다이어리"
       description="디자이너들의 스타일 노하우와 헤어 이야기를 확인해보세요."
+      showHeader={false}
       aside={<BlogAside selectedCategory={selectedCategory} onCategoryClick={handleCategoryClick} />}
-      action={
-        canPost ? (
-          <button
-            onClick={() => setSheetOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
-          >
-            <PenSquare className="h-3.5 w-3.5" />
-            포스트 작성
-          </button>
-        ) : undefined
-      }
     >
 
       {/* 피드 */}
@@ -155,13 +145,13 @@ export default function BlogListClient() {
         <div className="flex flex-col items-center gap-3 py-20 text-center">
           <p className="text-sm text-muted-foreground">아직 등록된 포스트가 없습니다.</p>
           {canPost && (
-            <Link
-              href="/blog-management/new"
+            <button
+              onClick={() => setSheetOpen(true)}
               className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
             >
               <PenSquare className="h-3.5 w-3.5" />
               첫 포스트 작성하기
-            </Link>
+            </button>
           )}
         </div>
       ) : (
@@ -193,7 +183,17 @@ export default function BlogListClient() {
     </CustomerShell>
 
     {canPost && (
-      <BlogPostSheet open={sheetOpen} onOpenChange={setSheetOpen} />
+      <>
+        <BlogPostSheet open={sheetOpen} onOpenChange={setSheetOpen} />
+        <button
+          onClick={() => setSheetOpen(true)}
+          className="fixed bottom-8 right-8 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:opacity-90 active:scale-95 transition-all duration-150"
+          title="포스트 작성"
+          aria-label="포스트 작성"
+        >
+          <PenSquare className="h-5 w-5" />
+        </button>
+      </>
     )}
     </>
   );

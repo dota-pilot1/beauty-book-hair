@@ -52,6 +52,15 @@ export function useCreateBlogCategory() {
   });
 }
 
+export function useUpdateBlogCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: { name: string; slug: string; displayOrder: number } }) =>
+      blogApi.adminUpdateCategory(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["blog-categories"] }),
+  });
+}
+
 export function useDeleteBlogCategory() {
   const qc = useQueryClient();
   return useMutation({

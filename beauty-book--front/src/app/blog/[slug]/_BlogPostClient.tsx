@@ -53,7 +53,14 @@ export default function BlogPostClient() {
     <CustomerShell eyebrow="Hair Diary" title="" description="" showHeader={false} aside={aside}>
       <article className="rounded-2xl border border-black/10 bg-card overflow-hidden shadow-sm">
         {/* 헤더 */}
-        <header className="px-7 pt-7 pb-5 space-y-2.5 border-b border-black/8">
+        <header className="px-7 pt-5 pb-5 space-y-2.5 border-b border-black/8">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            목록
+          </Link>
           {post.category && (
             <span className="inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
               {post.category.name}

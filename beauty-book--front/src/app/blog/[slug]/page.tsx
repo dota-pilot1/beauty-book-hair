@@ -6,12 +6,11 @@ const API_BASE =
 
 export async function generateStaticParams() {
   try {
-    const res = await fetch(`${API_BASE}/api/blog/posts?size=200`, {
-      cache: "no-store",
-    });
+    const res = await fetch(`${API_BASE}/api/blog/posts?size=200`);
     if (!res.ok) return [{ slug: "__placeholder__" }];
-    const data = await res.json();
-    return (data.content as { slug: string }[]).map((p) => ({ slug: p.slug }));
+    const data: { content: { slug: string }[] } = await res.json();
+    const slugs = data.content?.map((p) => ({ slug: p.slug })) ?? [];
+    return slugs.length > 0 ? slugs : [{ slug: "__placeholder__" }];
   } catch {
     return [{ slug: "__placeholder__" }];
   }
