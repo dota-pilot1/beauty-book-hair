@@ -42,55 +42,57 @@ function BlogCard({ post }: { post: BlogPostSummary }) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group block rounded-2xl border border-black/8 bg-card p-5 transition-colors hover:border-primary/30 hover:bg-muted/30"
+      className="group flex flex-col rounded-2xl border border-black/8 bg-card transition-colors hover:border-primary/30 hover:bg-muted/30 overflow-hidden"
     >
-      {/* 배지 영역 */}
-      {(post.category || post.isPinned) && (
-        <div className="mb-2 flex items-center gap-1.5">
-          {post.category && (
-            <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-              {post.category.name}
-            </span>
-          )}
-          {post.isPinned && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-              <Pin className="h-3 w-3" />
-              추천
-            </span>
-          )}
-        </div>
-      )}
+      {/* 본문 영역 */}
+      <div className="p-5 pb-4">
+        {/* 배지 */}
+        {(post.category || post.isPinned) && (
+          <div className="mb-2.5 flex items-center gap-1.5">
+            {post.category && (
+              <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                {post.category.name}
+              </span>
+            )}
+            {post.isPinned && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                <Pin className="h-3 w-3" />
+                추천
+              </span>
+            )}
+          </div>
+        )}
 
-      {/* 제목 */}
-      <h3 className="text-base font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">
-        {post.title}
-      </h3>
+        {/* 제목 */}
+        <h3 className="text-base font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">
+          {post.title}
+        </h3>
 
-      {/* 본문 미리보기 */}
-      {post.previewJson ? (
-        <div className="relative mt-3 max-h-48 overflow-hidden">
-          <LexicalEditor
-            key={`preview-${post.id}`}
-            initialState={post.previewJson}
-            readOnly
-            minHeight="0px"
-          />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
-        </div>
-      ) : (post.contentPreview || post.summary) ? (
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-3">
-          {post.contentPreview || post.summary}
-        </p>
-      ) : null}
+        {/* 본문 미리보기 */}
+        {post.previewJson ? (
+          <div className="relative mt-3 max-h-44 overflow-hidden">
+            <LexicalEditor
+              key={`preview-${post.id}`}
+              initialState={post.previewJson}
+              readOnly
+              minHeight="0px"
+            />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card to-transparent" />
+          </div>
+        ) : (post.contentPreview || post.summary) ? (
+          <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground line-clamp-4">
+            {post.contentPreview || post.summary}
+          </p>
+        ) : null}
+      </div>
 
-      {/* 하단 메타 */}
-      <div className="mt-4 flex items-center gap-3 text-xs text-muted-foreground">
+      {/* 푸터 메타 — 구분선 */}
+      <div className="flex items-center gap-3 border-t border-black/6 px-5 py-3 text-xs text-muted-foreground bg-muted/20">
         <AuthorAvatar name={post.authorName ?? "B"} />
         <span className="font-medium text-foreground/70">{post.authorName ?? "BeautyBook"}</span>
-        <span className="text-muted-foreground/40">·</span>
+        <span className="text-muted-foreground/30">·</span>
         <span>{formatDate(post.publishedAt ?? post.createdAt)}</span>
-        <span className="text-muted-foreground/40">·</span>
-        <span className="flex items-center gap-1">
+        <span className="ml-auto flex items-center gap-1">
           <Eye className="h-3.5 w-3.5" />
           {post.viewCount}
         </span>
@@ -155,7 +157,7 @@ export default function BlogListClient() {
           )}
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
           {posts.map((post) => (
             <BlogCard key={post.id} post={post} />
           ))}
