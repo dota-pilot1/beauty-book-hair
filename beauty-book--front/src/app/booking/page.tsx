@@ -320,26 +320,37 @@ function BookingFlowPage() {
               key === "designer"  ? selectedDesignerId != null :
               key === "schedule"  ? selectedStartAt != null :
               false;
+            const locked =
+              key === "designer" ? selectedServiceIds.length === 0 :
+              key === "schedule" ? selectedDesignerId == null :
+              false;
+            const lockHint =
+              key === "designer" ? "시술 먼저 선택" :
+              key === "schedule" ? "디자이너 먼저 선택" :
+              "";
 
             return (
               <button
                 key={key}
                 type="button"
+                disabled={locked}
                 onClick={() => bookingFlowActions.setStep(key)}
                 className={`rounded-xl border p-4 text-left transition-colors ${
-                  active
+                  locked
+                    ? "cursor-not-allowed border-black/8 bg-black/[0.02] opacity-50"
+                    : active
                     ? "border-black/20 bg-primary/10"
                     : completed
                     ? "border-emerald-200 bg-emerald-50/40"
                     : "border-black/10 bg-card hover:bg-accent"
                 }`}
               >
-                {/* 상단: 단계 번호 좌 + 체크 우 */}
+                {/* 상단: 단계 번호 좌 + 체크/잠금 우 */}
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/35">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  {completed && (
+                  {completed && !locked && (
                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
                       <Check className="h-3 w-3" />
                     </span>
@@ -347,7 +358,9 @@ function BookingFlowPage() {
                 </div>
                 {/* 아이콘 */}
                 <span className={`mt-3 inline-flex rounded-lg p-2 ${
-                  active
+                  locked
+                    ? "bg-muted text-foreground/30"
+                    : active
                     ? "bg-primary text-primary-foreground"
                     : completed
                     ? "bg-emerald-100 text-emerald-700"
@@ -357,6 +370,9 @@ function BookingFlowPage() {
                 </span>
                 {/* 타이틀 */}
                 <h2 className="mt-2.5 text-sm font-semibold text-foreground">{title}</h2>
+                {locked && (
+                  <p className="mt-0.5 text-[10px] text-foreground/35">{lockHint}</p>
+                )}
               </button>
             );
           })}
