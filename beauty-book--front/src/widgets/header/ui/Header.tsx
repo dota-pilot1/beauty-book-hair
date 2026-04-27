@@ -59,15 +59,15 @@ function DropdownMenu({ item }: { item: MenuItem }) {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center gap-1 text-sm transition-colors ${
+        className={`flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
           isActive
-            ? "text-foreground font-medium"
-            : "text-muted-foreground hover:text-foreground"
+            ? "bg-foreground text-background"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground"
         }`}
       >
         {item.label}
         <svg
-          className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-3 w-3 transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -214,7 +214,7 @@ export function Header() {
   return (
     <header className="border-b border-border bg-background">
       <div className="flex h-14 w-full items-center justify-between px-4">
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-1">
           <Link
             href="/"
             className="text-sm font-semibold tracking-tight hover:opacity-80 transition-opacity"
