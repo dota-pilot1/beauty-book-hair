@@ -56,17 +56,6 @@ function ServicesContent() {
       {!isLoading && !isError && categories.length > 0 && (
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory(null)}
-              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                selectedCategory === null
-                  ? "border-black/25 bg-primary text-primary-foreground"
-                  : "border-black/10 bg-card text-muted-foreground hover:bg-accent"
-              }`}
-            >
-              전체
-            </button>
             {categories.map((cat) => (
               <button
                 key={cat.code}
@@ -81,6 +70,17 @@ function ServicesContent() {
                 {cat.name}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setSelectedCategory(null)}
+              className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                selectedCategory === null
+                  ? "border-black/25 bg-primary text-primary-foreground"
+                  : "border-black/10 bg-card text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              전체
+            </button>
           </div>
           <div className="flex items-center gap-1 rounded-xl border border-black/10 bg-card p-1">
             <button
@@ -114,7 +114,7 @@ function ServicesContent() {
             const hasImages = (service.imageUrls?.length ?? 0) > 0;
             const multipleImages = (service.imageUrls?.length ?? 0) > 1;
             return (
-              <article key={service.id} className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+              <article key={service.id} className="overflow-hidden rounded-xl border border-border/60 bg-card shadow-sm">
                 {hasImages ? (
                   <div
                     className="relative aspect-[16/10] cursor-pointer"
