@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { Clock3, Images, LayoutGrid, List, Scissors, WalletCards } from "lucide-react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
@@ -29,6 +29,14 @@ function ServicesContent() {
       .filter((c) => { if (seen.has(c.code)) return false; seen.add(c.code); return true; })
       .sort((a, b) => a.displayOrder - b.displayOrder);
   }, [services]);
+
+  const initialized = useRef(false);
+  useEffect(() => {
+    if (!initialized.current && categories.length > 0) {
+      initialized.current = true;
+      setSelectedCategory(categories[0].code);
+    }
+  }, [categories]);
 
   const filtered = selectedCategory
     ? services.filter((s) => s.category.code === selectedCategory)
