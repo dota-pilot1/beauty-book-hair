@@ -214,18 +214,19 @@ export function Header() {
   return (
     <header className="border-b border-border bg-background">
       <div className="flex h-14 w-full items-center justify-between px-4">
-        <nav className="flex items-center gap-1">
-          <Link
-            href="/"
-            className="text-sm font-semibold tracking-tight hover:opacity-80 transition-opacity"
-          >
-            BeautyBook
-          </Link>
+        <Link
+          href="/"
+          className="shrink-0 text-sm font-semibold tracking-tight hover:opacity-80 transition-opacity"
+        >
+          BeautyBook
+        </Link>
+
+        <nav className="flex flex-1 items-center justify-center gap-1">
           {status === "authenticated" &&
             tree.map((item) => <NavItem key={item.id} item={item} />)}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <LanguageSelect />
           <ThemeSwitcher />
           {status === "authenticated" ? (
@@ -244,25 +245,17 @@ export function Header() {
             <>
               <Link
                 href="/register"
-                className="flex items-center gap-2 rounded-full border border-border/60 bg-muted/50 px-3 py-1.5 text-foreground hover:bg-muted transition-colors"
+                className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 text-[13px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               >
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground ring-2 ring-background shadow-sm">
-                  <UserPlus className="h-3.5 w-3.5" />
-                </span>
-                <span className="hidden sm:inline text-sm font-medium leading-none">
-                  {t("register")}
-                </span>
+                <UserPlus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("register")}</span>
               </Link>
               <Link
                 href="/login"
-                className="flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-3 py-1.5 hover:opacity-90 transition-opacity"
+                className="flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-[13px] font-medium text-primary-foreground hover:opacity-90 transition-opacity"
               >
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15 ring-2 ring-primary-foreground/10">
-                  <LogIn className="h-3.5 w-3.5" />
-                </span>
-                <span className="hidden sm:inline text-sm font-medium leading-none">
-                  {t("login")}
-                </span>
+                <LogIn className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("login")}</span>
               </Link>
             </>
           ) : null}
