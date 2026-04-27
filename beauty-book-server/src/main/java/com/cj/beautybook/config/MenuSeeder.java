@@ -34,6 +34,7 @@ public class MenuSeeder implements ApplicationRunner {
                 new MenuDef("BOOKING",               null,    "예약하기",      null,                   "/booking",          "CalendarPlus",    null,                    2),
                 new MenuDef("RESERVATIONS",          null,    "예약 현황",     null,                   "/reservations",     "CalendarCheck",   null,                    3),
                 new MenuDef("GALLERY",               null,    "갤러리",        null,                   "/gallery",          "GalleryHorizontal", null,                  4),
+                new MenuDef("BLOG",                  null,    "헤어 다이어리", null,                   "/blog",             "BookOpen",          null,                  5),
                 new MenuDef("ADMIN",                 null,    "관리",          "nav.admin",            null,                "Settings",        RoleSeeder.ROLE_ADMIN,   10),
                 new MenuDef("ADMIN_USERS",           "ADMIN", "유저 관리",     "nav.users",            "/users",            "Users",           RoleSeeder.ROLE_ADMIN,   0),
                 new MenuDef("ADMIN_ROLE_PERMISSIONS","ADMIN", "역할-권한 매핑","nav.rolePermissions",  "/role-permissions", "ShieldCheck",     RoleSeeder.ROLE_ADMIN,   1),
