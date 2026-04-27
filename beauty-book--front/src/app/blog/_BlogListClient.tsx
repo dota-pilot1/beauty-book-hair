@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Eye, Pin, PenSquare } from "lucide-react";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
 import { BlogAside } from "./_BlogAside";
+import { BlogPostSheet } from "./_BlogPostSheet";
 import { LexicalEditor } from "@/shared/ui/lexical/lexical-editor";
 import { useBlogPosts } from "@/entities/blog/model/useBlog";
 import { useAuth } from "@/entities/user/model/authStore";
@@ -101,6 +102,7 @@ function BlogCard({ post }: { post: BlogPostSummary }) {
 export default function BlogListClient() {
   const [selectedCategory, setSelectedCategory] = useState<string | undefined>();
   const [page, setPage] = useState(0);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const { data, isLoading } = useBlogPosts(selectedCategory, page);
   const { user } = useAuth();
@@ -116,6 +118,7 @@ export default function BlogListClient() {
   };
 
   return (
+    <>
     <CustomerShell
       eyebrow="Hair Diary"
       title="헤어 다이어리"
@@ -123,13 +126,13 @@ export default function BlogListClient() {
       aside={<BlogAside selectedCategory={selectedCategory} onCategoryClick={handleCategoryClick} />}
       action={
         canPost ? (
-          <Link
-            href="/blog-management/new"
+          <button
+            onClick={() => setSheetOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity"
           >
             <PenSquare className="h-3.5 w-3.5" />
             포스트 작성
-          </Link>
+          </button>
         ) : undefined
       }
     >
@@ -188,5 +191,10 @@ export default function BlogListClient() {
         </div>
       )}
     </CustomerShell>
+
+    {canPost && (
+      <BlogPostSheet open={sheetOpen} onOpenChange={setSheetOpen} />
+    )}
+    </>
   );
 }
