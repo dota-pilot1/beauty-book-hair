@@ -5,6 +5,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Trash2, AlertCircle, X } from "lucide-react";
 import { RequireRole } from "@/widgets/guards/RequireRole";
 import { AdminShell } from "@/shared/ui/admin/AdminShell";
+import { SelectInput } from "@/shared/ui/SelectInput";
+import { Toggle } from "@/shared/ui/Toggle";
 import { api } from "@/shared/api/axios";
 import type { Reservation } from "@/entities/reservation/model/types";
 
@@ -307,19 +309,11 @@ function BusinessHoursForm() {
                     )}
                   </td>
                   <td className="px-5 py-4 text-center">
-                    <button
-                      type="button" role="switch" aria-checked={row.closed}
-                      onClick={() => update(row.dayOfWeek, { closed: !row.closed })}
-                      className={[
-                        "relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-1",
-                        row.closed ? "bg-rose-500" : "bg-slate-300",
-                      ].join(" ")}
-                    >
-                      <span className={[
-                        "inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform",
-                        row.closed ? "translate-x-6" : "translate-x-1",
-                      ].join(" ")} />
-                    </button>
+                    <Toggle
+                      checked={row.closed}
+                      onCheckedChange={(checked) => update(row.dayOfWeek, { closed: checked })}
+                      aria-label={`${DAY_LABELS[row.dayOfWeek]} 휴무 토글`}
+                    />
                   </td>
                 </tr>
               );
@@ -636,21 +630,14 @@ function BlockedTimeSection() {
             </label>
             <label className="space-y-1">
               <span className="text-xs text-muted-foreground">차단 유형</span>
-              <select
+              <SelectInput
                 value={form.blockType}
                 onChange={(e) => setForm((f) => ({ ...f, blockType: e.target.value as BlockedTimeType }))}
-                className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary appearance-none cursor-pointer"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M1 4l5 4 5-4'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 0.75rem center',
-                  paddingRight: '2.5rem',
-                }}
               >
                 {(Object.keys(BLOCK_TYPE_LABELS) as BlockedTimeType[]).map((t) => (
                   <option key={t} value={t}>{BLOCK_TYPE_LABELS[t]}</option>
                 ))}
-              </select>
+              </SelectInput>
             </label>
             <label className="space-y-1">
               <span className="text-xs text-muted-foreground">사유 (선택)</span>
@@ -929,21 +916,14 @@ function RecurringBlockedTimeSection() {
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">차단 유형</label>
-              <select
+              <SelectInput
                 value={form.blockType}
                 onChange={(e) => setForm((f) => ({ ...f, blockType: e.target.value as BlockedTimeType }))}
-                className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary appearance-none cursor-pointer"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M1 4l5 4 5-4'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 0.75rem center',
-                  paddingRight: '2.5rem',
-                }}
               >
                 {(Object.keys(BLOCK_TYPE_LABELS) as BlockedTimeType[]).map((k) => (
                   <option key={k} value={k}>{BLOCK_TYPE_LABELS[k]}</option>
                 ))}
-              </select>
+              </SelectInput>
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-muted-foreground">사유 (선택)</label>
