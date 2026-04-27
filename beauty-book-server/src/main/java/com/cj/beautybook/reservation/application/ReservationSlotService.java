@@ -25,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.cj.beautybook.schedule.domain.BlockedTimeType;
+
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -152,7 +154,7 @@ public class ReservationSlotService {
                 responses.add(new ReservationSlotResponse(
                         startAt.toString(), startAt, endAt, durationMinutes,
                         SLOT_UNIT_MINUTES, occupiedUnitCount,
-                        ReservationSlotStatus.PAST, false, List.of(), "지난 시간입니다."
+                        ReservationSlotStatus.PAST, false, List.of(), "지난 시간입니다.", null
                 ));
                 cursor = cursor.plusMinutes(SLOT_UNIT_MINUTES);
                 continue;
@@ -176,6 +178,37 @@ public class ReservationSlotService {
                     ? resolveUnavailableStatus(staffList, reservations, startAt, endAt)
                     : ReservationSlotStatus.AVAILABLE;
 
+            String reason;
+            if (status == ReservationSlotStatus.BLOCKED) {
+                Instant slotWindowEnd = startAt.plusSeconds(SLOT_UNIT_MINUTES * 60L);
+                reason = blockedTimes.values().stream()
+                        .flatMap(List::stream)
+                        .filter(bt -> overlaps(bt.getStartAt(), bt.getEndAt(), startAt, slotWindowEnd))
+                        .findFirst()
+                        .map(bt -> {
+                            String label = blockTypeLabel(bt.getBlockType());
+                            return (bt.getReason() != null && !bt.getReason().isBlank())
+                                    ? label + " · " + bt.getReason()
+                                    : label;
+                        })
+                        .orElse("근무 외 시간이에요.");
+            } else {
+                reason = reasonFor(status, availableStaff.size());
+            }
+
+            // AVAILABLE 슬롯이지만 시술 전체 시간이 차단 시간을 가로지르는 경우 안내
+            String notice = null;
+            if (status == ReservationSlotStatus.AVAILABLE) {
+                Instant slotWindowEnd = startAt.plusSeconds(SLOT_UNIT_MINUTES * 60L);
+                notice = availableStaff.stream()
+                        .flatMap(staff -> blockedTimes.getOrDefault(staff.getId(), List.of()).stream())
+                        .filter(bt -> overlaps(bt.getStartAt(), bt.getEndAt(), startAt, endAt))
+                        .filter(bt -> !overlaps(bt.getStartAt(), bt.getEndAt(), startAt, slotWindowEnd))
+                        .findFirst()
+                        .map(this::formatNotice)
+                        .orElse(null);
+            }
+
             responses.add(new ReservationSlotResponse(
                     startAt.toString(),
                     startAt,
@@ -186,7 +219,8 @@ public class ReservationSlotService {
                     status,
                     status == ReservationSlotStatus.AVAILABLE,
                     availableStaff.stream().map(AvailableStaffResponse::from).toList(),
-                    reasonFor(status, availableStaff.size())
+                    reason,
+                    notice
             ));
 
             cursor = cursor.plusMinutes(SLOT_UNIT_MINUTES);
@@ -241,16 +275,19 @@ public class ReservationSlotService {
             return false;
         }
 
+        // 블록타임 체크: 슬롯 시작 30분 단위 구간만 확인 (시술 전체 시간이 아닌, 슬롯이 차단 구간에 걸리는지)
+        Instant slotWindowEnd = startAt.plusSeconds(SLOT_UNIT_MINUTES * 60L);
         boolean blocked = blockedTimes.stream().anyMatch(blockedTime -> overlaps(
                 blockedTime.getStartAt(),
                 blockedTime.getEndAt(),
                 startAt,
-                endAt
+                slotWindowEnd
         ));
         if (blocked) {
             return false;
         }
 
+        // 예약 겹침 체크: 전체 시술 시간으로 이중 예약 방지
         return reservations.stream().noneMatch(reservation -> overlaps(
                 reservation.getStartAt(),
                 reservation.getEndAt(),
@@ -291,10 +328,29 @@ public class ReservationSlotService {
     private String reasonFor(ReservationSlotStatus status, int availableStaffCount) {
         return switch (status) {
             case AVAILABLE -> availableStaffCount + "명 예약 가능";
-            case REQUESTED -> "승인 대기 예약과 겹칩니다.";
-            case RESERVED -> "확정 예약과 겹칩니다.";
-            case BLOCKED -> "근무 외 시간 또는 예약 불가 시간입니다.";
-            case PAST -> "지난 시간입니다.";
+            case REQUESTED -> "다른 고객이 승인 대기 중이에요.";
+            case RESERVED -> "이미 예약된 시간이에요.";
+            case BLOCKED -> "근무 외 시간이에요.";
+            case PAST -> "지나간 시간이에요.";
+        };
+    }
+
+    private String formatNotice(BlockedTime blockedTime) {
+        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+        String start = blockedTime.getStartAt().atZone(STORE_ZONE).toLocalTime().format(formatter);
+        String end = blockedTime.getEndAt().atZone(STORE_ZONE).toLocalTime().format(formatter);
+        String label = blockTypeLabel(blockedTime.getBlockType());
+        return "⚠️ " + label + "(" + start + "~" + end + ")이 시술 중에 포함돼요";
+    }
+
+    private String blockTypeLabel(BlockedTimeType type) {
+        return switch (type) {
+            case LUNCH -> "🍱 점심 시간";
+            case STORE_CLOSED -> "🚪 매장 휴무";
+            case DESIGNER_OFF -> "💆 디자이너 휴무";
+            case EDUCATION -> "📚 교육";
+            case PERSONAL -> "🙏 개인 사정";
+            case ETC -> "📌 기타";
         };
     }
 }

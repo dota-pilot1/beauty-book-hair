@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { toast } from "sonner";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { CustomerShell } from "@/shared/ui/customer/CustomerShell";
-import { useMyReservations, useChangeReservationStatus } from "@/entities/reservation/model/useReservations";
+import { useMyReservations, useChangeReservationStatus, useDeleteReservation } from "@/entities/reservation/model/useReservations";
 import type { Reservation, ReservationStatus } from "@/entities/reservation/model/types";
 
 const STATUS_META: Record<ReservationStatus, { label: string; className: string }> = {
@@ -34,6 +35,7 @@ export default function MyReservationsPage() {
 function MyReservationsContent() {
   const { data: reservations = [], isLoading } = useMyReservations();
   const changeStatus = useChangeReservationStatus();
+  const deleteReservation = useDeleteReservation();
 
   const active = reservations.filter((r) => ["REQUESTED", "CONFIRMED"].includes(r.status));
   const past = reservations.filter((r) => !["REQUESTED", "CONFIRMED"].includes(r.status));
@@ -79,8 +81,23 @@ function MyReservationsContent() {
                     <MyReservationCard
                       key={r.id}
                       reservation={r}
-                      onCancel={() => changeStatus.mutate({ id: r.id, status: "CANCELLED_BY_CUSTOMER" })}
-                      isPending={changeStatus.isPending}
+                      onCancel={() => {
+                        if (r.status === "REQUESTED") {
+                          deleteReservation.mutate(r.id, {
+                            onSuccess: () => toast.success("예약 요청이 취소되었습니다."),
+                            onError: () => toast.error("취소에 실패했습니다. 다시 시도해 주세요."),
+                          });
+                        } else {
+                          changeStatus.mutate(
+                            { id: r.id, status: "CANCELLED_BY_CUSTOMER" },
+                            {
+                              onSuccess: () => toast.success("예약이 취소되었습니다."),
+                              onError: () => toast.error("예약 취소에 실패했습니다. 다시 시도해 주세요."),
+                            }
+                          );
+                        }
+                      }}
+                      isPending={changeStatus.isPending || deleteReservation.isPending}
                     />
                   ))}
                 </div>

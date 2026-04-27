@@ -15,6 +15,7 @@ public record ReservationSlotResponse(
         ReservationSlotStatus status,
         boolean selectable,
         List<AvailableStaffResponse> availableStaff,
-        String reason
+        String reason,
+        String notice
 ) {
 }

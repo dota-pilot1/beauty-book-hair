@@ -52,4 +52,5 @@ export type ReservationSlot = {
   selectable: boolean;
   availableStaff: AvailableStaff[];
   reason: string;
+  notice: string | null;
 };

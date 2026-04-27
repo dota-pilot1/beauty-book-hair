@@ -67,25 +67,25 @@ const slotStatusMeta: Record<
   },
   REQUESTED: {
     label: "요청 중",
-    description: "다른 고객의 승인 대기 예약이 있습니다.",
+    description: "다른 고객이 승인 대기 중이에요.",
     className: "border-amber-200 bg-amber-50/60 text-muted-foreground",
     badgeClassName: "bg-amber-100 text-amber-800",
   },
   RESERVED: {
     label: "예약됨",
-    description: "이미 확정된 예약 시간입니다.",
+    description: "이미 예약된 시간이에요.",
     className: "border-black/10 bg-muted/40 text-muted-foreground",
     badgeClassName: "bg-muted text-muted-foreground",
   },
   BLOCKED: {
     label: "예약 불가",
-    description: "근무 외 시간 또는 매장 차단 시간입니다.",
+    description: "이 시간엔 예약이 어려워요.",
     className: "border-black/10 bg-muted/30 text-muted-foreground",
     badgeClassName: "bg-muted text-muted-foreground",
   },
   PAST: {
     label: "지난 시간",
-    description: "이미 지난 시간입니다.",
+    description: "지나간 시간이에요.",
     className: "border-black/6 bg-muted/20 text-muted-foreground/50 opacity-50",
     badgeClassName: "bg-muted/60 text-muted-foreground/60",
   },
@@ -208,6 +208,7 @@ function BookingFlowPage() {
       endAt: slot.endAt,
       availableStaff: slot.availableStaff,
       occupiedUnitCount: slot.occupiedUnitCount,
+      notice: slot.notice,
     });
   };
 
@@ -1075,8 +1076,9 @@ function SlotSelectableCard({
 }) {
   const disabled = !slot.selectable;
   const meta = slotStatusMeta[slot.status];
-  const timeRange = formatTimeRange(slot);
+  const timeRange = formatSlotWindow(slot);
   const designerNames = slot.availableStaff.map((designer) => designer.name).join(", ");
+  const multiCell = slot.occupiedUnitCount > 1;
 
   return (
     <button
@@ -1091,6 +1093,11 @@ function SlotSelectableCard({
         <div>
           <p className="text-xs text-muted-foreground">{formatDateLabelFromIso(slot.startAt)}</p>
           <h3 className="mt-1 text-base font-semibold text-foreground">{timeRange}</h3>
+          {multiCell && (
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              약 {slot.durationMinutes}분 · {slot.occupiedUnitCount}칸 사용
+            </p>
+          )}
         </div>
         <span
           className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-medium ${
@@ -1101,10 +1108,21 @@ function SlotSelectableCard({
         </span>
       </div>
       <div className="mt-3 space-y-1">
-        <p className="text-sm text-muted-foreground">{meta.description}</p>
-        <p className="text-sm text-muted-foreground">
-          {designerNames || slot.reason}
-        </p>
+        {slot.selectable ? (
+          <>
+            <p className="text-sm text-muted-foreground">{meta.description}</p>
+            {designerNames && <p className="text-sm text-muted-foreground">{designerNames}</p>}
+            {slot.notice && (
+              <p className="rounded-md bg-amber-50 px-2 py-1 text-xs text-amber-700 ring-1 ring-amber-200">
+                {slot.notice}
+              </p>
+            )}
+          </>
+        ) : slot.status === "BLOCKED" ? (
+          <p className="text-sm text-muted-foreground">{slot.reason}</p>
+        ) : (
+          <p className="text-sm text-muted-foreground">{meta.description}</p>
+        )}
       </div>
       <div className={`mt-3 grid gap-1 ${slot.occupiedUnitCount > 2 ? "grid-cols-3" : "grid-cols-2"}`}>
         {Array.from({ length: Math.max(slot.occupiedUnitCount, 1) }).map((_, index) => (
@@ -1176,6 +1194,18 @@ function formatTimeRange(slot: ReservationSlot) {
   return formatTimeRangeFromIso(slot.startAt, slot.endAt);
 }
 
+function formatSlotWindow(slot: ReservationSlot) {
+  const start = new Date(slot.startAt);
+  const end = new Date(start.getTime() + slot.unitMinutes * 60 * 1000);
+  const formatter = new Intl.DateTimeFormat("ko-KR", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Seoul",
+  });
+  return `${formatter.format(start)} ~ ${formatter.format(end)}`;
+}
+
 function formatTimeRangeFromIso(startAt: string | null, endAt: string | null) {
   if (!startAt || !endAt) return "시간 선택 전";
   const formatter = new Intl.DateTimeFormat("ko-KR", {
@@ -1189,7 +1219,7 @@ function formatTimeRangeFromIso(startAt: string | null, endAt: string | null) {
 
 // ─── 원샷 예약 다이어로그 ───────────────────────────────────────────
 
-const ONE_SHOT_STEPS = ["시술 선택", "디자이너 선택", "날짜·시간 선택"] as const;
+const ONE_SHOT_STEPS = ["시술 선택", "디자이너 선택", "날짜·시간 선택", "예약 요청"] as const;
 
 function OneShotBookingDialog({
   open,
@@ -1216,6 +1246,7 @@ function OneShotBookingDialog({
     selectedStartAt,
     selectedEndAt,
     selectedSlot,
+    selectedNotice,
   } = useBookingFlow();
 
   const [dialogStep, setDialogStep] = useState(0);
@@ -1274,6 +1305,7 @@ function OneShotBookingDialog({
       endAt: slot.endAt,
       availableStaff: slot.availableStaff,
       occupiedUnitCount: slot.occupiedUnitCount,
+      notice: slot.notice,
     });
   }
 
@@ -1303,7 +1335,9 @@ function OneShotBookingDialog({
                 </span>
                 <div>
                   <h2 className="text-base font-semibold text-foreground">원샷 예약</h2>
-                  <p className="text-xs text-muted-foreground">{ONE_SHOT_STEPS[dialogStep]}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {ONE_SHOT_STEPS[dialogStep === 2 && selectedStartAt ? 3 : dialogStep]}
+                  </p>
                 </div>
               </div>
               <Dialog.Close onClick={handleClose} className="rounded-full p-1.5 hover:bg-muted transition-colors">
@@ -1312,29 +1346,34 @@ function OneShotBookingDialog({
             </div>
 
             {/* 스텝 진행 바 */}
-            <div className="flex items-center gap-1.5">
-              {ONE_SHOT_STEPS.map((label, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => i < dialogStep && setDialogStep(i)}
-                  className="flex-1 group"
-                >
-                  <div
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      i < dialogStep
-                        ? "bg-primary cursor-pointer group-hover:bg-primary/70"
-                        : i === dialogStep
-                          ? "bg-primary"
-                          : "bg-muted"
-                    }`}
-                  />
-                  <p className={`mt-1 text-center text-[10px] font-medium transition-colors ${i <= dialogStep ? "text-primary" : "text-muted-foreground"}`}>
-                    {label}
-                  </p>
-                </button>
-              ))}
-            </div>
+            {(() => {
+              const effectiveStep = dialogStep === 2 && selectedStartAt ? 3 : dialogStep;
+              return (
+                <div className="flex items-center gap-1.5">
+                  {ONE_SHOT_STEPS.map((label, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => i < dialogStep && setDialogStep(i)}
+                      className="flex-1 group"
+                    >
+                      <div
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          i < effectiveStep
+                            ? "bg-primary cursor-pointer group-hover:bg-primary/70"
+                            : i === effectiveStep
+                              ? "bg-primary"
+                              : "bg-muted"
+                        }`}
+                      />
+                      <p className={`mt-1 text-center text-[10px] font-medium transition-colors ${i <= effectiveStep ? "text-primary" : "text-muted-foreground"}`}>
+                        {label}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {/* 슬라이드 본문 */}
@@ -1503,17 +1542,24 @@ function OneShotBookingDialog({
             {dialogStep === 2 && selectedStartAt && selectedEndAt ? (
               /* 슬롯 선택됨 → 전화번호 입력 + 예약 요청 */
               <div className="flex flex-col gap-2">
-                <div className="flex flex-col gap-0.5">
-                  <p className="truncate text-xs font-medium text-foreground">
-                    {selectedServices.map((s) => s.name).join(", ")}
-                  </p>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <span>{selectedDesigner}</span>
-                    <span>·</span>
-                    <span className="truncate">{selectedSlot}</span>
-                    <span>·</span>
-                    <span className="shrink-0">{totalDuration}분 / {totalPrice.toLocaleString()}원</span>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex flex-col gap-0.5">
+                    <p className="truncate text-xs font-medium text-foreground">
+                      {selectedServices.map((s) => s.name).join(", ")}
+                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span>{selectedDesigner}</span>
+                      <span>·</span>
+                      <span className="truncate">{selectedSlot}</span>
+                      <span>·</span>
+                      <span className="shrink-0">{totalDuration}분 / {totalPrice.toLocaleString()}원</span>
+                    </div>
                   </div>
+                  {selectedNotice && (
+                    <span className="shrink-0 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 ring-1 ring-amber-200">
+                      {selectedNotice}
+                    </span>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button

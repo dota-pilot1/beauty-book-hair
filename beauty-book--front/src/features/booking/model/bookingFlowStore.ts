@@ -16,6 +16,7 @@ export type BookingFlowState = {
   selectedSlot: string;
   selectedSlotAvailableDesigners: Array<{ id: number; name: string }>;
   selectedOccupiedUnitCount: number;
+  selectedNotice: string | null;
 };
 
 const STORAGE_KEY = "booking-flow-draft";
@@ -32,6 +33,7 @@ const DEFAULT_STATE: BookingFlowState = {
   selectedSlot: "선택 전",
   selectedSlotAvailableDesigners: [],
   selectedOccupiedUnitCount: 0,
+  selectedNotice: null,
 };
 
 export const bookingFlowStore = new Store<BookingFlowState>(DEFAULT_STATE);
@@ -52,6 +54,7 @@ function persist(next: BookingFlowState) {
         selectedSlot: next.selectedSlot,
         selectedSlotAvailableDesigners: next.selectedSlotAvailableDesigners,
         selectedOccupiedUnitCount: next.selectedOccupiedUnitCount,
+        selectedNotice: next.selectedNotice,
       })
     );
   } catch {
@@ -74,6 +77,7 @@ function clearScheduleAndDesigner(prev: BookingFlowState): BookingFlowState {
     selectedSlot: "선택 전",
     selectedSlotAvailableDesigners: [],
     selectedOccupiedUnitCount: 0,
+    selectedNotice: null,
   };
 }
 
@@ -112,6 +116,7 @@ export const bookingFlowActions = {
           parsed.selectedSlotAvailableDesigners ?? DEFAULT_STATE.selectedSlotAvailableDesigners,
         selectedOccupiedUnitCount:
           parsed.selectedOccupiedUnitCount ?? DEFAULT_STATE.selectedOccupiedUnitCount,
+        selectedNotice: parsed.selectedNotice ?? DEFAULT_STATE.selectedNotice,
       });
     } catch {
       bookingFlowStore.setState((prev) => ({ ...prev, hydrated: true }));
@@ -185,6 +190,7 @@ export const bookingFlowActions = {
     endAt: string;
     availableStaff: Array<{ id: number; name: string }>;
     occupiedUnitCount: number;
+    notice: string | null;
   }) {
     const autoDesigner = slot.availableStaff.length === 1 ? slot.availableStaff[0] : null;
     const currentDesignerStillAvailable =
@@ -199,6 +205,7 @@ export const bookingFlowActions = {
       selectedSlot: slot.label,
       selectedSlotAvailableDesigners: slot.availableStaff,
       selectedOccupiedUnitCount: slot.occupiedUnitCount,
+      selectedNotice: slot.notice,
       selectedDesignerId: currentDesignerStillAvailable
         ? bookingFlowStore.state.selectedDesignerId
         : autoDesigner?.id ?? null,

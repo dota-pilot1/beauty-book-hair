@@ -359,6 +359,7 @@ function StaffAdminPage() {
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
           <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-background p-6 shadow-lg">
+            <Dialog.Title className="sr-only">직원 상세 정보</Dialog.Title>
             {selectedStaff && (
               <StaffDetailPanel
                 staff={selectedStaff}

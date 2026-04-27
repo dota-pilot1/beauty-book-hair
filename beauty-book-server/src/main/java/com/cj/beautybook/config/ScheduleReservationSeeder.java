@@ -59,7 +59,6 @@ public class ScheduleReservationSeeder implements ApplicationRunner {
 
         seedStaffServices(staffList, services);
         seedStaffWorkingHours(staffList);
-        seedLunchBlockedTime(staffList.get(0));
     }
 
     private void seedBusinessHours() {
@@ -131,28 +130,4 @@ public class ScheduleReservationSeeder implements ApplicationRunner {
         }
     }
 
-    private void seedLunchBlockedTime(Staff staff) {
-        LocalDate nextMonday = LocalDate.now(STORE_ZONE)
-                .with(java.time.temporal.TemporalAdjusters.nextOrSame(DayOfWeek.MONDAY));
-        var startAt = nextMonday.atTime(13, 0).atZone(STORE_ZONE).toInstant();
-        var endAt = nextMonday.atTime(14, 0).atZone(STORE_ZONE).toInstant();
-
-        boolean exists = blockedTimeRepository
-                .findByStaffIdAndStartAtLessThanAndEndAtGreaterThan(staff.getId(), endAt, startAt)
-                .stream()
-                .anyMatch(blockedTime -> blockedTime.getBlockType() == BlockedTimeType.LUNCH);
-
-        if (exists) {
-            return;
-        }
-
-        blockedTimeRepository.save(BlockedTime.create(
-                staff,
-                startAt,
-                endAt,
-                "개발용 점심 차단",
-                BlockedTimeType.LUNCH
-        ));
-        log.info("Seeded lunch blocked time: {}", staff.getName());
-    }
 }

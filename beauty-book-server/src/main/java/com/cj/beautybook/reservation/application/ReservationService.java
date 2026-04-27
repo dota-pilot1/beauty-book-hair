@@ -142,6 +142,7 @@ public class ReservationService {
     }
 
     private static final List<ReservationStatus> DELETABLE_STATUSES = List.of(
+            ReservationStatus.REQUESTED,
             ReservationStatus.CANCELLED_BY_CUSTOMER,
             ReservationStatus.CANCELLED_BY_ADMIN,
             ReservationStatus.COMPLETED,
