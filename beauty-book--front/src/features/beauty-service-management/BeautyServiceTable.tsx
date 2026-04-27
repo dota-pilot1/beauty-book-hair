@@ -2,7 +2,24 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, Images, LayoutGrid, Plus, Table2, Trash2 } from "lucide-react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, ImagePlus, Images, LayoutGrid, Plus, Table2, Trash2 } from "lucide-react";
 import { beautyServiceApi } from "@/entities/beauty-service/api/beautyServiceApi";
 import type { BeautyService, BeautyServiceCategory } from "@/entities/beauty-service/model/types";
 import { toast, toastError } from "@/shared/lib/toast";
@@ -23,6 +40,11 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false);
   const [imageDialog, setImageDialog] = useState<{ urls: string[]; alt: string } | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   const { data: services, isLoading, isError } = useQuery({
     queryKey: ["beauty-services", selectedCategoryId],
@@ -68,6 +90,54 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
     },
     onError: (e) => toastError(e, "노출 상태 변경에 실패했습니다."),
   });
+
+  const reorderMutation = useMutation({
+    mutationFn: (nextServices: BeautyService[]) =>
+      Promise.all(
+        nextServices.map((service, index) =>
+          beautyServiceApi.update(service.id, {
+            name: service.name,
+            categoryId: service.category.id,
+            description: service.description ?? undefined,
+            durationMinutes: service.durationMinutes,
+            price: service.price,
+            targetGender: service.targetGender,
+            visible: service.visible,
+            displayOrder: index,
+            imageUrls: service.imageUrls ?? [],
+          })
+        )
+      ),
+    onMutate: async (nextServices) => {
+      await qc.cancelQueries({ queryKey: ["beauty-services", selectedCategoryId] });
+      const previous = qc.getQueryData<BeautyService[]>(["beauty-services", selectedCategoryId]);
+      qc.setQueryData(
+        ["beauty-services", selectedCategoryId],
+        nextServices.map((s, i) => ({ ...s, displayOrder: i }))
+      );
+      return { previous };
+    },
+    onError: (e, _nextServices, context) => {
+      if (context?.previous) {
+        qc.setQueryData(["beauty-services", selectedCategoryId], context.previous);
+      }
+      toastError(e, "순서 변경에 실패했습니다.");
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["beauty-services"] });
+    },
+  });
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !services) return;
+
+    const oldIndex = services.findIndex((s) => s.id === active.id);
+    const newIndex = services.findIndex((s) => s.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+
+    reorderMutation.mutate(arrayMove([...services], oldIndex, newIndex));
+  };
 
   if (isLoading) return <p className="text-sm text-muted-foreground">로딩 중...</p>;
   if (isError) return <p className="text-sm text-destructive">데이터를 불러오지 못했습니다.</p>;
@@ -126,172 +196,88 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
         </div>
       </div>
 
-      {viewMode === "table" ? (
-        <div className="mx-5 mb-5 mt-3 overflow-x-auto rounded-md border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/40">
-                <Th className="w-10">
-                  <input
-                    type="checkbox"
-                    className="rounded border-border"
-                    checked={
-                      (services?.length ?? 0) > 0 &&
-                      services?.filter((s) => !s.hasActiveReservations).every((s) => selectedIds.has(s.id))
-                    }
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedIds(new Set(services?.filter((s) => !s.hasActiveReservations).map((s) => s.id)));
-                      } else {
-                        setSelectedIds(new Set());
-                      }
-                    }}
-                  />
-                </Th>
-                <Th>이름</Th>
-                <Th>카테고리</Th>
-                <Th>소요 시간</Th>
-                <Th>가격</Th>
-                <Th>대상</Th>
-                <Th>노출</Th>
-                <Th>예약</Th>
-                <Th className="text-right">액션</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {services?.length === 0 ? (
-                <tr>
-                  <Td colSpan={8} className="py-10 text-center text-muted-foreground">
-                    등록된 시술이 없습니다.
-                  </Td>
-                </tr>
-              ) : null}
-              {services?.map((service) => (
-                <tr key={service.id} className="border-b border-border last:border-0 hover:bg-muted/20">
-                  <Td>
-                    {service.hasActiveReservations ? (
-                      <span title="활성 예약 있음" className="inline-block h-4 w-4 rounded border border-border bg-muted/40 cursor-not-allowed" />
-                    ) : (
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={(services ?? []).map((s) => s.id)} strategy={verticalListSortingStrategy}>
+          {viewMode === "table" ? (
+            <div className="mx-5 mb-5 mt-3 overflow-x-auto rounded-md border border-border">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/40">
+                    <Th className="w-8" />
+                    <Th className="w-10">
                       <input
                         type="checkbox"
                         className="rounded border-border"
-                        checked={selectedIds.has(service.id)}
+                        checked={
+                          (services?.length ?? 0) > 0 &&
+                          services?.filter((s) => !s.hasActiveReservations).every((s) => selectedIds.has(s.id))
+                        }
                         onChange={(e) => {
-                          const next = new Set(selectedIds);
-                          e.target.checked ? next.add(service.id) : next.delete(service.id);
-                          setSelectedIds(next);
+                          if (e.target.checked) {
+                            setSelectedIds(new Set(services?.filter((s) => !s.hasActiveReservations).map((s) => s.id)));
+                          } else {
+                            setSelectedIds(new Set());
+                          }
                         }}
                       />
-                    )}
-                  </Td>
-                  <Td className="font-medium">{service.name}</Td>
-                  <Td>{service.category.name}</Td>
-                  <Td>{service.durationMinutes}분</Td>
-                  <Td>{Number(service.price).toLocaleString()}원</Td>
-                  <Td>{genderLabel(service.targetGender)}</Td>
-                  <Td>{service.visible ? "노출" : "숨김"}</Td>
-                  <Td>
-                    {service.hasActiveReservations ? (
-                      <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-600/20">
-                        예약 있음
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
-                        없음
-                      </span>
-                    )}
-                  </Td>
-                  <Td className="text-right">
-                    <ServiceActions
+                    </Th>
+                    <Th>이름</Th>
+                    <Th>카테고리</Th>
+                    <Th>소요 시간</Th>
+                    <Th>가격</Th>
+                    <Th>대상</Th>
+                    <Th>노출</Th>
+                    <Th>예약</Th>
+                    <Th className="text-right">액션</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(services?.length ?? 0) === 0 ? (
+                    <tr>
+                      <Td colSpan={10} className="py-10 text-center text-muted-foreground">
+                        등록된 시술이 없습니다.
+                      </Td>
+                    </tr>
+                  ) : null}
+                  {services?.map((service) => (
+                    <SortableServiceRow
+                      key={service.id}
                       service={service}
+                      selectedIds={selectedIds}
+                      onToggleSelect={(id, checked) => {
+                        const next = new Set(selectedIds);
+                        checked ? next.add(id) : next.delete(id);
+                        setSelectedIds(next);
+                      }}
                       onEdit={setFormTarget}
                       onDelete={setDeleteTarget}
                     />
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="grid gap-4 px-5 pb-5 pt-3 md:grid-cols-2 xl:grid-cols-3">
-          {services?.length === 0 ? (
-            <div className="rounded-md border border-dashed border-border bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground md:col-span-2 xl:col-span-3">
-              등록된 시술이 없습니다.
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ) : null}
-          {services?.map((service) => (
-            <article key={service.id} className="overflow-hidden rounded-md border border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
-              {service.imageUrls?.[0] ? (
-                <div
-                  className="relative aspect-[16/9] cursor-pointer border-b border-border"
-                  onClick={() => setImageDialog({ urls: service.imageUrls!, alt: service.name })}
-                >
-                  <div
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                    style={{ backgroundImage: `url(${service.imageUrls[0]})` }}
-                    aria-label={`${service.name} 대표 이미지`}
-                  />
-                  {service.imageUrls.length > 1 && (
-                    <span className="absolute right-2 top-2 flex items-center gap-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white">
-                      <Images className="h-3 w-3" />
-                      {service.imageUrls.length}
-                    </span>
-                  )}
+          ) : (
+            <div className="grid gap-4 px-5 pb-5 pt-3 md:grid-cols-2 xl:grid-cols-3">
+              {(services?.length ?? 0) === 0 ? (
+                <div className="rounded-md border border-dashed border-border bg-muted/20 px-4 py-10 text-center text-sm text-muted-foreground md:col-span-2 xl:col-span-3">
+                  등록된 시술이 없습니다.
                 </div>
-              ) : (
-                <div className="flex aspect-[16/9] items-center justify-center border-b border-border bg-muted/50">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-border bg-background shadow-sm">
-                      <ImagePlus className="h-5 w-5" />
-                    </span>
-                    <span className="text-xs">이미지 미등록</span>
-                  </div>
-                </div>
-              )}
-
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="truncate text-base font-semibold">{service.name}</h3>
-                    <p className="mt-1 font-mono text-xs text-muted-foreground">{service.code}</p>
-                  </div>
-                  <VisibilityToggle
-                    service={service}
-                    loading={visibilityMutation.isPending}
-                    onToggle={() => visibilityMutation.mutate(service)}
-                  />
-                </div>
-
-                {service.description ? (
-                  <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                    {service.description}
-                  </p>
-                ) : (
-                  <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                    시술 설명 입력 예정
-                  </p>
-                )}
-
-                <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                  <Metric label="카테고리" value={service.category.name} />
-                  <Metric label="대상" value={genderLabel(service.targetGender)} />
-                  <Metric label="소요 시간" value={`${service.durationMinutes}분`} />
-                  <Metric label="가격" value={`${Number(service.price).toLocaleString()}원`} />
-                </div>
-
-                <div className="mt-4 flex justify-end">
-                  <ServiceActions
-                    service={service}
-                    onEdit={setFormTarget}
-                    onDelete={setDeleteTarget}
-                  />
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
+              ) : null}
+              {services?.map((service) => (
+                <SortableServiceCard
+                  key={service.id}
+                  service={service}
+                  visibilityLoading={visibilityMutation.isPending}
+                  onToggleVisibility={() => visibilityMutation.mutate(service)}
+                  onImageClick={(urls, alt) => setImageDialog({ urls, alt })}
+                  onEdit={setFormTarget}
+                  onDelete={setDeleteTarget}
+                />
+              ))}
+            </div>
+          )}
+        </SortableContext>
+      </DndContext>
 
       {imageDialog && (
         <ServiceImageDialog
@@ -331,6 +317,188 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
         onCancel={() => setBatchDeleteOpen(false)}
       />
     </section>
+  );
+}
+
+function SortableServiceRow({
+  service,
+  selectedIds,
+  onToggleSelect,
+  onEdit,
+  onDelete,
+}: {
+  service: BeautyService;
+  selectedIds: Set<number>;
+  onToggleSelect: (id: number, checked: boolean) => void;
+  onEdit: (service: BeautyService) => void;
+  onDelete: (service: BeautyService) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: service.id });
+
+  const style = {
+    opacity: isDragging ? 0.55 : undefined,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={style}
+      className="border-b border-border last:border-0 hover:bg-muted/20"
+    >
+      <Td>
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="flex h-8 w-6 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
+          aria-label={`${service.name} 순서 변경`}
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+      </Td>
+      <Td>
+        {service.hasActiveReservations ? (
+          <span title="활성 예약 있음" className="inline-block h-4 w-4 rounded border border-border bg-muted/40 cursor-not-allowed" />
+        ) : (
+          <input
+            type="checkbox"
+            className="rounded border-border"
+            checked={selectedIds.has(service.id)}
+            onChange={(e) => onToggleSelect(service.id, e.target.checked)}
+          />
+        )}
+      </Td>
+      <Td className="font-medium">{service.name}</Td>
+      <Td>{service.category.name}</Td>
+      <Td>{service.durationMinutes}분</Td>
+      <Td>{Number(service.price).toLocaleString()}원</Td>
+      <Td>{genderLabel(service.targetGender)}</Td>
+      <Td>{service.visible ? "노출" : "숨김"}</Td>
+      <Td>
+        {service.hasActiveReservations ? (
+          <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-600/20">
+            예약 있음
+          </span>
+        ) : (
+          <span className="inline-flex items-center rounded-full bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
+            없음
+          </span>
+        )}
+      </Td>
+      <Td className="text-right">
+        <ServiceActions service={service} onEdit={onEdit} onDelete={onDelete} />
+      </Td>
+    </tr>
+  );
+}
+
+function SortableServiceCard({
+  service,
+  visibilityLoading,
+  onToggleVisibility,
+  onImageClick,
+  onEdit,
+  onDelete,
+}: {
+  service: BeautyService;
+  visibilityLoading: boolean;
+  onToggleVisibility: () => void;
+  onImageClick: (urls: string[], alt: string) => void;
+  onEdit: (service: BeautyService) => void;
+  onDelete: (service: BeautyService) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: service.id });
+
+  const style = {
+    opacity: isDragging ? 0.55 : undefined,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+  };
+
+  return (
+    <article
+      ref={setNodeRef}
+      style={style}
+      className="overflow-hidden rounded-md border border-border bg-card shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+    >
+      {service.imageUrls?.[0] ? (
+        <div
+          className="relative aspect-[16/9] cursor-pointer border-b border-border"
+          onClick={() => onImageClick(service.imageUrls!, service.name)}
+        >
+          <div
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: `url(${service.imageUrls[0]})` }}
+            aria-label={`${service.name} 대표 이미지`}
+          />
+          {service.imageUrls.length > 1 && (
+            <span className="absolute right-2 top-2 flex items-center gap-1 rounded bg-black/50 px-1.5 py-0.5 text-[10px] font-medium text-white">
+              <Images className="h-3 w-3" />
+              {service.imageUrls.length}
+            </span>
+          )}
+        </div>
+      ) : (
+        <div className="flex aspect-[16/9] items-center justify-center border-b border-border bg-muted/50">
+          <div className="flex flex-col items-center gap-2 text-muted-foreground">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-border bg-background shadow-sm">
+              <ImagePlus className="h-5 w-5" />
+            </span>
+            <span className="text-xs">이미지 미등록</span>
+          </div>
+        </div>
+      )}
+
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-start gap-2">
+            <button
+              type="button"
+              {...attributes}
+              {...listeners}
+              className="mt-0.5 flex h-6 w-5 shrink-0 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing"
+              aria-label={`${service.name} 순서 변경`}
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+            <div className="min-w-0">
+              <h3 className="truncate text-base font-semibold">{service.name}</h3>
+              <p className="mt-1 font-mono text-xs text-muted-foreground">{service.code}</p>
+            </div>
+          </div>
+          <VisibilityToggle
+            service={service}
+            loading={visibilityLoading}
+            onToggle={onToggleVisibility}
+          />
+        </div>
+
+        {service.description ? (
+          <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
+            {service.description}
+          </p>
+        ) : (
+          <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted-foreground">
+            시술 설명 입력 예정
+          </p>
+        )}
+
+        <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+          <Metric label="카테고리" value={service.category.name} />
+          <Metric label="대상" value={genderLabel(service.targetGender)} />
+          <Metric label="소요 시간" value={`${service.durationMinutes}분`} />
+          <Metric label="가격" value={`${Number(service.price).toLocaleString()}원`} />
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <ServiceActions service={service} onEdit={onEdit} onDelete={onDelete} />
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -413,7 +581,7 @@ function VisibilityToggle({
   );
 }
 
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Th({ children, className = "" }: { children?: React.ReactNode; className?: string }) {
   return <th className={`px-4 py-2.5 text-left text-xs font-medium text-muted-foreground ${className}`}>{children}</th>;
 }
 
