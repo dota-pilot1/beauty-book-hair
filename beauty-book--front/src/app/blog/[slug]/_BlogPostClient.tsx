@@ -51,40 +51,39 @@ export default function BlogPostClient() {
 
   return (
     <CustomerShell eyebrow="Hair Diary" title="" description="" showHeader={false} aside={aside}>
-      <article className="space-y-5">
-        {/* 아티클 헤더 */}
-        <header className="rounded-3xl border border-black/10 bg-background p-6 shadow-sm space-y-3">
-          {/* 카테고리 배지 */}
+      <article className="rounded-2xl border border-black/10 bg-card overflow-hidden shadow-sm">
+        {/* 헤더 */}
+        <header className="px-7 pt-7 pb-5 space-y-2.5 border-b border-black/8">
           {post.category && (
-            <span className="inline-block rounded-full bg-muted px-3 py-0.5 text-xs font-medium text-muted-foreground">
+            <span className="inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary">
               {post.category.name}
             </span>
           )}
-          <h1 className="text-2xl font-bold tracking-tight text-foreground leading-snug">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground leading-snug">
             {post.title}
           </h1>
           {post.summary && (
             <p className="text-sm text-muted-foreground leading-relaxed">{post.summary}</p>
           )}
-          <div className="flex flex-wrap items-center gap-2 pt-1 text-sm text-muted-foreground border-t border-black/6">
+          <div className="flex flex-wrap items-center gap-2 pt-0.5 text-xs text-muted-foreground">
             {post.authorName && (
-              <span className="font-medium text-foreground">{post.authorName}</span>
+              <span className="font-medium text-foreground/80">{post.authorName}</span>
             )}
-            <span className="text-muted-foreground/40">·</span>
+            <span className="text-muted-foreground/30">·</span>
             <span>{formatDate(post.publishedAt ?? post.createdAt)}</span>
-            <span className="text-muted-foreground/40">·</span>
+            <span className="text-muted-foreground/30">·</span>
             <span className="flex items-center gap-1">
-              <Eye className="h-3.5 w-3.5" />
+              <Eye className="h-3 w-3" />
               {post.viewCount}
             </span>
             {post.tags.length > 0 && (
               <>
-                <span className="text-muted-foreground/40">·</span>
+                <span className="text-muted-foreground/30">·</span>
                 {post.tags.map((tag) => (
                   <Link
                     key={tag.slug}
                     href={`/blog?tag=${tag.slug}`}
-                    className="text-xs text-primary hover:underline"
+                    className="text-primary/70 hover:text-primary hover:underline transition-colors"
                   >
                     #{tag.name}
                   </Link>
@@ -95,7 +94,7 @@ export default function BlogPostClient() {
         </header>
 
         {/* 본문 */}
-        <div className="rounded-2xl border border-black/10 bg-card p-6">
+        <div className="px-7 py-6">
           {post.content ? (
             <LexicalEditor
               key={`blog-${post.slug}`}
@@ -108,14 +107,16 @@ export default function BlogPostClient() {
           )}
         </div>
 
-        {/* 목록으로 */}
-        <Link
-          href="/blog"
-          className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
-        >
-          <ChevronLeft className="h-3.5 w-3.5" />
-          목록으로
-        </Link>
+        {/* 푸터 */}
+        <div className="px-7 pb-6">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted"
+          >
+            <ChevronLeft className="h-3 w-3" />
+            목록으로
+          </Link>
+        </div>
       </article>
     </CustomerShell>
   );
