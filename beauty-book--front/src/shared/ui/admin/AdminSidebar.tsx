@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
+  BookOpen,
   CalendarDays,
   CalendarRange,
   CalendarX2,
@@ -85,6 +86,12 @@ export const adminNavItems: AdminNavItem[] = [
     label: "게시판 관리",
     description: "게시판과 게시글을 관리합니다.",
     icon: Newspaper,
+  },
+  {
+    href: "/blog-management",
+    label: "블로그 관리",
+    description: "헤어 다이어리 포스트를 관리합니다.",
+    icon: BookOpen,
   },
   {
     href: "/booking",

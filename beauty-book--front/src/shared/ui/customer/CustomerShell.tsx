@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
+  BookOpen,
   CalendarCheck2,
   CalendarDays,
   CircleUserRound,
@@ -64,6 +65,12 @@ const customerNavItems: CustomerNavItem[] = [
     label: "디자이너",
     description: "디자이너 프로필 보기",
     icon: UserRoundSearch,
+  },
+  {
+    href: "/blog",
+    label: "헤어 다이어리",
+    description: "디자이너들의 스타일 이야기",
+    icon: BookOpen,
   },
   {
     href: "/my-info",
