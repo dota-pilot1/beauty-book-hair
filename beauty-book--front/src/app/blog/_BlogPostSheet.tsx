@@ -5,6 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X, Loader2, Wand2 } from "lucide-react";
 import { LexicalEditor } from "@/shared/ui/lexical/lexical-editor";
 import { useCreateBlogPost } from "@/entities/blog/model/useBlog";
+import { useAuth } from "@/entities/user/model/authStore";
 import { blogApi } from "@/entities/blog/api/blogApi";
 
 type Props = {
@@ -60,17 +61,17 @@ function TagInput({
 
 export function BlogPostSheet({ open, onOpenChange }: Props) {
   const createPost = useCreateBlogPost();
+  const { user } = useAuth();
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [content, setContent] = useState("");
   const [summary, setSummary] = useState("");
-  const [authorName, setAuthorName] = useState("");
   const [tagNames, setTagNames] = useState<string[]>([]);
 
   const reset = () => {
     setTitle(""); setSlug(""); setContent("");
-    setSummary(""); setAuthorName(""); setTagNames([]);
+    setSummary(""); setTagNames([]);
   };
 
   const handleSuggestSlug = async () => {
@@ -84,7 +85,7 @@ export function BlogPostSheet({ open, onOpenChange }: Props) {
   const handleSubmit = (status: "DRAFT" | "PUBLISHED") => {
     if (!title.trim() || !slug.trim()) return;
     createPost.mutate(
-      { title: title.trim(), slug: slug.trim(), content, summary: summary.trim() || undefined, authorName: authorName.trim() || undefined, status, isPinned: false, tagNames },
+      { title: title.trim(), slug: slug.trim(), content, summary: summary.trim() || undefined, authorName: user?.username || undefined, status, isPinned: false, tagNames },
       { onSuccess: () => { reset(); onOpenChange(false); } }
     );
   };
@@ -93,11 +94,21 @@ export function BlogPostSheet({ open, onOpenChange }: Props) {
     <Dialog.Root open={open} onOpenChange={(v) => { if (!v) reset(); onOpenChange(v); }}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[95vw] max-w-6xl h-[90vh] bg-background rounded-2xl shadow-2xl flex flex-col overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2 w-[96vw] max-w-7xl h-[92vh] bg-background rounded-2xl shadow-2xl flex flex-col overflow-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 duration-200">
 
           {/* 헤더 */}
           <div className="flex items-center justify-between border-b border-black/8 px-6 py-4 shrink-0">
-            <Dialog.Title className="text-base font-semibold text-foreground">새 포스트 작성</Dialog.Title>
+            <div className="flex items-center gap-3">
+              <Dialog.Title className="text-base font-semibold text-foreground">새 포스트 작성</Dialog.Title>
+              {user?.username && (
+                <span className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary">
+                    {user.username.slice(0, 1)}
+                  </span>
+                  {user.username}
+                </span>
+              )}
+            </div>
             <Dialog.Close className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted transition-colors">
               <X className="h-4 w-4" />
             </Dialog.Close>
@@ -150,16 +161,6 @@ export function BlogPostSheet({ open, onOpenChange }: Props) {
                   rows={3}
                   maxLength={150}
                   className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">작성자</label>
-                <input
-                  value={authorName}
-                  onChange={(e) => setAuthorName(e.target.value)}
-                  placeholder="디자이너 이름"
-                  className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </div>
 
