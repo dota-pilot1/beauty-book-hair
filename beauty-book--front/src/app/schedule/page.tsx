@@ -250,12 +250,12 @@ function BusinessHoursForm() {
       <div className="overflow-hidden rounded-2xl border border-border">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border bg-muted/40">
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">요일</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">오픈 시간</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">마감 시간</th>
-              <th className="px-4 py-3 text-center font-medium text-muted-foreground">진행중인 예약</th>
-              <th className="px-4 py-3 text-center font-medium text-muted-foreground">휴무</th>
+            <tr className="border-b border-border bg-muted/50">
+              <th className="px-5 py-3.5 text-left font-semibold text-foreground">요일</th>
+              <th className="px-5 py-3.5 text-left font-semibold text-foreground">오픈 시간</th>
+              <th className="px-5 py-3.5 text-left font-semibold text-foreground">마감 시간</th>
+              <th className="px-5 py-3.5 text-center font-semibold text-foreground">진행중인 예약</th>
+              <th className="px-5 py-3.5 text-center font-semibold text-foreground">휴무</th>
             </tr>
           </thead>
           <tbody>
@@ -267,37 +267,37 @@ function BusinessHoursForm() {
                   className={[
                     "transition-colors",
                     i !== rows.length - 1 ? "border-b border-border" : "",
-                    row.closed ? "bg-muted/30" : "",
+                    row.closed ? "bg-muted/20" : "",
                   ].join(" ")}
                 >
-                  <td className="px-4 py-3 font-medium">
+                  <td className="px-5 py-4 font-medium">
                     <span className={[
-                      "text-sm",
+                      "text-sm font-semibold",
                       row.dayOfWeek === "SATURDAY" ? "text-blue-600" : "",
                       row.dayOfWeek === "SUNDAY" ? "text-rose-600" : "",
                     ].join(" ")}>
                       {DAY_LABELS[row.dayOfWeek]}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-4">
                     <input
                       type="time" value={row.openTime} disabled={row.closed}
                       onChange={(e) => update(row.dayOfWeek, { openTime: e.target.value })}
-                      className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-5 py-4">
                     <input
                       type="time" value={row.closeTime} disabled={row.closed}
                       onChange={(e) => update(row.dayOfWeek, { closeTime: e.target.value })}
-                      className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      className="rounded-lg border border-border bg-background px-3 py-2 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-5 py-4 text-center">
                     {pending.length > 0 ? (
                       <button
                         onClick={() => setCancelDayTarget({ dayOfWeek: row.dayOfWeek, reservations: pending })}
-                        className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
+                        className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
                       >
                         <AlertCircle className="h-3 w-3" />
                         {pending.length}개
@@ -306,17 +306,17 @@ function BusinessHoursForm() {
                       <span className="text-xs text-muted-foreground/40">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-5 py-4 text-center">
                     <button
                       type="button" role="switch" aria-checked={row.closed}
                       onClick={() => update(row.dayOfWeek, { closed: !row.closed })}
                       className={[
-                        "relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30",
-                        row.closed ? "bg-rose-500" : "bg-muted",
+                        "relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-1",
+                        row.closed ? "bg-rose-500" : "bg-slate-300",
                       ].join(" ")}
                     >
                       <span className={[
-                        "inline-block h-4 w-4 rounded-full bg-white shadow transition-transform",
+                        "inline-block h-5 w-5 rounded-full bg-white shadow-md transition-transform",
                         row.closed ? "translate-x-6" : "translate-x-1",
                       ].join(" ")} />
                     </button>
@@ -639,7 +639,13 @@ function BlockedTimeSection() {
               <select
                 value={form.blockType}
                 onChange={(e) => setForm((f) => ({ ...f, blockType: e.target.value as BlockedTimeType }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary appearance-none cursor-pointer"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M1 4l5 4 5-4'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.75rem center',
+                  paddingRight: '2.5rem',
+                }}
               >
                 {(Object.keys(BLOCK_TYPE_LABELS) as BlockedTimeType[]).map((t) => (
                   <option key={t} value={t}>{BLOCK_TYPE_LABELS[t]}</option>
@@ -909,7 +915,7 @@ function RecurringBlockedTimeSection() {
                 type="time"
                 value={form.startTime}
                 onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
             </div>
             <div>
@@ -918,7 +924,7 @@ function RecurringBlockedTimeSection() {
                 type="time"
                 value={form.endTime}
                 onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
             </div>
             <div>
@@ -926,7 +932,13 @@ function RecurringBlockedTimeSection() {
               <select
                 value={form.blockType}
                 onChange={(e) => setForm((f) => ({ ...f, blockType: e.target.value as BlockedTimeType }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary appearance-none cursor-pointer"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M1 4l5 4 5-4'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: 'no-repeat',
+                  backgroundPosition: 'right 0.75rem center',
+                  paddingRight: '2.5rem',
+                }}
               >
                 {(Object.keys(BLOCK_TYPE_LABELS) as BlockedTimeType[]).map((k) => (
                   <option key={k} value={k}>{BLOCK_TYPE_LABELS[k]}</option>
@@ -940,7 +952,7 @@ function RecurringBlockedTimeSection() {
                 placeholder="예: 직원 식사 시간"
                 value={form.reason}
                 onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
             </div>
           </div>
