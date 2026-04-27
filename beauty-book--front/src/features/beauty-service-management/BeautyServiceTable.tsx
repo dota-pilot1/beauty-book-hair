@@ -19,9 +19,10 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, ImagePlus, Images, LayoutGrid, Plus, Table2, Trash2 } from "lucide-react";
+import * as XLSX from "xlsx";
+import { Download, GripVertical, ImagePlus, Images, LayoutGrid, Plus, Table2, Trash2, Upload } from "lucide-react";
 import { beautyServiceApi } from "@/entities/beauty-service/api/beautyServiceApi";
-import type { BeautyService, BeautyServiceCategory } from "@/entities/beauty-service/model/types";
+import type { BeautyService, BeautyServiceCategory, BeautyServiceTargetGender } from "@/entities/beauty-service/model/types";
 import { toast, toastError } from "@/shared/lib/toast";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { BeautyServiceFormDialog } from "./BeautyServiceFormDialog";
@@ -128,6 +129,21 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
     },
   });
 
+  const uploadMutation = useMutation({
+    mutationFn: (rows: Parameters<typeof beautyServiceApi.create>[0][]) =>
+      Promise.allSettled(rows.map((r) => beautyServiceApi.create(r))),
+    onSuccess: (results) => {
+      const failed = results.filter((r) => r.status === "rejected").length;
+      if (failed > 0) {
+        toast.error(`${results.length - failed}개 등록 완료, ${failed}개 실패`);
+      } else {
+        toast.success(`${results.length}개 시술이 등록되었습니다.`);
+      }
+      qc.invalidateQueries({ queryKey: ["beauty-services"] });
+    },
+    onError: (e) => toastError(e, "업로드에 실패했습니다."),
+  });
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id || !services) return;
@@ -137,6 +153,63 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
     if (oldIndex < 0 || newIndex < 0) return;
 
     reorderMutation.mutate(arrayMove([...services], oldIndex, newIndex));
+  };
+
+  const handleDownload = () => {
+    const rows = (services ?? []).map((s) => ({
+      코드: s.code,
+      이름: s.name,
+      "소요시간(분)": s.durationMinutes,
+      "가격(원)": s.price,
+      "대상(전체/여성/남성)": genderLabel(s.targetGender),
+      "노출(Y/N)": s.visible ? "Y" : "N",
+      설명: s.description ?? "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "시술목록");
+    const date = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `시술_${selectedCategory?.name ?? "전체"}_${date}.xlsx`);
+  };
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !selectedCategoryId) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const wb = XLSX.read(ev.target?.result, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws);
+        if (rows.length === 0) { toast.error("데이터가 없습니다."); return; }
+
+        const baseOrder = services?.length ?? 0;
+        const bodies = rows.map((row, i) => ({
+          code: String(row["코드"] ?? "").trim(),
+          name: String(row["이름"] ?? "").trim(),
+          categoryId: selectedCategoryId,
+          durationMinutes: Number(row["소요시간(분)"] ?? 0),
+          price: Number(row["가격(원)"] ?? 0),
+          targetGender: parseGender(row["대상(전체/여성/남성)"]),
+          visible: String(row["노출(Y/N)"] ?? "Y").trim().toUpperCase() === "Y",
+          displayOrder: baseOrder + i,
+          description: row["설명"] ? String(row["설명"]) : undefined,
+          imageUrls: [],
+        }));
+
+        const invalid = bodies.filter((b) => !b.code || !b.name || !b.durationMinutes || !b.price);
+        if (invalid.length > 0) {
+          toast.error(`필수값(코드, 이름, 소요시간, 가격) 누락 행이 ${invalid.length}개 있습니다.`);
+          return;
+        }
+        uploadMutation.mutate(bodies);
+      } catch {
+        toast.error("파일을 읽지 못했습니다. 형식을 확인해주세요.");
+      }
+    };
+    reader.readAsArrayBuffer(file);
   };
 
   if (isLoading) return <p className="text-sm text-muted-foreground">로딩 중...</p>;
@@ -153,7 +226,7 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
             {selectedCategory ? selectedCategory.description || "선택한 카테고리의 시술입니다." : "전체 시술을 관리합니다."}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {selectedIds.size > 0 && (
             <button
               onClick={() => setBatchDeleteOpen(true)}
@@ -163,6 +236,25 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
               {selectedIds.size}개 삭제
             </button>
           )}
+          <button
+            onClick={handleDownload}
+            disabled={!services?.length}
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Download className="h-4 w-4" />
+            Excel 다운로드
+          </button>
+          <label className={`inline-flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm font-medium shadow-sm hover:bg-muted/40 ${!selectedCategoryId || uploadMutation.isPending ? "cursor-not-allowed opacity-40" : ""}`}>
+            <Upload className="h-4 w-4" />
+            {uploadMutation.isPending ? "업로드 중..." : "Excel 업로드"}
+            <input
+              type="file"
+              accept=".xlsx,.xls"
+              className="hidden"
+              disabled={!selectedCategoryId || uploadMutation.isPending}
+              onChange={handleUpload}
+            />
+          </label>
           <button
             onClick={() => setFormTarget("new")}
             className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90"
@@ -227,14 +319,13 @@ export function BeautyServiceTable({ selectedCategoryId, selectedCategory }: Pro
                     <Th>가격</Th>
                     <Th>대상</Th>
                     <Th>노출</Th>
-                    <Th>예약</Th>
                     <Th className="text-right">액션</Th>
                   </tr>
                 </thead>
                 <tbody>
                   {(services?.length ?? 0) === 0 ? (
                     <tr>
-                      <Td colSpan={10} className="py-10 text-center text-muted-foreground">
+                      <Td colSpan={9} className="py-10 text-center text-muted-foreground">
                         등록된 시술이 없습니다.
                       </Td>
                     </tr>
@@ -377,17 +468,6 @@ function SortableServiceRow({
       <Td>{Number(service.price).toLocaleString()}원</Td>
       <Td>{genderLabel(service.targetGender)}</Td>
       <Td>{service.visible ? "노출" : "숨김"}</Td>
-      <Td>
-        {service.hasActiveReservations ? (
-          <span className="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 ring-1 ring-amber-600/20">
-            예약 있음
-          </span>
-        ) : (
-          <span className="inline-flex items-center rounded-full bg-muted/40 px-2 py-0.5 text-xs text-muted-foreground">
-            없음
-          </span>
-        )}
-      </Td>
       <Td className="text-right">
         <ServiceActions service={service} onEdit={onEdit} onDelete={onDelete} />
       </Td>
@@ -606,4 +686,11 @@ function genderLabel(value: BeautyService["targetGender"]) {
     default:
       return "전체";
   }
+}
+
+function parseGender(value: unknown): BeautyServiceTargetGender {
+  const s = String(value ?? "").trim();
+  if (s === "여성") return "WOMEN";
+  if (s === "남성") return "MEN";
+  return "ALL";
 }
