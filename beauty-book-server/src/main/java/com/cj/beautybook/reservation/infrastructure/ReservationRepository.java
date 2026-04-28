@@ -44,4 +44,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     @Query("SELECT r FROM Reservation r WHERE r.status IN :statuses AND r.deletedAt IS NULL ORDER BY r.startAt ASC")
     List<Reservation> findAllActive(@Param("statuses") Collection<ReservationStatus> statuses);
+
+    @Query("SELECT r.id FROM Reservation r WHERE r.status = :status AND r.createdAt < :threshold AND r.deletedAt IS NULL")
+    List<Long> findExpirableRequestIds(@Param("status") ReservationStatus status, @Param("threshold") Instant threshold);
 }

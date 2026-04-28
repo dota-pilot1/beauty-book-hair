@@ -5,6 +5,7 @@ export type ReservationStatus =
   | "CONFIRMED"
   | "CANCELLED_BY_CUSTOMER"
   | "CANCELLED_BY_ADMIN"
+  | "EXPIRED"
   | "COMPLETED"
   | "NO_SHOW";
 

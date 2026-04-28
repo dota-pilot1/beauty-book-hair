@@ -35,7 +35,7 @@ function formatDate(iso: string | null) {
 
 function AuthorAvatar({ name }: { name: string }) {
   return (
-    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[11px] font-bold text-primary">
       {name.slice(0, 1)}
     </span>
   );
@@ -52,14 +52,14 @@ function AdminBlogCard({
     <motion.div
       whileHover={{ y: -3, boxShadow: "0 12px 32px -4px rgba(0,0,0,0.25)" }}
       transition={{ type: "spring", stiffness: 400, damping: 28 }}
-      className="group h-full rounded-2xl overflow-hidden"
+      className="group h-full rounded-md overflow-hidden"
     >
-      <div className="relative h-full flex flex-col rounded-2xl border border-black/8 bg-card overflow-hidden">
+      <div className="relative h-full flex flex-col rounded-md border border-black/8 bg-card overflow-hidden">
         {/* 어드민 액션 오버레이 */}
         <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
           <Link
             href={`/blog-management/${post.id}/edit`}
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-background/95 text-muted-foreground shadow hover:bg-primary hover:text-primary-foreground transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-md bg-background/95 text-muted-foreground shadow hover:bg-primary hover:text-primary-foreground transition-colors"
             title="편집"
           >
             <Pencil className="h-3.5 w-3.5" />
@@ -69,7 +69,7 @@ function AdminBlogCard({
               e.stopPropagation();
               if (confirm("포스트를 삭제하시겠습니까?")) onDelete(post.id);
             }}
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-background/95 text-muted-foreground shadow hover:bg-destructive hover:text-white transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-md bg-background/95 text-muted-foreground shadow hover:bg-destructive hover:text-white transition-colors"
             title="삭제"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -80,18 +80,18 @@ function AdminBlogCard({
         <div className="px-4 pt-3 pb-2.5 border-b border-black/6">
           <div className="flex items-center gap-1.5 mb-1 min-h-[18px]">
             {post.category && (
-              <span className="rounded-full bg-background border border-black/8 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+              <span className="rounded-md bg-background border border-black/8 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
                 {post.category.name}
               </span>
             )}
             {post.isPinned && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+              <span className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
                 <Pin className="h-2.5 w-2.5" />
                 추천
               </span>
             )}
             <span
-              className={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+              className={`ml-auto shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium ${
                 post.status === "PUBLISHED"
                   ? "bg-emerald-50 text-emerald-700"
                   : "bg-muted text-muted-foreground"
@@ -184,7 +184,7 @@ function BlogPostGrid({
             )}
             <Link
               href="/blog-management/new"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground"
             >
               <PenSquare className="h-3.5 w-3.5" />
               새 포스트
@@ -204,9 +204,9 @@ function BlogPostGrid({
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="flex gap-3 rounded-2xl border border-black/8 bg-card p-4"
+              className="flex gap-3 rounded-md border border-black/8 bg-card p-4"
             >
-              <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-muted" />
+              <div className="h-9 w-9 shrink-0 animate-pulse rounded-md bg-muted" />
               <div className="flex-1 space-y-2">
                 <div className="h-4 w-1/3 animate-pulse rounded bg-muted" />
                 <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
@@ -224,7 +224,7 @@ function BlogPostGrid({
           </p>
           <Link
             href="/blog-management/new"
-            className="inline-flex items-center gap-1.5 rounded-full border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted transition-colors"
           >
             <PenSquare className="h-3.5 w-3.5" />
             첫 포스트 작성하기
@@ -260,7 +260,7 @@ function BlogPostGrid({
             <button
               key={i}
               onClick={() => setPage(i)}
-              className={`h-8 w-8 rounded-full text-sm font-medium transition-colors ${
+              className={`h-8 w-8 rounded-md text-sm font-medium transition-colors ${
                 i === page
                   ? "bg-foreground text-background"
                   : "border border-border text-muted-foreground hover:bg-muted"

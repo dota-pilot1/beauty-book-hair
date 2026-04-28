@@ -12,6 +12,7 @@ import {
   ChartNoAxesColumn,
   CircleUserRound,
   LayoutDashboard,
+  MailCheck,
   MonitorCog,
   Newspaper,
   PanelLeftClose,
@@ -82,6 +83,12 @@ export const adminNavItems: AdminNavItem[] = [
     icon: MonitorCog,
   },
   {
+    href: "/mail-settings",
+    label: "메일 관리",
+    description: "예약 요청 알림 수신 이메일을 설정합니다.",
+    icon: MailCheck,
+  },
+  {
     href: "/board-management",
     label: "게시판 관리",
     description: "게시판과 게시글을 관리합니다.",
@@ -122,7 +129,7 @@ export function AdminSidebar() {
       {/* 컨테이너: collapsed 시 flex col items-center */}
       <div
         className={cn(
-          "sticky top-20 rounded-3xl border border-black/12 bg-sidebar/90 shadow-sm transition-[padding] duration-300",
+          "sticky top-20 rounded-md border border-black/12 bg-sidebar/90 shadow-sm transition-[padding] duration-300",
           collapsed ? "p-2 flex flex-col items-center gap-1.5" : "p-3"
         )}
       >
@@ -134,13 +141,13 @@ export function AdminSidebar() {
             "flex shrink-0 items-center overflow-hidden border bg-background/70 transition-all duration-300 ease-in-out",
             collapsed
               ? cn(
-                  "h-10 w-10 justify-center rounded-xl",
+                  "h-10 w-10 justify-center rounded-md",
                   pathname === "/admin/dashboard"
                     ? "border-primary/30 bg-primary/10 text-primary"
                     : "border-black/10 text-muted-foreground hover:bg-accent hover:text-foreground"
                 )
               : cn(
-                  "w-full rounded-2xl p-4",
+                  "w-full rounded-md p-4",
                   pathname === "/admin/dashboard"
                     ? "border-black/18 bg-accent/70"
                     : "border-black/12 hover:border-black/20 hover:bg-accent"
@@ -190,13 +197,13 @@ export function AdminSidebar() {
                   "relative flex shrink-0 items-center overflow-hidden border transition-all duration-300 ease-in-out",
                   collapsed
                     ? cn(
-                        "h-10 w-10 justify-center rounded-xl",
+                        "h-10 w-10 justify-center rounded-md",
                         active
                           ? "border-primary/30 bg-primary/10 text-primary shadow-sm"
                           : "border-black/8 bg-background/50 text-muted-foreground hover:bg-accent hover:text-foreground"
                       )
                     : cn(
-                        "w-full rounded-2xl px-3 py-3",
+                        "w-full rounded-md px-3 py-3",
                         active
                           ? "border-black/18 bg-accent/70"
                           : "border-black/10 bg-background/60 hover:border-black/20 hover:bg-accent"
@@ -206,14 +213,14 @@ export function AdminSidebar() {
                 {/* 활성 인디케이터 */}
                 <span
                   className={cn(
-                    "absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full bg-primary transition-opacity duration-200",
+                    "absolute left-0 top-3 bottom-3 w-0.5 rounded-r-md bg-primary transition-opacity duration-200",
                     active && !collapsed ? "opacity-100 delay-[200ms]" : "opacity-0"
                   )}
                 />
                 {/* 아이콘 */}
                 <span
                   className={cn(
-                    "shrink-0 inline-flex rounded-xl transition-all duration-300",
+                    "shrink-0 inline-flex rounded-md transition-all duration-300",
                     collapsed
                       ? "p-0"
                       : cn("p-2", active ? "bg-primary/12 text-primary" : "bg-muted text-foreground")
@@ -255,8 +262,8 @@ export function AdminSidebar() {
           className={cn(
             "shrink-0 flex items-center overflow-hidden border border-black/10 bg-background/60 text-xs text-muted-foreground transition-all duration-300 ease-in-out hover:border-black/20 hover:bg-accent",
             collapsed
-              ? "h-10 w-10 justify-center rounded-xl"
-              : "mt-3 w-full rounded-2xl px-3 py-2"
+              ? "h-10 w-10 justify-center rounded-md"
+              : "mt-3 w-full rounded-md px-3 py-2"
           )}
         >
           <div className="relative h-4 w-4 shrink-0">

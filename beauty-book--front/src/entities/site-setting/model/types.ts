@@ -4,3 +4,8 @@ export type SiteSetting = {
   introSubtitle: string;
   updatedAt: string;
 };
+
+export type MailSetting = {
+  reservationRequestEmails: string[];
+  updatedAt: string;
+};

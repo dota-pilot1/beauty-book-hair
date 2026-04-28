@@ -38,7 +38,7 @@ export function RoleManageDialog({ open, roles, onClose }: Props) {
         onClick={onClose}
       >
         <div
-          className="w-full max-w-lg rounded-lg border border-border bg-background shadow-lg overflow-hidden"
+          className="w-full max-w-lg rounded-md border border-border bg-background shadow-lg overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

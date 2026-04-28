@@ -40,10 +40,11 @@ public class MenuSeeder implements ApplicationRunner {
                 new MenuDef("ADMIN_ROLE_PERMISSIONS","ADMIN", "역할-권한 매핑","nav.rolePermissions",  "/role-permissions", "ShieldCheck",     RoleSeeder.ROLE_ADMIN,   1),
                 new MenuDef("ADMIN_BEAUTY_SERVICES", "ADMIN", "시술 관리",     null,                   "/beauty-services",  "Scissors",        RoleSeeder.ROLE_ADMIN,   2),
                 new MenuDef("ADMIN_SITE_SETTINGS",   "ADMIN", "메인 관리",     "nav.siteSettings",     "/site-settings",    "LayoutDashboard", RoleSeeder.ROLE_ADMIN,   3),
-                new MenuDef("ADMIN_MENU_MANAGEMENT", "ADMIN", "메뉴 관리",     "nav.menuManagement",   "/menu-management",  "Menu",            RoleSeeder.ROLE_ADMIN,   4),
-                new MenuDef("ADMIN_STAFF",          "ADMIN", "직원 관리",     null,                   "/staff",            "UserCog",         RoleSeeder.ROLE_ADMIN,   5),
-                new MenuDef("ADMIN_GALLERY",        "ADMIN", "갤러리 관리",   null,                   "/gallery-management", "GalleryHorizontal", RoleSeeder.ROLE_ADMIN, 6),
-                new MenuDef("ADMIN_BLOG",           "ADMIN", "블로그 관리",   null,                   "/blog-management",    "BookOpen",          RoleSeeder.ROLE_ADMIN, 7)
+                new MenuDef("ADMIN_MAIL_SETTINGS",   "ADMIN", "메일 관리",     null,                   "/mail-settings",    "MailCheck",       RoleSeeder.ROLE_ADMIN,   4),
+                new MenuDef("ADMIN_MENU_MANAGEMENT", "ADMIN", "메뉴 관리",     "nav.menuManagement",   "/menu-management",  "Menu",            RoleSeeder.ROLE_ADMIN,   5),
+                new MenuDef("ADMIN_STAFF",          "ADMIN", "직원 관리",     null,                   "/staff",            "UserCog",         RoleSeeder.ROLE_ADMIN,   6),
+                new MenuDef("ADMIN_GALLERY",        "ADMIN", "갤러리 관리",   null,                   "/gallery-management", "GalleryHorizontal", RoleSeeder.ROLE_ADMIN, 7),
+                new MenuDef("ADMIN_BLOG",           "ADMIN", "블로그 관리",   null,                   "/blog-management",    "BookOpen",          RoleSeeder.ROLE_ADMIN, 8)
         );
 
         for (MenuDef def : defs) {

@@ -106,7 +106,7 @@ export function CustomerShell({
       >
         <div
           className={cn(
-            "sticky top-[3.75rem] rounded-3xl border border-black/12 bg-sidebar/90 shadow-sm transition-[padding] duration-300",
+            "sticky top-[3.75rem] rounded-md border border-black/12 bg-sidebar/90 shadow-sm transition-[padding] duration-300",
             collapsed ? "p-2 flex flex-col items-center gap-2" : "p-4"
           )}
         >
@@ -116,7 +116,7 @@ export function CustomerShell({
                 href="/customer-space"
                 title="미용실 소개"
                 className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-md border transition-colors",
                   normalizedPathname === "/customer-space"
                     ? "border-primary bg-primary text-primary-foreground shadow-md"
                     : "border-border bg-card text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -128,7 +128,7 @@ export function CustomerShell({
               <Link
                 href="/customer-space"
                 className={cn(
-                  "block rounded-2xl border p-4 transition-colors",
+                  "block rounded-md border p-4 transition-colors",
                   normalizedPathname === "/customer-space"
                     ? "border-primary bg-primary text-primary-foreground shadow-md"
                     : "border-border bg-card hover:border-primary hover:bg-accent"
@@ -198,13 +198,13 @@ export function CustomerShell({
                     "relative flex shrink-0 items-center overflow-hidden border transition-all duration-300 ease-in-out",
                     collapsed
                       ? cn(
-                          "h-10 w-10 justify-center rounded-xl",
+                          "h-10 w-10 justify-center rounded-md",
                           active
                             ? "border-primary bg-primary text-primary-foreground shadow-md"
                             : "border-border bg-card text-muted-foreground hover:border-primary hover:bg-accent hover:text-foreground"
                         )
                       : cn(
-                          "w-full rounded-2xl px-3 py-3",
+                          "w-full rounded-md px-3 py-3",
                           active
                             ? "border-primary bg-primary text-primary-foreground shadow-md"
                             : "border-border bg-card hover:border-primary hover:bg-accent"
@@ -213,7 +213,7 @@ export function CustomerShell({
                 >
                   <span
                     className={cn(
-                      "shrink-0 inline-flex rounded-xl transition-all duration-300",
+                      "shrink-0 inline-flex rounded-md transition-all duration-300",
                       collapsed
                         ? "p-0"
                         : cn(
@@ -264,8 +264,8 @@ export function CustomerShell({
             className={cn(
               "shrink-0 flex items-center overflow-hidden border border-black/10 bg-background/60 text-xs text-muted-foreground transition-all duration-300 ease-in-out hover:border-black/20 hover:bg-accent",
               collapsed
-                ? "h-10 w-10 justify-center rounded-xl"
-                : "mt-3 w-full rounded-2xl px-3 py-2.5"
+                ? "h-10 w-10 justify-center rounded-md"
+                : "mt-3 w-full rounded-md px-3 py-2.5"
             )}
           >
             <div className="relative h-4 w-4 shrink-0">
@@ -298,7 +298,7 @@ export function CustomerShell({
 
       <section className="min-w-0 flex-1 space-y-5">
         {showHeader ? (
-          <header className="rounded-3xl border border-black/10 bg-background p-5 shadow-sm">
+          <header className="rounded-md border border-black/10 bg-background p-5 shadow-sm">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
               <div className="max-w-3xl">
                 <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">

@@ -75,7 +75,7 @@ export function CreateUserDialog({ open, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-lg border border-border bg-background p-6 shadow-lg"
+        className="w-full max-w-md rounded-md border border-border bg-background p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-base font-semibold mb-4">유저 등록</h2>

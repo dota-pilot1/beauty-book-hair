@@ -64,7 +64,7 @@ export function UserRoleDialog({ open, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="w-full max-w-2xl rounded-lg border border-border bg-background shadow-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-2xl rounded-md border border-border bg-background shadow-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h2 className="text-base font-semibold">유저 롤 설정</h2>

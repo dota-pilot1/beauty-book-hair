@@ -216,7 +216,7 @@ function SortableCategoryItem({
       }`}
     >
       {active ? (
-        <div className="absolute left-0 top-[15%] h-[70%] w-1 rounded-r-full bg-primary" />
+        <div className="absolute left-0 top-[15%] h-[70%] w-1 rounded-r-md bg-primary" />
       ) : null}
 
       <div className="flex shrink-0 items-center pl-2">

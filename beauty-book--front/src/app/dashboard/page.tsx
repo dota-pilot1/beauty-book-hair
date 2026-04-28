@@ -86,10 +86,10 @@ function WeeklyScheduleCard() {
   const isOpenToday = todayItem && !todayItem.closed;
 
   return (
-    <div className="rounded-xl border border-black/10 bg-card p-4 shadow-sm">
+    <div className="rounded-md border border-black/10 bg-card p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="inline-flex rounded-lg bg-primary/10 p-2 text-primary">
+          <div className="inline-flex rounded-md bg-primary/10 p-2 text-primary">
             <Users className="h-4 w-4" />
           </div>
           <h2 className="text-base font-semibold text-foreground">이번 주 스케줄</h2>
@@ -97,17 +97,17 @@ function WeeklyScheduleCard() {
         {todayItem && (
           <span
             className={[
-              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+              "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium",
               isOpenToday ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700",
             ].join(" ")}
           >
-            <span className={["h-1.5 w-1.5 rounded-full", isOpenToday ? "bg-emerald-500" : "bg-rose-500"].join(" ")} />
+            <span className={["h-1.5 w-1.5 rounded-md", isOpenToday ? "bg-emerald-500" : "bg-rose-500"].join(" ")} />
             {isOpenToday ? "오늘 영업 중" : "오늘 휴무"}
           </span>
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-black/10 bg-white">
+      <div className="overflow-x-auto rounded-md border border-black/10 bg-white">
         <table className="w-full min-w-[760px] table-fixed text-sm">
           <thead className="bg-muted/35">
             <tr>
@@ -173,7 +173,7 @@ function WeeklyScheduleCard() {
                 <tr key={staff.staffId} className={["border-t border-black/8 transition-colors hover:bg-muted/20", idx % 2 === 0 ? "" : "bg-muted/[0.07]"].join(" ")}>
                   <td className="px-3 py-2">
                     <div className="flex items-center justify-center gap-1.5">
-                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+                      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[9px] font-bold text-primary">
                         {staff.staffName.slice(0, 1)}
                       </div>
                       <span className="text-xs font-medium text-foreground whitespace-nowrap">{staff.staffName}</span>
@@ -225,6 +225,7 @@ const STATUS_META: Record<ReservationStatus, { label: string; className: string 
   CONFIRMED:             { label: "예약 확정",   className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" },
   CANCELLED_BY_CUSTOMER: { label: "고객 취소",   className: "bg-muted text-muted-foreground" },
   CANCELLED_BY_ADMIN:    { label: "관리자 취소", className: "bg-muted text-muted-foreground" },
+  EXPIRED:               { label: "요청 만료",   className: "bg-zinc-100 text-zinc-500 ring-1 ring-zinc-200" },
   COMPLETED:             { label: "완료",        className: "bg-blue-50 text-blue-700 ring-1 ring-blue-200" },
   NO_SHOW:               { label: "노쇼",        className: "bg-rose-50 text-rose-700 ring-1 ring-rose-200" },
 };
@@ -267,13 +268,13 @@ function DashboardInner() {
         <div className="flex items-center gap-2">
           <Link
             href="/customer-space"
-            className="inline-flex items-center justify-center rounded-full border border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
+            className="inline-flex items-center justify-center rounded-md border border-border bg-background px-5 py-2.5 text-sm font-medium text-foreground hover:bg-muted"
           >
             예약 홈
           </Link>
           <Link
             href="/reservations"
-            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
           >
             전체 예약 보기
           </Link>
@@ -292,7 +293,7 @@ function DashboardInner() {
             { label: "예약 확정",      value: isLoading ? "…" : String(confirmed) },
             { label: "근무 직원",      value: workingStaffCount > 0 ? String(workingStaffCount) : "—" },
           ].map((item) => (
-            <article key={item.label} className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
+            <article key={item.label} className="rounded-md border border-black/12 bg-card p-5 shadow-sm">
               <p className="text-sm text-muted-foreground">{item.label}</p>
               <p className="mt-3 text-3xl font-semibold tracking-tight">{item.value}</p>
             </article>
@@ -300,11 +301,11 @@ function DashboardInner() {
         </section>
 
         {/* 오늘 예약 현황 */}
-        <section className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
+        <section className="rounded-md border border-black/12 bg-card p-5 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <CalendarDays className="h-4 w-4" />
             오늘 예약 현황
-            <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            <span className="ml-auto rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               {todayReservations.length}건
             </span>
           </div>
@@ -312,10 +313,10 @@ function DashboardInner() {
           <div className="mt-4 space-y-3">
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted/50" />
+                <div key={i} className="h-20 animate-pulse rounded-md bg-muted/50" />
               ))
             ) : todayReservations.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+              <p className="rounded-md border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
                 오늘 예약이 없습니다.
               </p>
             ) : (
@@ -362,7 +363,7 @@ function DashboardReservationCard({
   };
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-background p-4">
+    <div className="rounded-md border border-black/10 bg-background p-4">
       <div className="flex items-start gap-4">
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground">
@@ -389,7 +390,7 @@ function DashboardReservationCard({
                     type="button"
                     disabled={isPending || isCurrent}
                     onClick={() => isCancelBtn ? setShowCancelInput(true) : onChangeStatus(status)}
-                    className={`rounded-lg border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-default ${
+                    className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-default ${
                       isCurrent
                         ? className
                         : "border-black/10 bg-background text-muted-foreground hover:bg-accent disabled:opacity-40"
@@ -408,21 +409,21 @@ function DashboardReservationCard({
                 onChange={(e) => setCancelMemo(e.target.value)}
                 placeholder="취소 사유를 입력하세요..."
                 rows={2}
-                className="w-full resize-none rounded-xl border border-black/10 bg-muted/30 px-3 py-2 text-xs outline-none focus:border-black/20"
+                className="w-full resize-none rounded-md border border-black/10 bg-muted/30 px-3 py-2 text-xs outline-none focus:border-black/20"
               />
               <div className="flex gap-1.5">
                 <button
                   type="button"
                   disabled={isPending}
                   onClick={handleAdminCancel}
-                  className="flex-1 rounded-lg bg-rose-500 py-1.5 text-xs font-medium text-white disabled:opacity-50"
+                  className="flex-1 rounded-md bg-rose-500 py-1.5 text-xs font-medium text-white disabled:opacity-50"
                 >
                   취소 확정
                 </button>
                 <button
                   type="button"
                   onClick={() => { setShowCancelInput(false); setCancelMemo(""); }}
-                  className="flex-1 rounded-lg border border-black/10 py-1.5 text-xs font-medium text-muted-foreground"
+                  className="flex-1 rounded-md border border-black/10 py-1.5 text-xs font-medium text-muted-foreground"
                 >
                   돌아가기
                 </button>

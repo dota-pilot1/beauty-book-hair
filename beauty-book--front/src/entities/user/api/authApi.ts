@@ -21,6 +21,9 @@ export const authApi = {
       .patch<User>("/api/auth/me/profile-image", { profileImageUrl })
       .then((r) => r.data),
 
+  changePassword: (body: { currentPassword: string; newPassword: string }) =>
+    api.patch<void>("/api/auth/me/password", body),
+
   logout: () =>
     api.post<void>("/api/auth/logout"),
 };

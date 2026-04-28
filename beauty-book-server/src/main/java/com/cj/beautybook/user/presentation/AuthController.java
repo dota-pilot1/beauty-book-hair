@@ -5,6 +5,7 @@ import com.cj.beautybook.common.exception.BusinessException;
 import com.cj.beautybook.common.exception.ErrorCode;
 import com.cj.beautybook.user.application.AuthService;
 import com.cj.beautybook.user.application.PasswordResetService;
+import com.cj.beautybook.user.presentation.dto.ChangePasswordRequest;
 import com.cj.beautybook.user.presentation.dto.PasswordResetConfirmDto;
 import com.cj.beautybook.user.presentation.dto.PasswordResetRequestDto;
 import com.cj.beautybook.user.infrastructure.UserRepository;
@@ -73,6 +74,15 @@ public class AuthController {
     @PostMapping("/password-reset/confirm")
     public ResponseEntity<Void> passwordResetConfirm(@Valid @RequestBody PasswordResetConfirmDto req) {
         passwordResetService.confirmReset(req.token(), req.newPassword());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/me/password")
+    public ResponseEntity<Void> changePassword(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @Valid @RequestBody ChangePasswordRequest req
+    ) {
+        authService.changePassword(principal.getId(), req);
         return ResponseEntity.noContent().build();
     }
 

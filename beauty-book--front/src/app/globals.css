@@ -283,6 +283,17 @@
     --sidebar-ring: oklch(0.556 0 0);
 }
 
+@keyframes spin-border {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes hint-bounce {
+  0%, 100% { transform: translateY(0); }
+  40%       { transform: translateY(-4px); }
+  70%       { transform: translateY(-2px); }
+}
+
 @layer base {
     * {
         @apply border-border outline-ring/50;

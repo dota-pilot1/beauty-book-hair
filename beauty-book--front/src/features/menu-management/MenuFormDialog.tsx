@@ -101,7 +101,7 @@ export function MenuFormDialog({ target, menus, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-xl">
+      <div className="w-full max-w-md rounded-md border border-border bg-background p-6 shadow-xl">
         <h2 className="mb-4 text-base font-semibold">
           {isNew ? "메뉴 생성" : "메뉴 수정"}
         </h2>

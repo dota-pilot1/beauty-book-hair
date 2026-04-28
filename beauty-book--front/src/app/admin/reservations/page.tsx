@@ -8,6 +8,7 @@ import type { Reservation, ReservationStatus } from "@/entities/reservation/mode
 const DELETABLE_STATUSES: ReservationStatus[] = [
   "CANCELLED_BY_CUSTOMER",
   "CANCELLED_BY_ADMIN",
+  "EXPIRED",
   "COMPLETED",
   "NO_SHOW",
 ];
@@ -17,6 +18,7 @@ const STATUS_META: Record<ReservationStatus, { label: string; badgeClass: string
   CONFIRMED:            { label: "예약 확정",   badgeClass: "bg-emerald-100 text-emerald-700", headerClass: "bg-emerald-50/60 border-b border-emerald-200" },
   CANCELLED_BY_CUSTOMER:{ label: "고객 취소",   badgeClass: "bg-slate-100 text-slate-500",    headerClass: "bg-slate-50/60 border-b border-slate-200" },
   CANCELLED_BY_ADMIN:   { label: "관리자 취소", badgeClass: "bg-slate-100 text-slate-500",    headerClass: "bg-slate-50/60 border-b border-slate-200" },
+  EXPIRED:              { label: "요청 만료",   badgeClass: "bg-zinc-100 text-zinc-500",      headerClass: "bg-zinc-50/60 border-b border-zinc-200" },
   COMPLETED:            { label: "완료",        badgeClass: "bg-blue-100 text-blue-700",      headerClass: "bg-blue-50/60 border-b border-blue-200" },
   NO_SHOW:              { label: "노쇼",        badgeClass: "bg-rose-100 text-rose-700",      headerClass: "bg-rose-50/60 border-b border-rose-200" },
 };
@@ -96,7 +98,7 @@ export default function AdminReservationsPage() {
   return (
     <div className="space-y-6">
       {/* 페이지 헤더 */}
-      <header className="rounded-3xl border border-black/12 bg-gradient-to-br from-background via-background to-muted/30 p-6 shadow-sm">
+      <header className="rounded-md border border-black/12 bg-gradient-to-br from-background via-background to-muted/30 p-6 shadow-sm">
         <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
           Admin
         </p>
@@ -114,7 +116,7 @@ export default function AdminReservationsPage() {
               key={opt.value}
               type="button"
               onClick={() => handleDateChange(opt.value)}
-              className={`rounded-xl border px-2 py-2.5 text-center transition-colors ${
+              className={`rounded-md border px-2 py-2.5 text-center transition-colors ${
                 selectedDate === opt.value
                   ? "border-black/25 bg-primary text-primary-foreground"
                   : "border-black/10 bg-card hover:bg-accent"
@@ -127,12 +129,12 @@ export default function AdminReservationsPage() {
         </section>
 
         {/* 예약 목록 */}
-        <section className="rounded-2xl border border-black/12 bg-card shadow-sm">
+        <section className="rounded-md border border-black/12 bg-card shadow-sm">
           {/* 섹션 헤더 */}
           <div className="flex items-center gap-2 border-b border-black/8 px-5 py-4 text-sm font-medium text-foreground">
             <CalendarDays className="h-4 w-4" />
             {dateOptions.find((d) => d.value === selectedDate)?.shortLabel} 예약
-            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            <span className="rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               {reservations.length}건
             </span>
 
@@ -158,7 +160,7 @@ export default function AdminReservationsPage() {
                 <button
                   type="button"
                   onClick={() => { setSelectedIds(new Set()); setShowBulkConfirm(false); }}
-                  className="rounded-lg border border-black/10 bg-white px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
+                  className="rounded-md border border-black/10 bg-white px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-accent"
                 >
                   선택 취소
                 </button>
@@ -167,13 +169,13 @@ export default function AdminReservationsPage() {
                     type="button"
                     disabled={isPending}
                     onClick={() => setShowBulkConfirm(true)}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 rounded-md bg-red-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-600 disabled:opacity-50"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     선택 삭제
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2 rounded-lg border border-red-300 bg-white px-3 py-1.5">
+                  <div className="flex items-center gap-2 rounded-md border border-red-300 bg-white px-3 py-1.5">
                     <span className="text-xs font-medium text-red-600">{selectedIds.size}건을 삭제할까요?</span>
                     <button
                       type="button"
@@ -199,10 +201,10 @@ export default function AdminReservationsPage() {
           <div className="space-y-3 p-5">
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted/50" />
+                <div key={i} className="h-24 animate-pulse rounded-md bg-muted/50" />
               ))
             ) : reservations.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+              <p className="rounded-md border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
                 해당 날짜에 예약이 없습니다.
               </p>
             ) : (
@@ -257,7 +259,7 @@ function ReservationCard({
 
   return (
     <div
-      className={`overflow-hidden rounded-2xl border transition-colors ${
+      className={`overflow-hidden rounded-md border transition-colors ${
         isSelected ? "border-red-300 ring-1 ring-red-200" : "border-black/10"
       } bg-background`}
     >
@@ -285,7 +287,7 @@ function ReservationCard({
         </button>
 
         {/* 상태 배지 */}
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${meta.badgeClass}`}>
+        <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${meta.badgeClass}`}>
           {meta.label}
         </span>
 
@@ -302,13 +304,13 @@ function ReservationCard({
                 type="button"
                 disabled={isPending}
                 onClick={() => setShowDeleteConfirm(true)}
-                className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-40"
               >
                 <Trash2 className="h-3 w-3" />
                 삭제
               </button>
             ) : (
-              <div className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-2.5 py-1">
+              <div className="flex items-center gap-1.5 rounded-md border border-red-200 bg-white px-2.5 py-1">
                 <span className="text-xs font-medium text-red-600">삭제할까요?</span>
                 <button
                   type="button"
@@ -355,7 +357,7 @@ function ReservationCard({
                     type="button"
                     disabled={isPending || isCurrent}
                     onClick={() => isCancelBtn ? setShowCancelInput(true) : onChangeStatus(status)}
-                    className={`rounded-lg border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-default ${
+                    className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-default ${
                       isCurrent
                         ? className
                         : "border-black/10 bg-background text-muted-foreground hover:bg-accent disabled:opacity-40"
@@ -374,15 +376,15 @@ function ReservationCard({
                 onChange={(e) => setCancelMemo(e.target.value)}
                 placeholder="취소 사유를 입력하세요..."
                 rows={2}
-                className="w-full resize-none rounded-xl border border-black/10 bg-muted/30 px-3 py-2 text-xs outline-none focus:border-black/20"
+                className="w-full resize-none rounded-md border border-black/10 bg-muted/30 px-3 py-2 text-xs outline-none focus:border-black/20"
               />
               <div className="flex gap-1.5">
                 <button type="button" disabled={isPending} onClick={handleAdminCancel}
-                  className="flex-1 rounded-lg bg-rose-500 py-1.5 text-xs font-medium text-white disabled:opacity-50">
+                  className="flex-1 rounded-md bg-rose-500 py-1.5 text-xs font-medium text-white disabled:opacity-50">
                   취소 확정
                 </button>
                 <button type="button" onClick={() => { setShowCancelInput(false); setCancelMemo(""); }}
-                  className="flex-1 rounded-lg border border-black/10 py-1.5 text-xs font-medium text-muted-foreground">
+                  className="flex-1 rounded-md border border-black/10 py-1.5 text-xs font-medium text-muted-foreground">
                   돌아가기
                 </button>
               </div>

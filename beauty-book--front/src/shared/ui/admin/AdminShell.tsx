@@ -13,6 +13,7 @@ import {
   Clock,
   GalleryHorizontal,
   LayoutDashboard,
+  MailCheck,
   MonitorCog,
   Newspaper,
   PanelLeftClose,
@@ -88,6 +89,12 @@ const adminNavItems: AdminNavItem[] = [
     icon: MonitorCog,
   },
   {
+    href: "/mail-settings",
+    label: "메일 관리",
+    description: "예약 요청 알림 수신 이메일을 설정합니다.",
+    icon: MailCheck,
+  },
+  {
     href: "/board-management",
     label: "게시판 관리",
     description: "게시판과 게시글을 관리합니다.",
@@ -144,7 +151,7 @@ export function AdminShell({
       >
         <div
           className={cn(
-            "sticky top-20 rounded-xl border border-sidebar-border bg-sidebar shadow-sm transition-[padding] duration-300",
+            "sticky top-20 rounded-md border border-sidebar-border bg-sidebar shadow-sm transition-[padding] duration-300",
             collapsed ? "p-2 flex flex-col items-center gap-2" : "p-4"
           )}
         >
@@ -175,13 +182,13 @@ export function AdminShell({
                     "shrink-0 flex items-center overflow-hidden border transition-all duration-300 ease-in-out",
                     collapsed
                       ? cn(
-                          "h-10 w-10 justify-center rounded-xl",
+                          "h-10 w-10 justify-center rounded-md",
                           active
                             ? "border-primary bg-primary text-primary-foreground shadow-sm"
                             : "border-border bg-card text-muted-foreground hover:border-primary hover:bg-accent hover:text-foreground"
                         )
                       : cn(
-                          "w-full rounded-xl px-3 py-2.5",
+                          "w-full rounded-md px-3 py-2.5",
                           active
                             ? "border-primary bg-primary text-primary-foreground shadow-md"
                             : "border-border bg-card text-muted-foreground hover:border-primary hover:bg-accent hover:text-foreground"
@@ -190,7 +197,7 @@ export function AdminShell({
                 >
                   <span
                     className={cn(
-                      "shrink-0 inline-flex rounded-xl transition-all duration-300",
+                      "shrink-0 inline-flex rounded-md transition-all duration-300",
                       collapsed ? "p-0" : cn("p-2", active ? "bg-primary-foreground/15 text-primary-foreground" : "bg-muted text-muted-foreground")
                     )}
                   >
@@ -221,8 +228,8 @@ export function AdminShell({
             className={cn(
               "shrink-0 flex items-center overflow-hidden border border-border bg-card text-xs text-muted-foreground transition-all duration-300 ease-in-out hover:border-primary hover:bg-accent hover:text-foreground",
               collapsed
-                ? "h-10 w-10 justify-center rounded-xl"
-                : "mt-4 w-full rounded-xl px-3 py-2"
+                ? "h-10 w-10 justify-center rounded-md"
+                : "mt-4 w-full rounded-md px-3 py-2"
             )}
           >
             <div className="relative h-4 w-4 shrink-0">
@@ -249,7 +256,7 @@ export function AdminShell({
 
       {/* 메인 */}
       <section className="min-w-0 flex-1 space-y-6">
-        <header className="rounded-xl border border-border bg-card px-5 py-4 shadow-sm">
+        <header className="rounded-md border border-border bg-card px-5 py-4 shadow-sm">
           <div className="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">

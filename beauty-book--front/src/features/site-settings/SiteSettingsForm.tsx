@@ -148,7 +148,7 @@ export function SiteSettingsForm() {
             </span>
           </div>
 
-          <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-xl border-2 border-dashed border-border bg-muted/30">
+          <div className="relative flex-1 min-h-[320px] overflow-hidden rounded-md border-2 border-dashed border-border bg-muted/30">
             {heroImageUrl ? (
               <Image
                 src={heroImageUrl}

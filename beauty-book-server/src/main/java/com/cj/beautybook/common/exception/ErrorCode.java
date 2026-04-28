@@ -14,6 +14,7 @@ public enum ErrorCode {
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_005", "유효하지 않은 토큰입니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_006", "유효하지 않은 리프레시 토큰입니다."),
     INVALID_PASSWORD_RESET_TOKEN(HttpStatus.BAD_REQUEST, "AUTH_007", "유효하지 않거나 만료된 비밀번호 재설정 링크입니다."),
+    WRONG_CURRENT_PASSWORD(HttpStatus.BAD_REQUEST, "AUTH_008", "현재 비밀번호가 올바르지 않습니다."),
     ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "ROLE_001", "롤을 찾을 수 없습니다."),
     ROLE_CODE_DUPLICATE(HttpStatus.CONFLICT, "ROLE_002", "이미 존재하는 롤 코드입니다."),
     ROLE_SYSTEM_READONLY(HttpStatus.BAD_REQUEST, "ROLE_003", "시스템 롤은 수정 또는 삭제할 수 없습니다."),

@@ -241,7 +241,7 @@ function BusinessHoursForm() {
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-2xl border border-border">
+      <div className="overflow-hidden rounded-md border border-border">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
@@ -277,21 +277,21 @@ function BusinessHoursForm() {
                     <input
                       type="time" value={row.openTime} disabled={row.closed}
                       onChange={(e) => update(row.dayOfWeek, { openTime: e.target.value })}
-                      className="rounded-lg border border-border bg-background px-3 py-2 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      className="rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
                   </td>
                   <td className="px-5 py-4">
                     <input
                       type="time" value={row.closeTime} disabled={row.closed}
                       onChange={(e) => update(row.dayOfWeek, { closeTime: e.target.value })}
-                      className="rounded-lg border border-border bg-background px-3 py-2 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      className="rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
                   </td>
                   <td className="px-5 py-4 text-center">
                     {pending.length > 0 ? (
                       <button
                         onClick={() => setCancelDayTarget({ dayOfWeek: row.dayOfWeek, reservations: pending })}
-                        className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
+                        className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
                       >
                         <AlertCircle className="h-3 w-3" />
                         {pending.length}개
@@ -321,7 +321,7 @@ function BusinessHoursForm() {
         <button
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending}
-          className="rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+          className="rounded-md bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
         >
           {mutation.isPending ? "저장 중..." : "저장"}
         </button>
@@ -374,7 +374,7 @@ function CancelDayReservationsDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-3xl rounded-2xl bg-background shadow-xl overflow-hidden">
+      <div className="w-full max-w-3xl rounded-md bg-background shadow-xl overflow-hidden">
         {/* 헤더 */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div>
@@ -385,7 +385,7 @@ function CancelDayReservationsDialog({
               총 {reservations.length}건 — 전화 확인 후 필요 시 일괄 취소하세요
             </p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 hover:bg-accent">
+          <button onClick={onClose} className="rounded-md p-1.5 hover:bg-accent">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -439,7 +439,7 @@ function CancelDayReservationsDialog({
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className={[
-                        "inline-block rounded-full px-2 py-0.5 text-[10px] font-medium",
+                        "inline-block rounded-md px-2 py-0.5 text-[10px] font-medium",
                         r.status === "REQUESTED" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700",
                       ].join(" ")}>
                         {r.status === "REQUESTED" ? "승인 대기" : "예약 확정"}
@@ -462,17 +462,17 @@ function CancelDayReservationsDialog({
                 value={reason}
                 placeholder="예: 매장 사정으로 인한 임시 휴무"
                 onChange={(e) => setReason(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </label>
             <div className="flex items-center justify-end gap-2">
-              <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent">
+              <button onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent">
                 닫기
               </button>
               <button
                 onClick={() => cancelMutation.mutate()}
                 disabled={cancelMutation.isPending}
-                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                className="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
               >
                 {cancelMutation.isPending ? "취소 중..." : `${reservations.length}개 예약 일괄 취소`}
               </button>
@@ -485,7 +485,7 @@ function CancelDayReservationsDialog({
 
         {done && (
           <div className="border-t border-border px-6 py-4 flex justify-end">
-            <button onClick={onClose} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
+            <button onClick={onClose} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
               닫기
             </button>
           </div>
@@ -565,17 +565,17 @@ function BlockedTimeSection() {
         {/* 월 네비 + 목록 */}
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <button onClick={prevMonth} className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-accent">‹ 이전</button>
+            <button onClick={prevMonth} className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent">‹ 이전</button>
             <span className="text-sm font-semibold">{year}년 {month}월</span>
-            <button onClick={nextMonth} className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-accent">다음 ›</button>
+            <button onClick={nextMonth} className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent">다음 ›</button>
           </div>
 
           {isLoading ? (
-            <div className="rounded-2xl border border-border p-8 text-center text-sm text-muted-foreground">불러오는 중...</div>
+            <div className="rounded-md border border-border p-8 text-center text-sm text-muted-foreground">불러오는 중...</div>
           ) : items.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">이 달에 등록된 차단 시간이 없습니다.</div>
+            <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">이 달에 등록된 차단 시간이 없습니다.</div>
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-border">
+            <div className="overflow-hidden rounded-md border border-border">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
@@ -605,7 +605,7 @@ function BlockedTimeSection() {
         </div>
 
         {/* 생성 폼 */}
-        <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+        <div className="rounded-md border border-border bg-card p-5 space-y-4">
           <h3 className="text-sm font-semibold text-foreground">차단 시간 추가</h3>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="space-y-1">
@@ -613,7 +613,7 @@ function BlockedTimeSection() {
               <input
                 type="datetime-local" value={form.startAt}
                 onChange={(e) => setForm((f) => ({ ...f, startAt: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </label>
             <label className="space-y-1">
@@ -621,7 +621,7 @@ function BlockedTimeSection() {
               <input
                 type="datetime-local" value={form.endAt}
                 onChange={(e) => setForm((f) => ({ ...f, endAt: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </label>
             <label className="space-y-1">
@@ -640,7 +640,7 @@ function BlockedTimeSection() {
               <input
                 type="text" value={form.reason} placeholder="예: 정기 청소, 교육 일정"
                 onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </label>
           </div>
@@ -649,7 +649,7 @@ function BlockedTimeSection() {
             {createMutation.isSuccess && <span className="text-sm text-emerald-600 font-medium">추가됐습니다.</span>}
             <button
               onClick={handleCreate} disabled={createMutation.isPending}
-              className="rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+              className="rounded-md bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
             >
               {createMutation.isPending ? "추가 중..." : "차단 시간 추가"}
             </button>
@@ -706,7 +706,7 @@ function BlockedTimeRow({
       <td className="px-4 py-3 text-foreground">{toKST(item.startAt)}</td>
       <td className="px-4 py-3 text-foreground">{toKST(item.endAt)}</td>
       <td className="px-4 py-3">
-        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${BLOCK_TYPE_BADGE_CLASS[item.blockType]}`}>
+        <span className={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-medium ${BLOCK_TYPE_BADGE_CLASS[item.blockType]}`}>
           {BLOCK_TYPE_LABELS[item.blockType]}
         </span>
       </td>
@@ -715,7 +715,7 @@ function BlockedTimeRow({
         {conflicting.length > 0 ? (
           <button
             onClick={onCancelClick}
-            className="inline-flex items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
+            className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition-colors"
           >
             <AlertCircle className="h-3 w-3" />
             {conflicting.length}개
@@ -727,7 +727,7 @@ function BlockedTimeRow({
       <td className="px-4 py-3 text-center">
         <button
           onClick={onDelete} disabled={deleteDisabled}
-          className="inline-flex items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-40"
+          className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-40"
         >
           <Trash2 className="h-4 w-4" />
         </button>
@@ -808,11 +808,11 @@ function RecurringBlockedTimeSection() {
 
       {/* 목록 */}
       {items.length === 0 ? (
-        <p className="mb-4 rounded-xl border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
+        <p className="mb-4 rounded-md border border-dashed border-border py-6 text-center text-sm text-muted-foreground">
           등록된 정기 차단이 없습니다.
         </p>
       ) : (
-        <div className="mb-4 overflow-hidden rounded-xl border border-border">
+        <div className="mb-4 overflow-hidden rounded-md border border-border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/30">
@@ -829,7 +829,7 @@ function RecurringBlockedTimeSection() {
                   <td className="px-4 py-3">
                     <div className="flex gap-1 flex-wrap">
                       {ALL_DAYS.filter((d) => item.daysOfWeek.includes(d)).map((d) => (
-                        <span key={d} className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        <span key={d} className="inline-flex rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
                           {DAY_SHORT[d]}
                         </span>
                       ))}
@@ -837,7 +837,7 @@ function RecurringBlockedTimeSection() {
                   </td>
                   <td className="px-4 py-3 font-mono text-foreground">{item.startTime.slice(0, 5)} ~ {item.endTime.slice(0, 5)}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${BLOCK_TYPE_BADGE_CLASS[item.blockType]}`}>
+                    <span className={`inline-flex rounded-md px-2.5 py-0.5 text-xs font-medium ${BLOCK_TYPE_BADGE_CLASS[item.blockType]}`}>
                       {BLOCK_TYPE_LABELS[item.blockType]}
                     </span>
                   </td>
@@ -846,7 +846,7 @@ function RecurringBlockedTimeSection() {
                     <button
                       onClick={() => deleteMutation.mutate(item.id)}
                       disabled={deleteMutation.isPending}
-                      className="inline-flex items-center justify-center rounded-lg p-1.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-40"
+                      className="inline-flex items-center justify-center rounded-md p-1.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 transition-colors disabled:opacity-40"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -859,7 +859,7 @@ function RecurringBlockedTimeSection() {
       )}
 
       {/* 추가 폼 */}
-      <div className="rounded-xl border border-border bg-muted/10 p-5">
+      <div className="rounded-md border border-border bg-muted/10 p-5">
         <p className="mb-3 text-sm font-medium text-foreground">정기 차단 추가</p>
 
         {/* 요일 선택 */}
@@ -871,7 +871,7 @@ function RecurringBlockedTimeSection() {
                 key={day}
                 type="button"
                 onClick={() => toggleDay(day)}
-                className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                   form.daysOfWeek.includes(day)
                     ? "bg-primary text-primary-foreground"
                     : "bg-background border border-border text-foreground hover:bg-accent"
@@ -883,7 +883,7 @@ function RecurringBlockedTimeSection() {
             <button
               type="button"
               onClick={() => setForm((f) => ({ ...f, daysOfWeek: f.daysOfWeek.length === 7 ? [] : [...ALL_DAYS] }))}
-              className="rounded-full border border-dashed border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
+              className="rounded-md border border-dashed border-border px-3 py-1 text-xs font-medium text-muted-foreground hover:bg-accent transition-colors"
             >
               {form.daysOfWeek.length === 7 ? "전체 해제" : "전체"}
             </button>
@@ -898,7 +898,7 @@ function RecurringBlockedTimeSection() {
                 type="time"
                 value={form.startTime}
                 onChange={(e) => setForm((f) => ({ ...f, startTime: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
             </div>
             <div>
@@ -907,7 +907,7 @@ function RecurringBlockedTimeSection() {
                 type="time"
                 value={form.endTime}
                 onChange={(e) => setForm((f) => ({ ...f, endTime: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
             </div>
             <div>
@@ -928,7 +928,7 @@ function RecurringBlockedTimeSection() {
                 placeholder="예: 직원 식사 시간"
                 value={form.reason}
                 onChange={(e) => setForm((f) => ({ ...f, reason: e.target.value }))}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
+                className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
               />
             </div>
           </div>
@@ -938,7 +938,7 @@ function RecurringBlockedTimeSection() {
               type="button"
               onClick={handleSubmit}
               disabled={createMutation.isPending}
-              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors whitespace-nowrap"
+              className="rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors whitespace-nowrap"
             >
               {createMutation.isPending ? "추가 중..." : "정기 차단 추가"}
             </button>
@@ -1007,7 +1007,7 @@ function CancelReservationsDialog({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-2xl border border-border bg-background shadow-xl"
+        className="w-full max-w-lg rounded-md border border-border bg-background shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
@@ -1018,7 +1018,7 @@ function CancelReservationsDialog({
               {toKST(blockedTime.startAt)} ~ {toKST(blockedTime.endAt)}
             </p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent">
+          <button onClick={onClose} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -1033,7 +1033,7 @@ function CancelReservationsDialog({
             <p className="text-sm text-muted-foreground py-4 text-center">진행중인 예약이 없습니다.</p>
           ) : (
             targets.map((r) => (
-              <div key={r.id} className="flex items-center justify-between rounded-xl border border-border bg-muted/20 px-3 py-2.5">
+              <div key={r.id} className="flex items-center justify-between rounded-md border border-border bg-muted/20 px-3 py-2.5">
                 <div>
                   <p className="text-sm font-medium text-foreground">{r.beautyServiceName}</p>
                   <p className="text-xs text-muted-foreground">
@@ -1044,7 +1044,7 @@ function CancelReservationsDialog({
                   )}
                 </div>
                 <span className={[
-                  "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                  "shrink-0 rounded-md px-2 py-0.5 text-[10px] font-medium",
                   r.status === "REQUESTED" ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700",
                 ].join(" ")}>
                   {r.status === "REQUESTED" ? "승인 대기" : "예약 확정"}
@@ -1064,17 +1064,17 @@ function CancelReservationsDialog({
                 value={reason}
                 placeholder="예: 매장 사정으로 인한 임시 휴무"
                 onChange={(e) => setReason(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </label>
             <div className="flex items-center justify-end gap-2">
-              <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent">
+              <button onClick={onClose} className="rounded-md border border-border px-4 py-2 text-sm hover:bg-accent">
                 닫기
               </button>
               <button
                 onClick={() => cancelMutation.mutate()}
                 disabled={cancelMutation.isPending}
-                className="rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                className="rounded-md bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
               >
                 {cancelMutation.isPending ? "취소 중..." : `${targets.length}개 예약 일괄 취소`}
               </button>
@@ -1087,7 +1087,7 @@ function CancelReservationsDialog({
 
         {done && (
           <div className="border-t border-border px-5 py-4 flex justify-end">
-            <button onClick={onClose} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
+            <button onClick={onClose} className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
               닫기
             </button>
           </div>

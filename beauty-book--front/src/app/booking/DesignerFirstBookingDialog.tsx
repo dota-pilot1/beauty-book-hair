@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ChevronLeft, ChevronRight, Scissors, Search, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Scissors, Search, X } from "lucide-react";
 import type { BeautyService } from "@/entities/beauty-service/model/types";
 import type { ReservationSlot, ReservationSlotStatus } from "@/entities/reservation/model/types";
 import { useReservationSlots } from "@/entities/reservation/model/useReservationSlots";
@@ -236,14 +236,14 @@ export function DesignerFirstBookingDialog({
     <Dialog.Root open={open} onOpenChange={(o) => !o && handleClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
-        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex h-[92vh] flex-col overflow-hidden rounded-t-3xl bg-background shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:rounded-3xl">
+        <Dialog.Content className="fixed inset-x-0 bottom-0 z-50 flex h-[92vh] flex-col overflow-hidden rounded-t-md bg-background shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:rounded-md">
           <Dialog.Title className="sr-only">{designer.name} 디자이너 예약</Dialog.Title>
 
           {/* 헤더 */}
           <div className="shrink-0 px-5 pt-5 pb-4 border-b border-black/8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
+                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
                   {designer.profileImageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={designer.profileImageUrl} alt={designer.name} className="h-9 w-9 object-cover" />
@@ -258,7 +258,7 @@ export function DesignerFirstBookingDialog({
                   </p>
                 </div>
               </div>
-              <Dialog.Close onClick={handleClose} className="rounded-full p-1.5 hover:bg-muted transition-colors">
+              <Dialog.Close onClick={handleClose} className="rounded-md p-1.5 hover:bg-muted transition-colors">
                 <X className="h-4 w-4 text-muted-foreground" />
               </Dialog.Close>
             </div>
@@ -273,7 +273,7 @@ export function DesignerFirstBookingDialog({
                   className="flex-1 group"
                 >
                   <div
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                    className={`h-1.5 rounded-md transition-all duration-300 ${
                       i < effectiveStep
                         ? "bg-primary cursor-pointer group-hover:bg-primary/70"
                         : i === effectiveStep
@@ -325,7 +325,7 @@ export function DesignerFirstBookingDialog({
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="시술 검색..."
-                  className="w-full rounded-xl border border-black/10 bg-muted/30 py-2 pl-8 pr-4 text-sm outline-none focus:border-black/25"
+                  className="w-full rounded-md border border-black/10 bg-muted/30 py-2 pl-8 pr-4 text-sm outline-none focus:border-black/25"
                 />
               </div>
               <div className="grid gap-3 grid-cols-2">
@@ -361,7 +361,7 @@ export function DesignerFirstBookingDialog({
                     key={opt.value}
                     type="button"
                     onClick={() => handleDateSelect(opt.value)}
-                    className={`rounded-xl border px-1.5 py-2 text-center transition-colors ${
+                    className={`rounded-md border px-1.5 py-2 text-center transition-colors ${
                       selectedDate === opt.value
                         ? "border-black/25 bg-primary text-primary-foreground"
                         : "border-black/10 bg-background hover:bg-accent"
@@ -379,7 +379,7 @@ export function DesignerFirstBookingDialog({
                   </p>
                 ) : slotsLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted/50" />
+                    <div key={i} className="h-24 animate-pulse rounded-md bg-muted/50" />
                   ))
                 ) : slotsError ? (
                   <p className="col-span-2 text-sm text-muted-foreground">시간을 불러오지 못했습니다.</p>
@@ -423,7 +423,7 @@ export function DesignerFirstBookingDialog({
                   </div>
                 </div>
                 {selectedSlot.notice && (
-                  <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                  <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
                     {selectedSlot.notice}
                   </p>
                 )}
@@ -431,7 +431,7 @@ export function DesignerFirstBookingDialog({
                   <button
                     type="button"
                     onClick={() => setSelectedSlot(null)}
-                    className="inline-flex items-center gap-1 shrink-0 rounded-full border border-black/15 px-3 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                    className="inline-flex items-center gap-1 shrink-0 rounded-md border border-black/15 px-3 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
@@ -440,7 +440,7 @@ export function DesignerFirstBookingDialog({
                     placeholder="연락처 (010-0000-0000)"
                     value={phoneInput}
                     onChange={(e) => setPhoneInput(e.target.value)}
-                    className="flex-1 rounded-full border border-black/15 bg-muted/30 px-4 py-2 text-sm outline-none focus:border-black/30"
+                    className="flex-1 rounded-md border border-black/15 bg-muted/30 px-4 py-2 text-sm outline-none focus:border-black/30"
                   />
                   <button
                     type="button"
@@ -454,7 +454,7 @@ export function DesignerFirstBookingDialog({
                       })
                     }
                     disabled={isPending || !phoneInput.trim()}
-                    className="shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:bg-primary/90"
+                    className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:bg-primary/90"
                   >
                     {isPending ? "요청 중..." : "예약 요청"}
                   </button>
@@ -466,7 +466,7 @@ export function DesignerFirstBookingDialog({
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   닫기
@@ -475,7 +475,7 @@ export function DesignerFirstBookingDialog({
                   {DF_STEPS.map((_, i) => (
                     <div
                       key={i}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                      className={`h-1.5 rounded-md transition-all duration-300 ${
                         i === dialogStep ? "w-5 bg-primary" : i < dialogStep ? "w-1.5 bg-primary/40" : "w-1.5 bg-muted"
                       }`}
                     />
@@ -485,7 +485,7 @@ export function DesignerFirstBookingDialog({
                   type="button"
                   onClick={() => setDialogStep(1)}
                   disabled={selectedServiceIds.length === 0}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40 hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40 hover:bg-primary/90 transition-colors"
                 >
                   {selectedServiceIds.length > 0
                     ? `다음 (${selectedServiceIds.length}개 선택됨)`
@@ -499,7 +499,7 @@ export function DesignerFirstBookingDialog({
                 <button
                   type="button"
                   onClick={() => setDialogStep(0)}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   이전
@@ -529,7 +529,7 @@ function DFCategoryChip({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+      className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
         active
           ? "bg-foreground text-background"
           : "border border-black/10 bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -554,25 +554,27 @@ function DFServiceCard({
   const selected = role !== "none";
   const ringClass =
     role === "main"
-      ? "border-primary ring-2 ring-primary/30 bg-primary/5"
+      ? "border-primary bg-background shadow-[0_12px_28px_rgba(17,24,39,0.14)] ring-2 ring-primary/20"
       : role === "option"
-        ? "border-primary/60 ring-1 ring-primary/20 bg-primary/[0.03]"
-        : "border-black/10 bg-background hover:bg-accent";
+        ? "border-primary/70 bg-background shadow-sm ring-2 ring-primary/10"
+        : "border-black/10 bg-background hover:border-black/20 hover:bg-accent";
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl border text-left transition-all active:scale-[0.98] ${ringClass}`}
+      className={`relative overflow-hidden rounded-md border text-left transition-all active:scale-[0.98] ${ringClass}`}
     >
+      {selected && <span className="absolute inset-y-0 left-0 z-20 w-1 bg-primary" />}
       {selected && (
         <span
-          className={`absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+          className={`absolute left-2 top-2 z-30 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold shadow-lg ${
             role === "main"
               ? "bg-primary text-primary-foreground"
               : "bg-white/95 text-primary ring-1 ring-primary/40"
           }`}
         >
+          <Check className="h-3 w-3" />
           {role === "main" ? "메인" : `옵션 ${optionOrder}`}
         </span>
       )}
@@ -592,7 +594,7 @@ function DFServiceCard({
           <span
             className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold mt-0.5 ${
               selected
-                ? "border-primary bg-primary text-primary-foreground"
+                ? "border-primary bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/15"
                 : "border-black/15 bg-background text-transparent"
             }`}
             aria-hidden
@@ -627,10 +629,11 @@ function DFSlotCard({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-2xl border p-4 text-left transition-colors disabled:cursor-not-allowed ${
-        selected ? "border-black/25 bg-primary/10" : meta.className
+      className={`relative overflow-hidden rounded-md border p-4 text-left transition-all duration-200 disabled:cursor-not-allowed ${
+        selected ? "border-primary bg-background shadow-[0_12px_28px_rgba(17,24,39,0.12)] ring-2 ring-primary/20" : meta.className
       }`}
     >
+      {selected && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs text-muted-foreground">{formatDateLabelFromIso(slot.startAt)}</p>
@@ -642,11 +645,16 @@ function DFSlotCard({
           )}
         </div>
         <span
-          className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-medium ${
-            selected ? "bg-primary text-primary-foreground" : meta.badgeClassName
+          className={`inline-flex shrink-0 rounded-md px-2 py-1 text-xs font-medium ${
+            selected ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20" : meta.badgeClassName
           }`}
         >
-          {selected ? "선택됨" : meta.label}
+          {selected ? (
+            <span className="inline-flex items-center gap-1">
+              <Check className="h-3 w-3" />
+              선택됨
+            </span>
+          ) : meta.label}
         </span>
       </div>
       <div className="mt-3 space-y-1">
@@ -662,7 +670,7 @@ function DFSlotCard({
         {Array.from({ length: Math.max(slot.occupiedUnitCount, 1) }).map((_, i) => (
           <span
             key={i}
-            className={`h-1.5 rounded-full ${
+            className={`h-1.5 rounded-md ${
               selected ? "bg-primary" : slot.selectable ? "bg-emerald-300" : "bg-muted"
             }`}
           />

@@ -2,7 +2,9 @@ package com.cj.beautybook.site_settings.application;
 
 import com.cj.beautybook.site_settings.domain.SiteSetting;
 import com.cj.beautybook.site_settings.infrastructure.SiteSettingRepository;
+import com.cj.beautybook.site_settings.presentation.dto.MailSettingResponse;
 import com.cj.beautybook.site_settings.presentation.dto.SiteSettingResponse;
+import com.cj.beautybook.site_settings.presentation.dto.UpdateMailSettingRequest;
 import com.cj.beautybook.site_settings.presentation.dto.UpdateSiteSettingRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,5 +30,21 @@ public class SiteSettingService {
         setting.update(request.heroImageUrl(), request.introTitle(), request.introSubtitle());
         SiteSetting saved = repository.save(setting);
         return SiteSettingResponse.from(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public MailSettingResponse getMailSetting() {
+        SiteSetting setting = repository.findById(SiteSetting.SINGLETON_ID)
+                .orElseGet(SiteSetting::createDefault);
+        return MailSettingResponse.from(setting);
+    }
+
+    @Transactional
+    public MailSettingResponse updateMailSetting(UpdateMailSettingRequest request) {
+        SiteSetting setting = repository.findById(SiteSetting.SINGLETON_ID)
+                .orElseGet(() -> repository.save(SiteSetting.createDefault()));
+        setting.updateMailSetting(request.reservationRequestEmails());
+        SiteSetting saved = repository.save(setting);
+        return MailSettingResponse.from(saved);
     }
 }

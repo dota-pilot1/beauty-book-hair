@@ -80,7 +80,7 @@ export default function BlogPostNewPage() {
           </Link>
 
           {/* 기본 정보 */}
-          <section className="rounded-2xl border border-black/10 bg-card p-5 shadow-sm space-y-4">
+          <section className="rounded-md border border-black/10 bg-card p-5 shadow-sm space-y-4">
             <p className="text-sm font-medium text-foreground">기본 정보</p>
 
             <div>
@@ -90,7 +90,7 @@ export default function BlogPostNewPage() {
                 onChange={(e) => setTitle(e.target.value)}
                 onBlur={handleSuggestSlug}
                 placeholder="포스트 제목"
-                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
@@ -103,11 +103,11 @@ export default function BlogPostNewPage() {
                   value={slug}
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="my-post-slug"
-                  className="h-10 flex-1 rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="h-10 flex-1 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <button
                   onClick={handleSuggestSlug}
-                  className="h-10 rounded-lg border border-border px-3 text-xs text-muted-foreground hover:bg-muted transition-colors"
+                  className="h-10 rounded-md border border-border px-3 text-xs text-muted-foreground hover:bg-muted transition-colors"
                 >
                   자동 생성
                 </button>
@@ -122,7 +122,7 @@ export default function BlogPostNewPage() {
                 placeholder="목록 카드에 표시될 짧은 요약 (150자 이내)"
                 rows={2}
                 maxLength={150}
-                className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
 
@@ -132,13 +132,13 @@ export default function BlogPostNewPage() {
                 value={authorName}
                 onChange={(e) => setAuthorName(e.target.value)}
                 placeholder="디자이너 이름"
-                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
           </section>
 
           {/* 본문 에디터 */}
-          <section className="rounded-2xl border border-black/10 bg-card shadow-sm overflow-hidden">
+          <section className="rounded-md border border-black/10 bg-card shadow-sm overflow-hidden">
             <div className="border-b border-black/8 px-5 py-3">
               <p className="text-sm font-medium text-foreground">본문</p>
             </div>
@@ -151,12 +151,12 @@ export default function BlogPostNewPage() {
           </section>
 
           {/* 태그 입력 */}
-          <section className="rounded-2xl border border-black/10 bg-card p-5 shadow-sm">
+          <section className="rounded-md border border-black/10 bg-card p-5 shadow-sm">
             <p className="mb-1 text-sm font-medium text-foreground">태그</p>
             <p className="mb-3 text-xs text-muted-foreground">Enter 또는 쉼표로 추가 · Backspace로 마지막 태그 제거</p>
-            <div className="flex flex-wrap gap-1.5 rounded-lg border border-input bg-background px-3 py-2 min-h-[42px] focus-within:ring-1 focus-within:ring-primary">
+            <div className="flex flex-wrap gap-1.5 rounded-md border border-input bg-background px-3 py-2 min-h-[42px] focus-within:ring-1 focus-within:ring-primary">
               {tagNames.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                   {tag}
                   <button type="button" onClick={() => setTagNames((prev) => prev.filter((t) => t !== tag))} className="text-primary/60 hover:text-primary transition-colors">
                     <X className="h-3 w-3" />
@@ -178,21 +178,21 @@ export default function BlogPostNewPage() {
           <div className="flex items-center justify-end gap-3 pb-6">
             <Link
               href="/blog-management"
-              className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm text-muted-foreground hover:bg-muted transition-colors"
+              className="inline-flex h-10 items-center rounded-md border border-border px-4 text-sm text-muted-foreground hover:bg-muted transition-colors"
             >
               취소
             </Link>
             <button
               onClick={() => handleSubmit("DRAFT")}
               disabled={createPost.isPending || !title.trim() || !slug.trim()}
-              className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
+              className="inline-flex h-10 items-center rounded-md border border-border px-4 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
             >
               임시저장
             </button>
             <button
               onClick={() => handleSubmit("PUBLISHED")}
               disabled={createPost.isPending || !title.trim() || !slug.trim()}
-              className="inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+              className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
               {createPost.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -111,7 +111,7 @@ function ImageUploader({
       {value ? (
         // 이미지가 있을 때 — 미리보기 + 액션 버튼
         <div
-          className="group relative h-44 w-full rounded-xl overflow-hidden border border-border bg-muted cursor-pointer"
+          className="group relative h-44 w-full rounded-md overflow-hidden border border-border bg-muted cursor-pointer"
           onClick={handleClick}
         >
           <Image src={value} alt={label} fill className="object-cover" />
@@ -128,7 +128,7 @@ function ImageUploader({
                 e.stopPropagation();
                 handleClick();
               }}
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white"
+              className="inline-flex items-center gap-1.5 rounded-md bg-white/90 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white"
             >
               <RefreshCw className="h-3.5 w-3.5" />
               다시 선택
@@ -136,7 +136,7 @@ function ImageUploader({
             <button
               type="button"
               onClick={handleRemove}
-              className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/90 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-500"
+              className="inline-flex items-center gap-1.5 rounded-md bg-rose-500/90 px-3 py-1.5 text-xs font-medium text-white hover:bg-rose-500"
             >
               <X className="h-3.5 w-3.5" />
               제거
@@ -146,7 +146,7 @@ function ImageUploader({
           <button
             type="button"
             onClick={handleRemove}
-            className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+            className="absolute top-2 right-2 inline-flex h-7 w-7 items-center justify-center rounded-md bg-black/60 text-white hover:bg-black/80 transition-colors"
             title="제거"
           >
             <X className="h-3.5 w-3.5" />
@@ -162,7 +162,7 @@ function ImageUploader({
           }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
-          className={`flex h-44 w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${
+          className={`flex h-44 w-full cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed transition-colors ${
             dragOver
               ? "border-primary bg-primary/5"
               : "border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/50"
@@ -175,7 +175,7 @@ function ImageUploader({
             </>
           ) : (
             <>
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background border border-border">
+              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-background border border-border">
                 <ImagePlus className="h-5 w-5 text-muted-foreground" />
               </div>
               <p className="mt-2 text-sm font-medium text-foreground">클릭하거나 드래그하여 업로드</p>
@@ -272,11 +272,11 @@ function MultiImageUploader({
         {values.map((url, idx) => (
           <div
             key={`${url}-${idx}`}
-            className="group relative aspect-square rounded-xl overflow-hidden border border-border bg-muted"
+            className="group relative aspect-square rounded-md overflow-hidden border border-border bg-muted"
           >
             <Image src={url} alt={`${label} ${idx + 1}`} fill className="object-cover" />
             {idx === 0 && (
-              <span className="absolute top-1 left-1 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
+              <span className="absolute top-1 left-1 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
                 대표
               </span>
             )}
@@ -285,7 +285,7 @@ function MultiImageUploader({
                 <button
                   type="button"
                   onClick={() => moveUp(idx)}
-                  className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-white"
+                  className="rounded-md bg-white/90 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-white"
                   title="앞으로"
                 >
                   ▲
@@ -294,7 +294,7 @@ function MultiImageUploader({
               <button
                 type="button"
                 onClick={() => removeAt(idx)}
-                className="rounded-full bg-rose-500/90 px-2 py-1 text-[10px] font-medium text-white hover:bg-rose-500"
+                className="rounded-md bg-rose-500/90 px-2 py-1 text-[10px] font-medium text-white hover:bg-rose-500"
               >
                 제거
               </button>
@@ -312,7 +312,7 @@ function MultiImageUploader({
             }}
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
-            className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed transition-colors ${
+            className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed transition-colors ${
               dragOver
                 ? "border-primary bg-primary/5"
                 : "border-border bg-muted/30 hover:border-primary/50 hover:bg-muted/50"
@@ -385,7 +385,7 @@ function GalleryFormDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 overflow-y-auto">
-      <div className="w-full max-w-lg my-8 rounded-2xl border border-black/12 bg-card shadow-xl">
+      <div className="w-full max-w-lg my-8 rounded-md border border-black/12 bg-card shadow-xl">
         <div className="flex items-center justify-between border-b border-black/8 px-5 py-4">
           <h3 className="text-base font-semibold">
             {initial ? "갤러리 수정" : "갤러리 등록"}
@@ -401,7 +401,7 @@ function GalleryFormDialog({
               value={form.title}
               onChange={(e) => set("title", e.target.value)}
               placeholder="예: 내추럴 펌 before/after"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
@@ -433,7 +433,7 @@ function GalleryFormDialog({
               <select
                 value={form.photoType}
                 onChange={(e) => set("photoType", e.target.value as GalleryPhotoType)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {PHOTO_TYPE_OPTIONS.map((t) => (
                   <option key={t} value={t}>{GALLERY_PHOTO_TYPE_LABEL[t]}</option>
@@ -445,7 +445,7 @@ function GalleryFormDialog({
               <select
                 value={form.tag}
                 onChange={(e) => set("tag", e.target.value as GalleryTag)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {TAG_OPTIONS.map((t) => (
                   <option key={t} value={t}>{GALLERY_TAG_LABEL[t]}</option>
@@ -461,7 +461,7 @@ function GalleryFormDialog({
               value={form.designerName}
               onChange={(e) => set("designerName", e.target.value)}
               placeholder="홍길동"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
 
@@ -473,7 +473,7 @@ function GalleryFormDialog({
               onChange={(e) => set("description", e.target.value)}
               rows={3}
               placeholder="시술 설명을 입력하세요"
-              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+              className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
           </div>
 
@@ -492,14 +492,14 @@ function GalleryFormDialog({
         <div className="flex justify-end gap-2 border-t border-black/8 px-5 py-4">
           <button
             onClick={onClose}
-            className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted"
+            className="rounded-md border border-border px-4 py-2 text-sm text-muted-foreground hover:bg-muted"
           >
             취소
           </button>
           <button
             onClick={() => onSubmit(form)}
             disabled={!form.title.trim() || form.imageUrls.length === 0 || isPending || uploading}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
             {isPending || uploading ? "처리 중..." : "저장"}
           </button>
@@ -595,7 +595,7 @@ export default function GalleryManagementPage() {
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 shrink-0"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 shrink-0"
           >
             + 사진 등록
           </button>
@@ -612,7 +612,7 @@ export default function GalleryManagementPage() {
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="group rounded-2xl border border-black/12 bg-card shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+                  className="group rounded-md border border-black/12 bg-card shadow-sm overflow-hidden hover:shadow-md transition-shadow"
                 >
                   {/* 이미지 영역 */}
                   <div
@@ -623,20 +623,20 @@ export default function GalleryManagementPage() {
                       <Image src={item.imageUrls[0]} alt={item.title} fill className="object-cover" />
                     )}
                     {item.imageUrls.length > 1 && (
-                      <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
+                      <span className="absolute bottom-2 right-2 rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white">
                         +{item.imageUrls.length - 1}
                       </span>
                     )}
-                    <span className={`absolute top-2 left-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${PHOTO_TYPE_BADGE[item.photoType]}`}>
+                    <span className={`absolute top-2 left-2 inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${PHOTO_TYPE_BADGE[item.photoType]}`}>
                       {GALLERY_PHOTO_TYPE_LABEL[item.photoType]}
                     </span>
-                    <span className={`absolute top-2 right-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium ${TAG_BADGE[item.tag]}`}>
+                    <span className={`absolute top-2 right-2 inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${TAG_BADGE[item.tag]}`}>
                       {GALLERY_TAG_LABEL[item.tag]}
                     </span>
                     {/* 공개 토글 (좌하단) */}
                     <button
                       onClick={() => togglePublish.mutate(item.id)}
-                      className={`absolute bottom-2 left-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                      className={`absolute bottom-2 left-2 inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium transition-colors ${
                         item.isPublished
                           ? "bg-emerald-500/90 text-white hover:bg-emerald-600"
                           : "bg-black/60 text-white hover:bg-black/80"
@@ -661,7 +661,7 @@ export default function GalleryManagementPage() {
                     <div className="flex gap-1.5 pt-1">
                       <button
                         onClick={() => setEditTarget(item)}
-                        className="flex-1 rounded-lg border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted"
+                        className="flex-1 rounded-md border border-border px-2 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted"
                       >
                         수정
                       </button>
@@ -669,7 +669,7 @@ export default function GalleryManagementPage() {
                         onClick={() => {
                           if (confirm("삭제하시겠습니까?")) deleteGallery.mutate(item.id);
                         }}
-                        className="flex-1 rounded-lg border border-rose-200 px-2 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50"
+                        className="flex-1 rounded-md border border-rose-200 px-2 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50"
                       >
                         삭제
                       </button>
@@ -686,7 +686,7 @@ export default function GalleryManagementPage() {
                   <button
                     key={i}
                     onClick={() => setPage(i)}
-                    className={`h-8 w-8 rounded-full text-sm font-medium transition-colors ${
+                    className={`h-8 w-8 rounded-md text-sm font-medium transition-colors ${
                       i === page
                         ? "bg-primary text-primary-foreground"
                         : "border border-border text-muted-foreground hover:bg-muted"
@@ -700,7 +700,7 @@ export default function GalleryManagementPage() {
           </>
         ) : (
           // ── 테이블 뷰 ──────────────────────────────────────────────────
-          <div className="rounded-2xl border border-black/12 bg-card shadow-sm overflow-hidden">
+          <div className="rounded-md border border-black/12 bg-card shadow-sm overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-black/8 bg-muted/30 text-left text-xs text-muted-foreground">
@@ -718,7 +718,7 @@ export default function GalleryManagementPage() {
                 {items.map((item) => (
                   <tr key={item.id} className="border-b border-black/6 hover:bg-muted/20 transition-colors">
                     <td className="px-4 py-3">
-                      <div className="relative h-12 w-12 rounded-lg overflow-hidden border border-border">
+                      <div className="relative h-12 w-12 rounded-md overflow-hidden border border-border">
                         {item.imageUrls[0] && (
                           <Image src={item.imageUrls[0]} alt={item.title} fill className="object-cover" />
                         )}
@@ -733,12 +733,12 @@ export default function GalleryManagementPage() {
                       {item.title}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${PHOTO_TYPE_BADGE[item.photoType]}`}>
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${PHOTO_TYPE_BADGE[item.photoType]}`}>
                         {GALLERY_PHOTO_TYPE_LABEL[item.photoType]}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${TAG_BADGE[item.tag]}`}>
+                      <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${TAG_BADGE[item.tag]}`}>
                         {GALLERY_TAG_LABEL[item.tag]}
                       </span>
                     </td>
@@ -748,7 +748,7 @@ export default function GalleryManagementPage() {
                     <td className="px-4 py-3 text-center">
                       <button
                         onClick={() => togglePublish.mutate(item.id)}
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium transition-colors ${
+                        className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium transition-colors ${
                           item.isPublished
                             ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
                             : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -764,7 +764,7 @@ export default function GalleryManagementPage() {
                       <div className="flex justify-end gap-1">
                         <button
                           onClick={() => setEditTarget(item)}
-                          className="rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted whitespace-nowrap"
+                          className="rounded-md border border-border px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted whitespace-nowrap"
                         >
                           수정
                         </button>
@@ -772,7 +772,7 @@ export default function GalleryManagementPage() {
                           onClick={() => {
                             if (confirm("삭제하시겠습니까?")) deleteGallery.mutate(item.id);
                           }}
-                          className="rounded-lg border border-rose-200 px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 whitespace-nowrap"
+                          className="rounded-md border border-rose-200 px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 whitespace-nowrap"
                         >
                           삭제
                         </button>
@@ -790,7 +790,7 @@ export default function GalleryManagementPage() {
                   <button
                     key={i}
                     onClick={() => setPage(i)}
-                    className={`h-8 w-8 rounded-full text-sm font-medium transition-colors ${
+                    className={`h-8 w-8 rounded-md text-sm font-medium transition-colors ${
                       i === page
                         ? "bg-primary text-primary-foreground"
                         : "border border-border text-muted-foreground hover:bg-muted"

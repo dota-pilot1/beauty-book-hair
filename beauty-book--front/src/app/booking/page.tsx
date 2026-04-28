@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -93,8 +93,8 @@ const slotStatusMeta: Record<
   RESERVED: {
     label: "예약됨",
     description: "이미 예약된 시간이에요.",
-    className: "border-black/10 bg-muted/40 text-muted-foreground",
-    badgeClassName: "bg-muted text-muted-foreground",
+    className: "border-rose-200 bg-rose-50 text-rose-600",
+    badgeClassName: "bg-rose-400 text-white ring-1 ring-rose-300",
   },
   BLOCKED: {
     label: "예약 불가",
@@ -153,6 +153,8 @@ function BookingFlowPage() {
     !searchParams.has("designerId") &&
     !searchParams.has("designerName");
   const [phoneInput, setPhoneInput] = useState("");
+  const [showPhoneHint, setShowPhoneHint] = useState(false);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
   const [serviceViewMode, setServiceViewMode] = useState<"card" | "table">("card");
   const [serviceQuery, setServiceQuery] = useState("");
   const [appliedServiceQuery, setAppliedServiceQuery] = useState("");
@@ -301,13 +303,13 @@ function BookingFlowPage() {
           <button
             type="button"
             onClick={() => bookingFlowActions.setStep("service")}
-            className="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
           >
             예약하기
           </button>
           <Link
             href="/my-reservations"
-            className="inline-flex items-center justify-center rounded-full border border-black/15 px-5 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
+            className="inline-flex items-center justify-center rounded-md border border-black/15 px-5 py-2.5 text-sm font-medium text-foreground hover:bg-accent"
           >
             내 예약 보기
           </Link>
@@ -328,6 +330,8 @@ function BookingFlowPage() {
           onReset={bookingFlowActions.reset}
           onRemoveService={(id) => bookingFlowActions.toggleService(id)}
           onPromoteToMain={(id) => bookingFlowActions.promoteToMain(id)}
+          phoneInputRef={phoneInputRef}
+          showPhoneHint={showPhoneHint}
           onSubmit={() => {
             if (selectedServiceIds.length === 0 || !selectedDesignerId || !selectedStartAt || !selectedEndAt) return;
             createReservation.mutate(
@@ -349,7 +353,7 @@ function BookingFlowPage() {
         />
       }
     >
-        <div className="space-y-4">
+        <div className="space-y-4 pb-28">
           <section className="grid gap-3 xl:grid-cols-3">
           {steps.map(({ key, title, icon: Icon }, index) => {
             const active = step === key;
@@ -373,29 +377,30 @@ function BookingFlowPage() {
                 type="button"
                 disabled={locked}
                 onClick={() => bookingFlowActions.setStep(key)}
-                className={`rounded-xl border p-4 text-left transition-colors ${
+                className={`relative overflow-hidden rounded-md border p-4 text-left transition-all ${
                   locked
                     ? "cursor-not-allowed border-black/8 bg-black/[0.02] opacity-50"
                     : active
-                    ? "border-black/20 bg-primary/10"
+                    ? "border-primary bg-background shadow-md ring-2 ring-primary/15"
                     : completed
-                    ? "border-emerald-200 bg-emerald-50/40"
-                    : "border-black/10 bg-card hover:bg-accent"
+                    ? "border-emerald-300 bg-emerald-50/60 shadow-sm"
+                    : "border-black/10 bg-card hover:border-black/20 hover:bg-accent"
                 }`}
               >
+                {active && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
                 {/* 상단: 단계 번호 좌 + 체크/잠금 우 */}
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/35">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                   {completed && !locked && (
-                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-emerald-500 text-white">
                       <Check className="h-3 w-3" />
                     </span>
                   )}
                 </div>
                 {/* 아이콘 */}
-                <span className={`mt-3 inline-flex rounded-lg p-2 ${
+                <span className={`mt-3 inline-flex rounded-md p-2 ${
                   locked
                     ? "bg-muted text-foreground/30"
                     : active
@@ -416,7 +421,7 @@ function BookingFlowPage() {
           })}
         </section>
 
-        <section className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
+        <section className="rounded-md border border-black/12 bg-card p-5 shadow-sm">
           {step === "service" ? (
             <StepSection
               icon={Scissors}
@@ -426,7 +431,7 @@ function BookingFlowPage() {
                 <button
                   type="button"
                   onClick={() => setOneShotOpen(true)}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md active:scale-95"
+                  className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md active:scale-95"
                 >
                   <Zap className="h-4 w-4" />
                   원샷 예약
@@ -477,17 +482,17 @@ function BookingFlowPage() {
                           if (v === "") setAppliedServiceQuery("");
                         }}
                         placeholder="시술 검색..."
-                        className="w-full rounded-lg border border-black/10 bg-background py-2 pl-8 pr-16 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-black/25 focus:ring-0"
+                        className="w-full rounded-md border border-black/10 bg-background py-2 pl-8 pr-16 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-colors focus:border-black/25 focus:ring-0"
                       />
                       <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-black/10 bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground/60">
                         Enter
                       </span>
                     </form>
-                    <div className="inline-flex rounded-xl border border-black/10 bg-muted/30 p-1">
+                    <div className="inline-flex rounded-md border border-black/10 bg-muted/30 p-1">
                       <button
                         type="button"
                         onClick={() => setServiceViewMode("card")}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                        className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                           serviceViewMode === "card"
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
@@ -499,7 +504,7 @@ function BookingFlowPage() {
                       <button
                         type="button"
                         onClick={() => setServiceViewMode("table")}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                        className={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                           serviceViewMode === "table"
                             ? "bg-background text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground"
@@ -590,7 +595,7 @@ function BookingFlowPage() {
                       type="button"
                       disabled={isDisabled}
                       onClick={() => bookingFlowActions.setSelectedDate(option.value)}
-                      className={`w-full rounded-xl border px-2 py-2 text-center transition-colors ${
+                      className={`w-full rounded-md border px-2 py-2 text-center transition-colors ${
                         isDisabled
                           ? "border-black/8 bg-black/[0.03] text-foreground/25 cursor-not-allowed"
                           : selectedDate === option.value
@@ -616,7 +621,7 @@ function BookingFlowPage() {
                   <p className="col-span-2 text-sm text-muted-foreground">시술을 먼저 선택해주세요.</p>
                 ) : slotsLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="h-28 animate-pulse rounded-2xl bg-muted/50" />
+                    <div key={i} className="h-28 animate-pulse rounded-md bg-muted/50" />
                   ))
                 ) : slotsError ? (
                   <p className="col-span-2 text-sm text-muted-foreground">가능한 시간을 불러오지 못했습니다.</p>
@@ -638,35 +643,6 @@ function BookingFlowPage() {
             </StepSection>
           ) : null}
 
-          <div className="mt-6 flex items-center justify-between border-t border-black/10 pt-5">
-            <button
-              type="button"
-              onClick={goPrev}
-              disabled={currentIndex === 0}
-              className="rounded-full border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              이전 단계
-            </button>
-            {currentIndex < steps.length - 1 ? (
-              <button
-                type="button"
-                onClick={goNext}
-                disabled={!canGoNext}
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                다음 단계
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={!selectedStartAt}
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                예약 요청 보내기
-              </button>
-            )}
-          </div>
         </section>
 
       </div>
@@ -704,6 +680,81 @@ function BookingFlowPage() {
         }}
         isPending={createReservation.isPending}
       />
+
+      {/* 피그마 스타일 플로팅 툴바 */}
+      <div className="fixed bottom-6 inset-x-0 z-40 flex justify-center px-4 pointer-events-none">
+        <div className="pointer-events-auto flex items-center gap-1 rounded-md bg-neutral-800 px-2 py-2 shadow-xl ring-1 ring-white/10">
+          {/* 이전 */}
+          <button
+            type="button"
+            onClick={goPrev}
+            disabled={currentIndex === 0}
+            className="inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-white/60 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            이전
+          </button>
+
+          {/* 구분선 */}
+          <div className="h-5 w-px bg-white/15 mx-1" />
+
+          {/* 스텝 인디케이터 */}
+          <div className="flex items-center gap-2 px-3">
+            {steps.map((s, i) => (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => {
+                  const locked = s.key === "designer" ? selectedServiceIds.length === 0 : s.key === "schedule" ? selectedDesignerId == null : false;
+                  if (!locked) bookingFlowActions.setStep(s.key);
+                }}
+                className="flex items-center gap-1.5"
+              >
+                <div className={`rounded-md transition-all duration-300 ${
+                  i === currentIndex ? "h-2 w-6 bg-white" : i < currentIndex ? "h-2 w-2 bg-white/50" : "h-2 w-2 bg-white/20"
+                }`} />
+                {i === currentIndex && (
+                  <span className="text-xs font-medium text-white/80">{s.title}</span>
+                )}
+              </button>
+            ))}
+            <span className="ml-1 text-xs text-white/35">{currentIndex + 1}/{steps.length}</span>
+          </div>
+
+          {/* 구분선 */}
+          <div className="h-5 w-px bg-white/15 mx-1" />
+
+          {/* 다음 / 예약 요청 */}
+          {currentIndex < steps.length - 1 ? (
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={!canGoNext}
+              className="inline-flex items-center gap-1.5 rounded-md bg-neutral-800 px-3 py-2 text-sm font-semibold text-white hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+            >
+              다음
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={!selectedStartAt}
+              onClick={() => {
+                if (phoneInput.replace(/\D/g, "").length < 11) {
+                  phoneInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  phoneInputRef.current?.focus();
+                  setShowPhoneHint(true);
+                  setTimeout(() => setShowPhoneHint(false), 2500);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 rounded-md bg-neutral-800 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-30 transition-colors"
+            >
+              예약 요청
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
 
       {designerPreset && (
         <DesignerFirstBookingDialog
@@ -755,33 +806,38 @@ function DesignerCard({
     <button
       type="button"
       onClick={onClick}
-      className={`relative w-full rounded-2xl border overflow-hidden text-left transition-all ${
+      className={`relative w-full overflow-hidden rounded-md border text-left transition-all duration-200 ${
         selected
-          ? "border-primary ring-2 ring-primary/30"
+          ? "border-primary bg-background shadow-[0_16px_36px_rgba(17,24,39,0.16)] ring-2 ring-primary/20"
           : "border-black/12 bg-background hover:border-black/20 hover:shadow-sm"
       }`}
     >
+      {selected && <span className="absolute inset-y-0 left-0 z-20 w-1 bg-primary" />}
       {/* 이미지 영역 */}
-      <div className="aspect-[4/3] w-full bg-muted flex items-center justify-center overflow-hidden">
+      <div className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden bg-muted">
         {staff.profileImageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={staff.profileImageUrl} alt={staff.name} className="h-full w-full object-cover" />
+          <img src={staff.profileImageUrl} alt={staff.name} className={`h-full w-full object-cover transition-transform duration-300 ${selected ? "scale-[1.02]" : ""}`} />
         ) : (
-          <span className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-background text-2xl font-bold text-foreground shadow-sm">
+          <span className="inline-flex h-16 w-16 items-center justify-center rounded-md bg-background text-2xl font-bold text-foreground shadow-sm">
             {staff.name[0]}
           </span>
+        )}
+        {selected && (
+          <div className="absolute inset-0 bg-gradient-to-t from-primary/35 via-primary/5 to-transparent" />
         )}
       </div>
 
       {/* 선택됨 배지 */}
       {selected && (
-        <span className="absolute top-2 right-2 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
+        <span className="absolute right-2 top-2 z-30 inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground shadow-lg ring-1 ring-white/30">
+          <Check className="h-3 w-3" />
           선택됨
         </span>
       )}
 
       {/* 정보 영역 */}
-      <div className="p-4">
+      <div className={`p-4 ${selected ? "bg-primary/[0.04]" : ""}`}>
         <h3 className="font-semibold text-[15px] text-foreground">{staff.name}</h3>
         {staff.introduction && (
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-3">{staff.introduction}</p>
@@ -808,7 +864,7 @@ function StepSection({
     <div>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <span className="inline-flex rounded-2xl bg-primary/10 p-3 text-primary">
+          <span className="inline-flex rounded-md bg-primary/10 p-3 text-primary">
             <Icon className="h-5 w-5" />
           </span>
           <div>
@@ -841,37 +897,42 @@ function ServiceSelectableCard({
 }) {
   const selected = role !== "none";
   const ringClass = role === "main"
-    ? "border-primary ring-2 ring-primary/40 bg-primary/5"
+    ? "border-primary bg-background shadow-[0_14px_32px_rgba(17,24,39,0.14)] ring-2 ring-primary/20"
     : role === "option"
-      ? "border-primary/60 ring-1 ring-primary/20 bg-primary/[0.03]"
-      : "border-black/12 bg-background hover:bg-accent";
+      ? "border-primary/70 bg-background shadow-sm ring-2 ring-primary/10"
+      : "border-black/12 bg-background hover:border-black/20 hover:bg-accent";
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl border text-left transition-colors ${ringClass}`}
+      className={`relative overflow-hidden rounded-md border text-left transition-all duration-200 ${ringClass}`}
     >
+      {selected && <span className="absolute inset-y-0 left-0 z-20 w-1 bg-primary" />}
       {selected ? (
         <span
-          className={`absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold ${
+          className={`absolute left-3 top-3 z-30 inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold shadow-lg ${
             role === "main"
               ? "bg-primary text-primary-foreground"
               : "bg-white/95 text-primary ring-1 ring-primary/40"
           }`}
         >
+          <Check className="h-3 w-3" />
           {role === "main" ? "메인" : `옵션 ${optionOrder}`}
         </span>
       ) : null}
       {service.imageUrls?.[0] ? (
-        <div
-          className="aspect-[16/10] bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${service.imageUrls[0]})` }}
-          aria-label={`${service.name} 이미지`}
-        />
+        <div className="relative aspect-[16/10] overflow-hidden">
+          <div
+            className={`h-full w-full bg-cover bg-center bg-no-repeat transition-transform duration-300 ${selected ? "scale-[1.02]" : ""}`}
+            style={{ backgroundImage: `url(${service.imageUrls[0]})` }}
+            aria-label={`${service.name} 이미지`}
+          />
+          {selected && <div className="absolute inset-0 bg-gradient-to-t from-primary/25 via-transparent to-transparent" />}
+        </div>
       ) : (
         <div className="flex aspect-[16/10] flex-col items-center justify-center gap-2 bg-gradient-to-br from-slate-100 via-slate-50 to-zinc-100">
-          <div className="rounded-2xl border border-dashed border-slate-300/60 bg-white/70 p-3">
+          <div className="rounded-md border border-dashed border-slate-300/60 bg-white/70 p-3">
             <Scissors className="h-5 w-5 text-slate-300" />
           </div>
           <span className="text-[11px] font-medium tracking-widest text-slate-300 uppercase">No Image</span>
@@ -883,7 +944,7 @@ function ServiceSelectableCard({
           <span
             className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold ${
               selected
-                ? "border-primary bg-primary text-primary-foreground"
+                ? "border-primary bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/15"
                 : "border-black/20 bg-background text-transparent"
             }`}
             aria-hidden
@@ -920,7 +981,7 @@ function CategoryChip({
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+      className={`inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
         active
           ? "bg-foreground text-background"
           : "border border-black/10 bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -943,7 +1004,7 @@ function ServiceSelectableTable({
   onPromoteToMain: (id: number) => void;
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-black/10">
+    <div className="overflow-hidden rounded-md border border-black/10">
       <table className="w-full text-sm">
         <thead className="bg-muted/40 text-xs text-muted-foreground">
           <tr>
@@ -988,12 +1049,12 @@ function ServiceSelectableTable({
                 <td className="px-3 py-2.5">
                   <div className="flex items-center gap-2">
                     {role === "main" && (
-                      <span className="inline-flex shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                      <span className="inline-flex shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
                         메인
                       </span>
                     )}
                     {role === "option" && (
-                      <span className="inline-flex shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground ring-1 ring-primary/30">
+                      <span className="inline-flex shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground ring-1 ring-primary/30">
                         옵션 {idx}
                       </span>
                     )}
@@ -1047,6 +1108,8 @@ function BookingStatusPanel({
   onRemoveService,
   onPromoteToMain,
   onSubmit,
+  phoneInputRef,
+  showPhoneHint,
 }: {
   mainService: BeautyService | null;
   optionServices: BeautyService[];
@@ -1062,12 +1125,14 @@ function BookingStatusPanel({
   onRemoveService: (id: number) => void;
   onPromoteToMain: (id: number) => void;
   onSubmit: () => void;
+  phoneInputRef?: React.RefObject<HTMLInputElement | null>;
+  showPhoneHint?: boolean;
 }) {
   const totalCount = (mainService ? 1 : 0) + optionServices.length;
   const allSelected = !!mainService && !!selectedDesigner && !!selectedSlot;
 
   return (
-    <article className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
+    <article className="rounded-md border border-black/12 bg-card p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-medium text-foreground">예약 현황</h2>
         <button
@@ -1080,7 +1145,7 @@ function BookingStatusPanel({
       </div>
 
       <div className="mt-4 space-y-3">
-        <div className="rounded-xl border border-black/12 bg-background px-4 py-3">
+        <div className="rounded-md border border-black/12 bg-background px-4 py-3">
           <div className="flex items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">시술</p>
             {totalCount > 0 && (
@@ -1093,10 +1158,10 @@ function BookingStatusPanel({
           ) : (
             <div className="mt-2 space-y-2">
               {/* 메인 */}
-              <div className="flex items-center justify-between gap-2 rounded-lg bg-primary/5 px-2.5 py-2 ring-1 ring-primary/20">
+              <div className="flex items-center justify-between gap-2 rounded-md bg-primary/5 px-2.5 py-2 ring-1 ring-primary/20">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className="inline-flex shrink-0 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">메인</span>
+                    <span className="inline-flex shrink-0 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">메인</span>
                     <p className="truncate text-sm font-medium text-foreground">{mainService.name}</p>
                   </div>
                   <p className="mt-0.5 pl-[34px] text-[11px] text-muted-foreground">
@@ -1106,7 +1171,7 @@ function BookingStatusPanel({
                 <button
                   type="button"
                   onClick={() => onRemoveService(mainService.id)}
-                  className="shrink-0 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                   aria-label={`${mainService.name} 제거`}
                 >
                   <X className="h-3.5 w-3.5" />
@@ -1115,10 +1180,10 @@ function BookingStatusPanel({
 
               {/* 옵션 */}
               {optionServices.map((s, i) => (
-                <div key={s.id} className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 hover:bg-muted/40">
+                <div key={s.id} className="flex items-center justify-between gap-2 rounded-md px-2.5 py-2 hover:bg-muted/40">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="inline-flex shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground">옵션 {i + 1}</span>
+                      <span className="inline-flex shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-foreground">옵션 {i + 1}</span>
                       <p className="truncate text-sm font-medium text-foreground">{s.name}</p>
                     </div>
                     <div className="mt-0.5 flex items-center gap-2 pl-[44px] text-[11px] text-muted-foreground">
@@ -1135,7 +1200,7 @@ function BookingStatusPanel({
                   <button
                     type="button"
                     onClick={() => onRemoveService(s.id)}
-                    className="shrink-0 rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                     aria-label={`${s.name} 제거`}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -1167,42 +1232,71 @@ function BookingStatusPanel({
       </div>
 
       {allSelected ? (
-        <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-          <p className="text-xs font-medium text-emerald-700">선택 완료</p>
-          <p className="mt-1 text-sm text-emerald-900">
-            {selectedDesigner} · {selectedSlot}
-          </p>
-          {selectedNotice ? (
-            <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
-              {selectedNotice}
+        /* Shimmer border wrapper */
+        <div className="mt-5 relative rounded-md overflow-hidden p-[1.5px]">
+          {/* 테두리를 따라 도는 빛 */}
+          <div
+            className="absolute inset-[-100%] opacity-90"
+            style={{
+              background: "conic-gradient(from 0deg, transparent 0%, transparent 65%, #6ee7b7 78%, #10b981 82%, #34d399 86%, transparent 95%)",
+              animation: "spin-border 3s linear infinite",
+            }}
+          />
+          {/* 실제 카드 */}
+          <div className="relative rounded-[calc(1rem-1.5px)] border border-emerald-200 bg-emerald-50 p-4">
+            <p className="text-xs font-medium text-emerald-700">선택 완료</p>
+            <p className="mt-1 text-sm text-emerald-900">
+              {selectedDesigner} · {selectedSlot}
             </p>
-          ) : null}
-          <div className="mt-3 flex items-center overflow-hidden rounded-xl border border-black/15 bg-white focus-within:border-primary transition-colors">
-            <span className="shrink-0 border-r border-black/10 bg-black/[0.03] px-3 py-2 text-sm font-semibold text-foreground select-none">
-              010
-            </span>
-            <span className="shrink-0 px-1.5 text-sm text-foreground/30 select-none">-</span>
-            <input
-              type="tel"
-              inputMode="numeric"
-              placeholder="0000-0000"
-              maxLength={9}
-              value={phoneSuffixFrom(phoneInput)}
-              onChange={(e) => onPhoneChange(e.target.value)}
-              className="flex-1 bg-transparent py-2 pr-3 text-sm outline-none"
-            />
+            {selectedNotice ? (
+              <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                {selectedNotice}
+              </p>
+            ) : null}
+            {/* 전화번호 입력 + 힌트 팝오버 */}
+            <div className="relative mt-3">
+              {showPhoneHint && (
+                <div
+                  className="absolute -top-9 left-0 right-0 flex items-center justify-center"
+                  style={{ animation: "hint-bounce 0.4s ease" }}
+                >
+                  <span className="rounded-md bg-foreground px-3 py-1.5 text-xs font-medium text-background shadow-lg">
+                    📞 전화번호를 입력해주세요
+                    <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-foreground" />
+                  </span>
+                </div>
+              )}
+              <div className={`flex items-center overflow-hidden rounded-md border bg-white transition-all duration-300 ${
+                showPhoneHint ? "border-emerald-400 ring-2 ring-emerald-200" : "border-black/15 focus-within:border-primary"
+              }`}>
+                <span className="shrink-0 border-r border-black/10 bg-black/[0.03] px-3 py-2 text-sm font-semibold text-foreground select-none">
+                  010
+                </span>
+                <span className="shrink-0 px-1.5 text-sm text-foreground/30 select-none">-</span>
+                <input
+                  ref={phoneInputRef}
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="0000-0000"
+                  maxLength={9}
+                  value={phoneSuffixFrom(phoneInput)}
+                  onChange={(e) => onPhoneChange(e.target.value)}
+                  className="flex-1 bg-transparent py-2 pr-3 text-sm outline-none"
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onSubmit}
+              disabled={isPending || phoneInput.replace(/\D/g, "").length < 11}
+              className="mt-2 w-full rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isPending ? "요청 중..." : "예약 요청 보내기"}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={isPending || phoneInput.replace(/\D/g, "").length < 11}
-            className="mt-2 w-full rounded-xl bg-primary py-2.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isPending ? "요청 중..." : "예약 요청 보내기"}
-          </button>
         </div>
       ) : (
-        <div className="mt-5 rounded-2xl border border-dashed border-black/10 bg-muted/20 p-4 text-xs text-muted-foreground">
+        <div className="mt-5 rounded-md border border-dashed border-black/10 bg-muted/20 p-4 text-xs text-muted-foreground">
           시술 → 디자이너 → 시간을 순서대로 선택하면 예약 요청이 활성화됩니다.
         </div>
       )}
@@ -1222,10 +1316,10 @@ function StatusItem({
   detail?: string;
 }) {
   return (
-    <div className={`rounded-xl border px-4 py-3 ${done ? "border-black/12 bg-background" : "border-dashed border-black/10 bg-muted/20"}`}>
+    <div className={`rounded-md border px-4 py-3 ${done ? "border-black/12 bg-background" : "border-dashed border-black/10 bg-muted/20"}`}>
       <div className="flex items-center justify-between gap-2">
         <p className="text-xs text-muted-foreground">{label}</p>
-        {done && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
+        {done && <span className="h-1.5 w-1.5 rounded-md bg-emerald-400" />}
       </div>
       <p className={`mt-1 text-sm font-medium ${done ? "text-foreground" : "text-muted-foreground"}`}>
         {value}
@@ -1257,10 +1351,11 @@ function SlotSelectableCard({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex min-h-[9rem] flex-col rounded-2xl border p-4 text-left transition-colors disabled:cursor-not-allowed ${
-        selected ? "border-black/25 bg-primary/10" : meta.className
+      className={`relative flex min-h-[9rem] flex-col overflow-hidden rounded-md border p-4 text-left transition-all duration-200 disabled:cursor-not-allowed ${
+        selected ? "border-primary bg-background shadow-[0_12px_28px_rgba(17,24,39,0.12)] ring-2 ring-primary/20" : meta.className
       }`}
     >
+      {selected && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs text-muted-foreground">{formatDateLabelFromIso(slot.startAt)}</p>
@@ -1272,11 +1367,16 @@ function SlotSelectableCard({
           )}
         </div>
         <span
-          className={`inline-flex shrink-0 rounded-full px-2 py-1 text-xs font-medium ${
-            selected ? "bg-primary text-primary-foreground" : meta.badgeClassName
+          className={`inline-flex shrink-0 rounded-md px-2 py-1 text-xs font-medium ${
+            selected ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/20" : meta.badgeClassName
           }`}
         >
-          {selected ? "선택됨" : meta.label}
+          {selected ? (
+            <span className="inline-flex items-center gap-1">
+              <Check className="h-3 w-3" />
+              선택됨
+            </span>
+          ) : meta.label}
         </span>
       </div>
       <div className="mt-3 flex-1 space-y-1">
@@ -1284,18 +1384,23 @@ function SlotSelectableCard({
           <>
             <p className="text-sm text-muted-foreground">{meta.description}</p>
             {designerNames && <p className="text-sm text-muted-foreground">{designerNames}</p>}
+            {slot.notice && (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2 py-1 mt-1">
+                {slot.notice}
+              </p>
+            )}
           </>
         ) : slot.status === "BLOCKED" ? (
           <p className="text-sm text-muted-foreground">{compactBlockReason(slot.reason)}</p>
         ) : (
-          <p className="text-sm text-muted-foreground">{meta.description}</p>
+          <p className="text-sm text-muted-foreground">{slot.reason || meta.description}</p>
         )}
       </div>
       <div className={`mt-3 grid gap-1 ${slot.occupiedUnitCount > 2 ? "grid-cols-3" : "grid-cols-2"}`}>
         {Array.from({ length: Math.max(slot.occupiedUnitCount, 1) }).map((_, index) => (
           <span
             key={index}
-            className={`h-1.5 rounded-full ${
+            className={`h-1.5 rounded-md ${
               selected ? "bg-primary" : slot.selectable ? "bg-emerald-300" : "bg-muted"
             }`}
           />
@@ -1504,7 +1609,7 @@ function OneShotBookingDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
         <Dialog.Content
-          className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background shadow-2xl sm:inset-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:h-[90vh] sm:max-h-[800px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:rounded-3xl"
+          className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-background shadow-2xl sm:inset-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:h-[90vh] sm:max-h-[800px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl sm:rounded-md"
         >
           <Dialog.Title className="sr-only">원샷 예약</Dialog.Title>
 
@@ -1512,7 +1617,7 @@ function OneShotBookingDialog({
           <div className="shrink-0 px-5 pt-5 pb-4 border-b border-black/8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <span className="inline-flex rounded-xl bg-primary/10 p-1.5 text-primary">
+                <span className="inline-flex rounded-md bg-primary/10 p-1.5 text-primary">
                   <Zap className="h-4 w-4" />
                 </span>
                 <div>
@@ -1522,7 +1627,7 @@ function OneShotBookingDialog({
                   </p>
                 </div>
               </div>
-              <Dialog.Close onClick={handleClose} className="rounded-full p-1.5 hover:bg-muted transition-colors">
+              <Dialog.Close onClick={handleClose} className="rounded-md p-1.5 hover:bg-muted transition-colors">
                 <X className="h-4 w-4 text-muted-foreground" />
               </Dialog.Close>
             </div>
@@ -1540,7 +1645,7 @@ function OneShotBookingDialog({
                       className="flex-1 group"
                     >
                       <div
-                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                        className={`h-1.5 rounded-md transition-all duration-300 ${
                           i < effectiveStep
                             ? "bg-primary cursor-pointer group-hover:bg-primary/70"
                             : i === effectiveStep
@@ -1582,7 +1687,7 @@ function OneShotBookingDialog({
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     placeholder="시술 검색..."
-                    className="w-full rounded-xl border border-black/10 bg-muted/30 py-2 pl-8 pr-4 text-sm outline-none focus:border-black/25"
+                    className="w-full rounded-md border border-black/10 bg-muted/30 py-2 pl-8 pr-4 text-sm outline-none focus:border-black/25"
                   />
                 </div>
                 {/* 서비스 그리드 */}
@@ -1618,7 +1723,7 @@ function OneShotBookingDialog({
                 ) : staffLoading ? (
                   <div className="grid gap-3">
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted/50" />
+                      <div key={i} className="h-20 animate-pulse rounded-md bg-muted/50" />
                     ))}
                   </div>
                 ) : staffList.length === 0 ? (
@@ -1632,14 +1737,14 @@ function OneShotBookingDialog({
                         key={staff.id}
                         type="button"
                         onClick={() => handleDesignerClick(staff.id, staff.name)}
-                        className={`w-full rounded-2xl border p-4 text-left transition-all ${
+                        className={`w-full rounded-md border p-4 text-left transition-all ${
                           selectedDesignerId === staff.id
                             ? "border-primary/40 bg-primary/8 ring-2 ring-primary/25"
                             : "border-black/10 bg-background hover:bg-accent hover:border-black/20"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full bg-muted flex items-center justify-center">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
                             {staff.profileImageUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={staff.profileImageUrl} alt={staff.name} className="h-12 w-12 object-cover" />
@@ -1651,7 +1756,7 @@ function OneShotBookingDialog({
                             <div className="flex items-center justify-between gap-2">
                               <h3 className="font-semibold text-foreground">{staff.name}</h3>
                               {selectedDesignerId === staff.id && (
-                                <span className="inline-flex shrink-0 rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+                                <span className="inline-flex shrink-0 rounded-md bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
                                   선택됨
                                 </span>
                               )}
@@ -1680,7 +1785,7 @@ function OneShotBookingDialog({
                       key={opt.value}
                       type="button"
                       onClick={() => bookingFlowActions.setSelectedDate(opt.value)}
-                      className={`rounded-xl border px-1.5 py-2 text-center transition-colors ${
+                      className={`rounded-md border px-1.5 py-2 text-center transition-colors ${
                         selectedDate === opt.value
                           ? "border-black/25 bg-primary text-primary-foreground"
                           : "border-black/10 bg-background hover:bg-accent"
@@ -1696,7 +1801,7 @@ function OneShotBookingDialog({
                 <div className="grid gap-2.5 sm:grid-cols-2">
                   {slotsLoading
                     ? Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="h-24 animate-pulse rounded-2xl bg-muted/50" />
+                        <div key={i} className="h-24 animate-pulse rounded-md bg-muted/50" />
                       ))
                     : slotsError
                       ? <p className="col-span-2 text-sm text-muted-foreground">시간을 불러오지 못했습니다.</p>
@@ -1739,7 +1844,7 @@ function OneShotBookingDialog({
                   </div>
                 </div>
                 {selectedNotice ? (
-                  <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
+                  <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-5 text-amber-800">
                     {selectedNotice}
                   </p>
                 ) : null}
@@ -1747,11 +1852,11 @@ function OneShotBookingDialog({
                   <button
                     type="button"
                     onClick={() => setDialogStep(dialogStep - 1)}
-                    className="inline-flex items-center gap-1 shrink-0 rounded-full border border-black/15 px-3 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                    className="inline-flex items-center gap-1 shrink-0 rounded-md border border-black/15 px-3 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
-                  <div className="flex flex-1 items-center overflow-hidden rounded-full border border-black/15 bg-muted/30 focus-within:border-black/30 transition-colors">
+                  <div className="flex flex-1 items-center overflow-hidden rounded-md border border-black/15 bg-muted/30 focus-within:border-black/30 transition-colors">
                     <span className="shrink-0 border-r border-black/10 px-3 py-2 text-sm font-semibold text-foreground select-none">
                       010
                     </span>
@@ -1773,7 +1878,7 @@ function OneShotBookingDialog({
                     type="button"
                     onClick={() => onSubmit(phoneInput)}
                     disabled={isPending || phoneInput.replace(/\D/g, "").length < 11}
-                    className="shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:bg-primary/90"
+                    className="shrink-0 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:bg-primary/90"
                   >
                     {isPending ? "요청 중..." : "예약 요청"}
                   </button>
@@ -1785,7 +1890,7 @@ function OneShotBookingDialog({
                 <button
                   type="button"
                   onClick={() => dialogStep > 0 ? setDialogStep(dialogStep - 1) : handleClose()}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-black/15 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent transition-colors"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   {dialogStep === 0 ? "닫기" : "이전"}
@@ -1795,7 +1900,7 @@ function OneShotBookingDialog({
                   {ONE_SHOT_STEPS.map((_, i) => (
                     <div
                       key={i}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                      className={`h-1.5 rounded-md transition-all duration-300 ${
                         i === dialogStep ? "w-5 bg-primary" : i < dialogStep ? "w-1.5 bg-primary/40" : "w-1.5 bg-muted"
                       }`}
                     />
@@ -1806,7 +1911,7 @@ function OneShotBookingDialog({
                   type="button"
                   onClick={() => setDialogStep(dialogStep + 1)}
                   disabled={dialogStep === 0 ? selectedServiceIds.length === 0 : !selectedDesignerId}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40 hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-40 hover:bg-primary/90 transition-colors"
                 >
                   {dialogStep === 0
                     ? `다음 (${selectedServiceIds.length}개 선택됨)`
@@ -1835,25 +1940,27 @@ function OneShotServiceCard({
 }) {
   const selected = role !== "none";
   const ringClass = role === "main"
-    ? "border-primary ring-2 ring-primary/30 bg-primary/5"
+    ? "border-primary bg-background shadow-[0_12px_28px_rgba(17,24,39,0.14)] ring-2 ring-primary/20"
     : role === "option"
-      ? "border-primary/60 ring-1 ring-primary/20 bg-primary/[0.03]"
-      : "border-black/10 bg-background hover:bg-accent";
+      ? "border-primary/70 bg-background shadow-sm ring-2 ring-primary/10"
+      : "border-black/10 bg-background hover:border-black/20 hover:bg-accent";
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative overflow-hidden rounded-2xl border text-left transition-all active:scale-[0.98] ${ringClass}`}
+      className={`relative overflow-hidden rounded-md border text-left transition-all active:scale-[0.98] ${ringClass}`}
     >
+      {selected && <span className="absolute inset-y-0 left-0 z-20 w-1 bg-primary" />}
       {selected && (
         <span
-          className={`absolute left-2 top-2 z-10 inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+          className={`absolute left-2 top-2 z-30 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-semibold shadow-lg ${
             role === "main"
               ? "bg-primary text-primary-foreground"
               : "bg-white/95 text-primary ring-1 ring-primary/40"
           }`}
         >
+          <Check className="h-3 w-3" />
           {role === "main" ? "메인" : `옵션 ${optionOrder}`}
         </span>
       )}
@@ -1872,7 +1979,7 @@ function OneShotServiceCard({
           <h3 className="text-sm font-semibold text-foreground leading-snug">{service.name}</h3>
           <span
             className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold mt-0.5 ${
-              selected ? "border-primary bg-primary text-primary-foreground" : "border-black/15 bg-background text-transparent"
+              selected ? "border-primary bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/15" : "border-black/15 bg-background text-transparent"
             }`}
             aria-hidden
           >

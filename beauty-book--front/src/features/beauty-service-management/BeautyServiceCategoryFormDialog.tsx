@@ -100,7 +100,7 @@ export function BeautyServiceCategoryFormDialog({ open, category, onClose }: Pro
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-lg border border-border bg-background p-6 shadow-lg"
+        className="w-full max-w-md rounded-md border border-border bg-background p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="mb-4 text-base font-semibold">{isEdit ? "카테고리 수정" : "카테고리 등록"}</h2>

@@ -16,6 +16,7 @@ const STATUS_META: Record<ReservationStatus, { label: string; badge: string; car
   CONFIRMED:             { label: "예약 확정",  badge: "border border-black bg-black text-white",                       card: "border-black/70 bg-white" },
   CANCELLED_BY_CUSTOMER: { label: "고객 취소",  badge: "border border-black/12 bg-black/[0.03] text-foreground/40",     card: "border-black/8 bg-black/[0.015]" },
   CANCELLED_BY_ADMIN:    { label: "관리자취소", badge: "border border-black/12 bg-black/[0.03] text-foreground/40",     card: "border-black/8 bg-black/[0.015]" },
+  EXPIRED:               { label: "요청 만료",  badge: "border border-zinc-200 bg-zinc-50 text-zinc-500",               card: "border-zinc-200 bg-zinc-50/40" },
   COMPLETED:             { label: "완료",       badge: "border border-black/12 bg-black/[0.03] text-foreground/40",     card: "border-black/8 bg-black/[0.015]" },
   NO_SHOW:               { label: "노쇼",       badge: "border border-rose-300 bg-rose-50 text-rose-600",               card: "border-rose-200 bg-rose-50/30" },
 };

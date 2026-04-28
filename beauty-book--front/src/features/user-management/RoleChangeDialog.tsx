@@ -44,7 +44,7 @@ export function RoleChangeDialog({ user, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm rounded-lg border border-border bg-background p-5 shadow-lg"
+        className="w-full max-w-sm rounded-md border border-border bg-background p-5 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold mb-1">롤 변경</h2>

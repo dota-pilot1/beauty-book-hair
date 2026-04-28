@@ -10,6 +10,7 @@ const STATUS_META: Record<ReservationStatus, { label: string }> = {
   CONFIRMED:             { label: "예약 확정" },
   CANCELLED_BY_CUSTOMER: { label: "고객 취소" },
   CANCELLED_BY_ADMIN:    { label: "관리자 취소" },
+  EXPIRED:               { label: "요청 만료" },
   COMPLETED:             { label: "완료" },
   NO_SHOW:               { label: "노쇼" },
 };
@@ -45,7 +46,7 @@ export default function DeletedReservationsPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-3xl border border-black/12 bg-gradient-to-br from-background via-background to-muted/30 p-6 shadow-sm">
+      <header className="rounded-md border border-black/12 bg-gradient-to-br from-background via-background to-muted/30 p-6 shadow-sm">
         <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
           Deleted Reservations
         </p>
@@ -63,7 +64,7 @@ export default function DeletedReservationsPage() {
               key={opt.value}
               type="button"
               onClick={() => setSelectedDate(opt.value)}
-              className={`rounded-xl border px-2 py-2.5 text-center transition-colors ${
+              className={`rounded-md border px-2 py-2.5 text-center transition-colors ${
                 selectedDate === opt.value
                   ? "border-black/25 bg-primary text-primary-foreground"
                   : "border-black/10 bg-card hover:bg-accent"
@@ -75,11 +76,11 @@ export default function DeletedReservationsPage() {
           ))}
         </section>
 
-        <section className="rounded-2xl border border-black/12 bg-card p-5 shadow-sm">
+        <section className="rounded-md border border-black/12 bg-card p-5 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <CalendarX2 className="h-4 w-4 text-muted-foreground" />
             {dateOptions.find((d) => d.value === selectedDate)?.shortLabel} 삭제된 예약
-            <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            <span className="ml-auto rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               {deletedReservations.length}건
             </span>
           </div>
@@ -87,10 +88,10 @@ export default function DeletedReservationsPage() {
           <div className="mt-4 space-y-3">
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted/50" />
+                <div key={i} className="h-20 animate-pulse rounded-md bg-muted/50" />
               ))
             ) : deletedReservations.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+              <p className="rounded-md border border-dashed border-black/10 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
                 해당 날짜에 삭제된 예약이 없습니다.
               </p>
             ) : (
@@ -107,9 +108,9 @@ export default function DeletedReservationsPage() {
 
 function DeletedReservationCard({ reservation: r }: { reservation: Reservation }) {
   return (
-    <div className="rounded-2xl border border-black/8 bg-muted/20 p-4 opacity-70">
+    <div className="rounded-md border border-black/8 bg-muted/20 p-4 opacity-70">
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground line-through">
+        <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground line-through">
           {STATUS_META[r.status].label}
         </span>
         <span className="text-xs text-muted-foreground">

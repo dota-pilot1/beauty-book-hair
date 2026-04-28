@@ -176,37 +176,34 @@ public class ReservationSlotService {
                     .toList();
 
             ReservationSlotStatus status = availableStaff.isEmpty()
-                    ? resolveUnavailableStatus(staffList, reservations, startAt, endAt)
+                    ? resolveUnavailableStatus(staffList, blockedTimes, reservations, startAt, endAt)
                     : ReservationSlotStatus.AVAILABLE;
 
             String reason;
             if (status == ReservationSlotStatus.BLOCKED) {
-                Instant slotWindowEnd = startAt.plusSeconds(SLOT_UNIT_MINUTES * 60L);
+                final Instant slotStart = startAt;
                 reason = blockedTimes.values().stream()
                         .flatMap(List::stream)
-                        .filter(bt -> overlaps(bt.getStartAt(), bt.getEndAt(), startAt, slotWindowEnd))
+                        .filter(bt -> bt.getBlockType() != BlockedTimeType.LUNCH)
+                        .filter(bt -> overlaps(bt.getStartAt(), bt.getEndAt(), startAt, endAt))
                         .findFirst()
-                        .map(bt -> {
-                            String label = blockTypeLabel(bt.getBlockType());
-                            return (bt.getReason() != null && !bt.getReason().isBlank())
-                                    ? label + " · " + bt.getReason()
-                                    : label;
-                        })
+                        .map(bt -> describeBlockedReason(slotStart, bt))
                         .orElse("근무 외 시간이에요.");
+            } else if (status == ReservationSlotStatus.RESERVED || status == ReservationSlotStatus.REQUESTED) {
+                reason = describeReservationReason(staffList, reservations, status, startAt);
             } else {
                 reason = reasonFor(status, availableStaff.size());
             }
 
-            // AVAILABLE 슬롯이지만 시술 전체 시간이 차단 시간을 가로지르는 경우 안내
+            // AVAILABLE 슬롯이 점심 시간을 가로지를 때 안내 메시지 표시.
             String notice = null;
             if (status == ReservationSlotStatus.AVAILABLE) {
-                Instant slotWindowEnd = startAt.plusSeconds(SLOT_UNIT_MINUTES * 60L);
-                notice = availableStaff.stream()
-                        .flatMap(staff -> blockedTimes.getOrDefault(staff.getId(), List.of()).stream())
+                notice = blockedTimes.values().stream()
+                        .flatMap(List::stream)
+                        .filter(bt -> bt.getBlockType() == BlockedTimeType.LUNCH)
                         .filter(bt -> overlaps(bt.getStartAt(), bt.getEndAt(), startAt, endAt))
-                        .filter(bt -> !overlaps(bt.getStartAt(), bt.getEndAt(), startAt, slotWindowEnd))
                         .findFirst()
-                        .map(this::formatNotice)
+                        .map(bt -> "🍱 점심 시간(" + formatHHmm(bt.getStartAt()) + "~" + formatHHmm(bt.getEndAt()) + ")과 겹쳐요")
                         .orElse(null);
             }
 
@@ -276,14 +273,11 @@ public class ReservationSlotService {
             return false;
         }
 
-        // 블록타임 체크: 슬롯 시작 30분 단위 구간만 확인 (시술 전체 시간이 아닌, 슬롯이 차단 구간에 걸리는지)
-        Instant slotWindowEnd = startAt.plusSeconds(SLOT_UNIT_MINUTES * 60L);
-        boolean blocked = blockedTimes.stream().anyMatch(blockedTime -> overlaps(
-                blockedTime.getStartAt(),
-                blockedTime.getEndAt(),
-                startAt,
-                slotWindowEnd
-        ));
+        // 블록타임 체크: 점심 시간(LUNCH)은 안내만 하고 가로지를 수 있도록 허용한다.
+        // 매장 휴무·디자이너 휴무·교육 등 그 외 차단은 절대 시간이라 시술 시간이 겹치면 불가.
+        boolean blocked = blockedTimes.stream()
+                .filter(bt -> bt.getBlockType() != BlockedTimeType.LUNCH)
+                .anyMatch(bt -> overlaps(bt.getStartAt(), bt.getEndAt(), startAt, endAt));
         if (blocked) {
             return false;
         }
@@ -299,10 +293,21 @@ public class ReservationSlotService {
 
     private ReservationSlotStatus resolveUnavailableStatus(
             List<Staff> staffList,
+            Map<Long, List<BlockedTime>> blockedTimes,
             Map<Long, List<Reservation>> reservations,
             Instant startAt,
             Instant endAt
     ) {
+        // 점심 시간이 아닌 차단 시간(매장 휴무·디자이너 휴무·교육 등)이 시술 시간과 겹치면 BLOCKED 우선.
+        // 점심은 가로지를 수 있도록 허용하므로 BLOCKED 가 아니라 RESERVED/REQUESTED 등이 우선.
+        boolean hasHardBlock = staffList.stream()
+                .flatMap(staff -> blockedTimes.getOrDefault(staff.getId(), List.of()).stream())
+                .filter(bt -> bt.getBlockType() != BlockedTimeType.LUNCH)
+                .anyMatch(bt -> overlaps(bt.getStartAt(), bt.getEndAt(), startAt, endAt));
+        if (hasHardBlock) {
+            return ReservationSlotStatus.BLOCKED;
+        }
+
         boolean hasConfirmed = staffList.stream()
                 .flatMap(staff -> reservations.getOrDefault(staff.getId(), List.of()).stream())
                 .anyMatch(reservation -> reservation.getStatus() == ReservationStatus.CONFIRMED
@@ -336,12 +341,56 @@ public class ReservationSlotService {
         };
     }
 
-    private String formatNotice(BlockedTime blockedTime) {
-        java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
-        String start = blockedTime.getStartAt().atZone(STORE_ZONE).toLocalTime().format(formatter);
-        String end = blockedTime.getEndAt().atZone(STORE_ZONE).toLocalTime().format(formatter);
-        String label = blockTypeLabel(blockedTime.getBlockType());
-        return "⚠️ " + label + "(" + start + "~" + end + ") 포함";
+    /**
+     * 예약 충돌 메시지: 슬롯 자체가 예약 안인지, 시술이 다음 예약을 가로지르는 건지 구분.
+     */
+    private String describeReservationReason(
+            List<Staff> staffList,
+            Map<Long, List<Reservation>> reservations,
+            ReservationSlotStatus status,
+            Instant startAt
+    ) {
+        Instant slotWindowEnd = startAt.plusSeconds(SLOT_UNIT_MINUTES * 60L);
+        ReservationStatus targetStatus = status == ReservationSlotStatus.RESERVED
+                ? ReservationStatus.CONFIRMED
+                : ReservationStatus.REQUESTED;
+        boolean slotItselfTaken = staffList.stream()
+                .flatMap(staff -> reservations.getOrDefault(staff.getId(), List.of()).stream())
+                .filter(r -> r.getStatus() == targetStatus)
+                .anyMatch(r -> overlaps(r.getStartAt(), r.getEndAt(), startAt, slotWindowEnd));
+
+        if (slotItselfTaken) {
+            return status == ReservationSlotStatus.RESERVED
+                    ? "이미 예약된 시간이에요."
+                    : "다른 고객이 승인 대기 중이에요.";
+        }
+        // 슬롯 자체는 비어있지만 시술 시간이 다음 예약과 겹치는 경우
+        return status == ReservationSlotStatus.RESERVED
+                ? "다음 예약과 시간이 겹쳐요."
+                : "다음 요청과 시간이 겹쳐요.";
+    }
+
+    private String formatHHmm(Instant instant) {
+        return instant.atZone(STORE_ZONE).toLocalTime()
+                .format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+    }
+
+    /**
+     * 차단 시간 표시 메시지 결정.
+     * - 슬롯 시작이 차단 구간 안: 슬롯 자체가 차단 시간 (예: "🚪 매장 휴무")
+     * - 슬롯 시작은 차단 구간 밖이지만 시술 시간이 차단 구간으로 침범: 시간 부족
+     */
+    private String describeBlockedReason(Instant slotStart, BlockedTime bt) {
+        String label = blockTypeLabel(bt.getBlockType());
+        String reasonSuffix = (bt.getReason() != null && !bt.getReason().isBlank())
+                ? " · " + bt.getReason()
+                : "";
+
+        boolean slotInsideBlock = !slotStart.isBefore(bt.getStartAt()) && slotStart.isBefore(bt.getEndAt());
+        if (slotInsideBlock) {
+            return label + reasonSuffix;
+        }
+        return label + " 전이라 시술이 다 끝나지 않아요" + reasonSuffix;
     }
 
     private String blockTypeLabel(BlockedTimeType type) {

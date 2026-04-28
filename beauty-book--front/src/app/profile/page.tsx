@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { RequireAuth } from "@/widgets/guards/RequireAuth";
 import { useAuth, authActions } from "@/entities/user/model/authStore";
 import { uploadImage } from "@/shared/api/upload";
+import { ChangePasswordDialog } from "@/features/profile/ChangePasswordDialog";
 
 export default function ProfilePage() {
   return (
@@ -19,6 +20,7 @@ function ProfileContent() {
   const { user } = useAuth();
   const [tab, setTab] = useState<Tab>("info");
   const [uploading, setUploading] = useState(false);
+  const [changePwOpen, setChangePwOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!user) return null;
@@ -75,6 +77,15 @@ function ProfileContent() {
                 <Row label="이름" value={user.username} />
                 <Row label="이메일" value={user.email} />
                 <Row label="역할" value={user.role.name} />
+                <div className="flex items-center px-4 py-2.5">
+                  <span className="w-20 text-xs text-muted-foreground shrink-0">비밀번호</span>
+                  <button
+                    onClick={() => setChangePwOpen(true)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    변경하기
+                  </button>
+                </div>
               </Section>
               <Section title="보유 권한">
                 {user.permissions.length === 0 ? (
@@ -184,6 +195,7 @@ function ProfileContent() {
         </aside>
 
       </div>
+      <ChangePasswordDialog open={changePwOpen} onClose={() => setChangePwOpen(false)} />
     </main>
   );
 }

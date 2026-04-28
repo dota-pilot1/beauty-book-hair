@@ -61,7 +61,7 @@ export function PermissionCategoryFormDialog({ open, category, onClose }: Props)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-lg border border-border bg-background p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md rounded-md border border-border bg-background p-6 shadow-lg" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-base font-semibold mb-4">{isEdit ? "카테고리 수정" : "카테고리 등록"}</h2>
         <form onSubmit={handleSubmit((v) => mutation.mutate(v as Record<string, string>))} className="space-y-4">
           {!isEdit ? (

@@ -81,7 +81,7 @@ export default function BlogPostEditPage() {
         <AdminShell eyebrow="Admin" title="포스트 수정" description="">
           <div className="space-y-4 max-w-3xl">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-12 animate-pulse rounded-xl bg-muted" />
+              <div key={i} className="h-12 animate-pulse rounded-md bg-muted" />
             ))}
           </div>
         </AdminShell>
@@ -102,14 +102,14 @@ export default function BlogPostEditPage() {
           </Link>
 
           {/* 기본 정보 */}
-          <section className="rounded-2xl border border-black/10 bg-card p-5 shadow-sm space-y-4">
+          <section className="rounded-md border border-black/10 bg-card p-5 shadow-sm space-y-4">
             <p className="text-sm font-medium text-foreground">기본 정보</p>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-muted-foreground">제목 *</label>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
             <div>
@@ -117,7 +117,7 @@ export default function BlogPostEditPage() {
               <input
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
             <div>
@@ -127,7 +127,7 @@ export default function BlogPostEditPage() {
                 onChange={(e) => setSummary(e.target.value)}
                 rows={2}
                 maxLength={150}
-                className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
             <div>
@@ -135,13 +135,13 @@ export default function BlogPostEditPage() {
               <input
                 value={authorName}
                 onChange={(e) => setAuthorName(e.target.value)}
-                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
           </section>
 
           {/* 본문 에디터 */}
-          <section className="rounded-2xl border border-black/10 bg-card shadow-sm overflow-hidden">
+          <section className="rounded-md border border-black/10 bg-card shadow-sm overflow-hidden">
             <div className="border-b border-black/8 px-5 py-3">
               <p className="text-sm font-medium text-foreground">본문</p>
             </div>
@@ -154,12 +154,12 @@ export default function BlogPostEditPage() {
           </section>
 
           {/* 태그 입력 */}
-          <section className="rounded-2xl border border-black/10 bg-card p-5 shadow-sm">
+          <section className="rounded-md border border-black/10 bg-card p-5 shadow-sm">
             <p className="mb-1 text-sm font-medium text-foreground">태그</p>
             <p className="mb-3 text-xs text-muted-foreground">Enter 또는 쉼표로 추가 · Backspace로 마지막 태그 제거</p>
-            <div className="flex flex-wrap gap-1.5 rounded-lg border border-input bg-background px-3 py-2 min-h-[42px] focus-within:ring-1 focus-within:ring-primary">
+            <div className="flex flex-wrap gap-1.5 rounded-md border border-input bg-background px-3 py-2 min-h-[42px] focus-within:ring-1 focus-within:ring-primary">
               {tagNames.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                <span key={tag} className="inline-flex items-center gap-1 rounded-md bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                   {tag}
                   <button type="button" onClick={() => setTagNames((prev) => prev.filter((t) => t !== tag))} className="text-primary/60 hover:text-primary transition-colors">
                     <X className="h-3 w-3" />
@@ -181,21 +181,21 @@ export default function BlogPostEditPage() {
           <div className="flex items-center justify-end gap-3 pb-6">
             <Link
               href="/blog-management"
-              className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm text-muted-foreground hover:bg-muted transition-colors"
+              className="inline-flex h-10 items-center rounded-md border border-border px-4 text-sm text-muted-foreground hover:bg-muted transition-colors"
             >
               취소
             </Link>
             <button
               onClick={() => handleSubmit("DRAFT")}
               disabled={updatePost.isPending || !title.trim() || !slug.trim()}
-              className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
+              className="inline-flex h-10 items-center rounded-md border border-border px-4 text-sm font-medium text-foreground hover:bg-muted disabled:opacity-50 transition-colors"
             >
               임시저장
             </button>
             <button
               onClick={() => handleSubmit("PUBLISHED")}
               disabled={updatePost.isPending || !title.trim() || !slug.trim()}
-              className="inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground disabled:opacity-50"
+              className="inline-flex h-10 items-center rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
               {updatePost.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "발행"}
             </button>

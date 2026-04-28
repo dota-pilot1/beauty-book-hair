@@ -119,6 +119,21 @@ public class AuthService {
     }
 
     @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest req) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        if (!passwordEncoder.matches(req.currentPassword(), user.getPasswordHash())) {
+            throw new BusinessException(ErrorCode.WRONG_CURRENT_PASSWORD);
+        }
+        user.changePassword(passwordEncoder.encode(req.newPassword()));
+        try {
+            notificationService.sendPasswordChanged(user);
+        } catch (Exception e) {
+            log.warn("비밀번호 변경 메일 발송 실패 userId={}", user.getId(), e);
+        }
+    }
+
+    @Transactional
     public UserSummary updateProfileImage(Long userId, UpdateProfileImageRequest req) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));

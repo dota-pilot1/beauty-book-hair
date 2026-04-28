@@ -77,7 +77,7 @@ export function RolePermissionDialog({ role, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-lg border border-border bg-background p-6 shadow-lg max-h-[80vh] flex flex-col"
+        className="w-full max-w-lg rounded-md border border-border bg-background p-6 shadow-lg max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4">

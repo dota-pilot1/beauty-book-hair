@@ -16,6 +16,7 @@ const STATUS_META: Record<ReservationStatus, { label: string; bg: string; border
   NO_SHOW:               { label: "노쇼",        bg: "bg-rose-50",    border: "border-rose-300",    text: "text-rose-700" },
   CANCELLED_BY_CUSTOMER: { label: "고객 취소",   bg: "bg-slate-50",   border: "border-slate-200",   text: "text-slate-500" },
   CANCELLED_BY_ADMIN:    { label: "관리자 취소", bg: "bg-slate-50",   border: "border-slate-200",   text: "text-slate-500" },
+  EXPIRED:               { label: "요청 만료",   bg: "bg-zinc-50",    border: "border-zinc-200",    text: "text-zinc-500" },
 };
 
 function getDateOptions(days = 7) {
@@ -98,7 +99,7 @@ export function AdminDesignerScheduleDialog({ open, onClose, staffName, staffId,
     <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-full max-w-sm -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-lg">
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-full max-w-sm -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-md border border-border bg-background shadow-lg">
           <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-4">
             <Dialog.Title className="text-sm font-semibold">{staffName} 스케쥴</Dialog.Title>
             <Dialog.Close onClick={onClose} className="rounded p-1 hover:bg-muted">
@@ -113,7 +114,7 @@ export function AdminDesignerScheduleDialog({ open, onClose, staffName, staffId,
                 key={opt.value}
                 type="button"
                 onClick={() => setSelectedDate(opt.value)}
-                className={`flex shrink-0 flex-col items-center rounded-lg px-2.5 py-1.5 text-center transition-colors ${
+                className={`flex shrink-0 flex-col items-center rounded-md px-2.5 py-1.5 text-center transition-colors ${
                   selectedDate === opt.value
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted/60 text-muted-foreground hover:bg-muted"
@@ -162,7 +163,7 @@ function SkeletonTimeline() {
   return (
     <div className="space-y-2 pt-4">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="h-12 animate-pulse rounded-lg bg-muted/50" />
+        <div key={i} className="h-12 animate-pulse rounded-md bg-muted/50" />
       ))}
     </div>
   );
@@ -216,7 +217,7 @@ function Timeline({ slots, containerHeight, isStoreClosed, isStaffOff, staffName
       {offDutyRanges.map((o, i) => (
         <div
           key={`off-${i}`}
-          className="absolute left-13 right-0 flex items-center justify-center overflow-hidden rounded-lg border border-slate-300 bg-slate-200 px-2.5 py-1.5"
+          className="absolute left-13 right-0 flex items-center justify-center overflow-hidden rounded-md border border-slate-300 bg-slate-200 px-2.5 py-1.5"
           style={{ top: `${o.topPx}px`, height: `${o.heightPx}px` }}
         >
           <p className="truncate text-[11px] font-semibold text-slate-600">🚫 근무 외</p>
@@ -227,7 +228,7 @@ function Timeline({ slots, containerHeight, isStoreClosed, isStaffOff, staffName
       {blockedRanges.map((b, i) => (
         <div
           key={`block-${i}`}
-          className="absolute left-13 right-0 flex items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 px-2.5 py-1.5"
+          className="absolute left-13 right-0 flex items-center justify-center overflow-hidden rounded-md border border-dashed border-slate-300 px-2.5 py-1.5"
           style={{
             top: `${b.topPx}px`,
             height: `${b.heightPx}px`,
@@ -251,12 +252,12 @@ function Timeline({ slots, containerHeight, isStoreClosed, isStaffOff, staffName
         return (
           <div
             key={r.id}
-            className={`absolute left-13 right-0 overflow-hidden rounded-lg border px-2.5 py-1.5 ${meta.bg} ${meta.border}`}
+            className={`absolute left-13 right-0 overflow-hidden rounded-md border px-2.5 py-1.5 ${meta.bg} ${meta.border}`}
             style={{ top: `${topPx}px`, height: `${heightPx}px` }}
           >
             <div className="flex items-start justify-between gap-1">
               <p className="truncate text-xs font-semibold text-foreground">{serviceNames}</p>
-              <span className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${meta.text}`}>
+              <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${meta.text}`}>
                 {meta.label}
               </span>
             </div>
@@ -275,7 +276,7 @@ function Timeline({ slots, containerHeight, isStoreClosed, isStaffOff, staffName
         <>
           <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-[1px]" />
           <div className="sticky top-1/3 z-20 flex justify-center">
-            <p className="rounded-full bg-foreground/85 px-4 py-1.5 text-xs font-medium text-background shadow-sm">
+            <p className="rounded-md bg-foreground/85 px-4 py-1.5 text-xs font-medium text-background shadow-sm">
               🚪 이 날은 매장 휴무일입니다
             </p>
           </div>
@@ -287,7 +288,7 @@ function Timeline({ slots, containerHeight, isStoreClosed, isStaffOff, staffName
         <>
           <div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-[1px]" />
           <div className="sticky top-1/3 z-20 flex justify-center">
-            <p className="rounded-full bg-rose-500/90 px-4 py-1.5 text-xs font-medium text-white shadow-sm">
+            <p className="rounded-md bg-rose-500/90 px-4 py-1.5 text-xs font-medium text-white shadow-sm">
               💆 {staffName} 디자이너 휴무일
             </p>
           </div>
@@ -297,7 +298,7 @@ function Timeline({ slots, containerHeight, isStoreClosed, isStaffOff, staffName
       {/* 예약/차단 둘 다 없을 때 */}
       {isEmpty && (
         <div className="sticky top-1/3 z-10 flex justify-center">
-          <p className="rounded-full bg-muted/80 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
+          <p className="rounded-md bg-muted/80 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
             이 날 예약이 없습니다
           </p>
         </div>

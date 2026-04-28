@@ -294,7 +294,7 @@ function StaffAdminPage() {
       title="직원 관리"
       description="디자이너, 스탭, 데스크 직원을 관리합니다."
     >
-      <section className="rounded-2xl border border-black/8 bg-card shadow-sm">
+      <section className="rounded-md border border-black/8 bg-card shadow-sm">
         <div className="p-4">
           <div className="mb-5 flex items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2">
@@ -302,7 +302,7 @@ function StaffAdminPage() {
                 <button
                   key={role}
                   onClick={() => setRoleFilter(role)}
-                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors ${
                     roleFilter === role
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted/70 text-muted-foreground hover:bg-muted"
@@ -316,7 +316,7 @@ function StaffAdminPage() {
               ))}
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex h-9 items-stretch overflow-hidden rounded-lg border border-border bg-background">
+              <div className="flex h-9 items-stretch overflow-hidden rounded-md border border-border bg-background">
                 <button
                   onClick={() => setViewMode("table")}
                   className={`flex items-center px-3 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
@@ -335,7 +335,7 @@ function StaffAdminPage() {
               </div>
               <button
                 onClick={openCreate}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
                 + 직원 등록
               </button>
@@ -424,7 +424,7 @@ function StaffAdminPage() {
       <Dialog.Root open={detailOpen} onOpenChange={(open) => { if (!open) { setDetailOpen(false); setSelectedStaff(null); } }}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-background p-6 shadow-lg">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-md border border-border bg-background p-6 shadow-lg">
             <Dialog.Title className="sr-only">직원 상세 정보</Dialog.Title>
             {selectedStaff && (
               <StaffDetailPanel
@@ -441,7 +441,7 @@ function StaffAdminPage() {
       <Dialog.Root open={scheduleOpen} onOpenChange={(open) => { if (!open) { setScheduleOpen(false); setScheduleTarget(null); } }}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-border bg-background p-6 shadow-lg max-h-[90vh] overflow-y-auto">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-md border border-border bg-background p-6 shadow-lg max-h-[90vh] overflow-y-auto">
             <Dialog.Title className="sr-only">근무 시간 설정</Dialog.Title>
             {scheduleTarget && (
               <StaffScheduleModal
@@ -468,7 +468,7 @@ function StaffAdminPage() {
       <Dialog.Root open={dialogOpen} onOpenChange={(open) => !open && closeDialog()}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-2rem)] max-w-6xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-lg">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-2rem)] max-w-6xl -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-md border border-border bg-background shadow-lg">
             <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-5">
               <Dialog.Title className="text-base font-semibold">
                 {editTarget ? "직원 수정" : "직원 등록"}
@@ -531,7 +531,7 @@ function StaffAdminPage() {
                 <div className="grid gap-2 sm:grid-cols-[112px_minmax(0,1fr)] sm:items-start">
                   <label className="pt-2 text-sm font-medium">프로필 이미지</label>
                   <div className="flex items-center gap-3">
-                    <div className="h-16 w-16 shrink-0 rounded-full overflow-hidden bg-muted flex items-center justify-center border border-border">
+                    <div className="h-16 w-16 shrink-0 rounded-md overflow-hidden bg-muted flex items-center justify-center border border-border">
                       {form.profileImageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={form.profileImageUrl} alt="preview" className="h-16 w-16 object-cover" />
@@ -647,17 +647,17 @@ function StaffServiceAssignmentPanel({ staff }: { staff: StaffMember | null }) {
       </div>
 
       {!staff ? (
-        <div className="rounded-2xl border border-border bg-background p-4 text-sm leading-6 text-muted-foreground">
+        <div className="rounded-md border border-border bg-background p-4 text-sm leading-6 text-muted-foreground">
           직원 등록 후 수정 화면에서 가능한 시술을 연결할 수 있습니다.
         </div>
       ) : isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="h-12 animate-pulse rounded-xl bg-background" />
+            <div key={index} className="h-12 animate-pulse rounded-md bg-background" />
           ))}
         </div>
       ) : services.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-background p-4 text-sm leading-6 text-muted-foreground">
+        <div className="rounded-md border border-border bg-background p-4 text-sm leading-6 text-muted-foreground">
           연결 가능한 시술 항목이 없습니다. 먼저 시술/가격 화면에서 시술을 등록해주세요.
         </div>
       ) : (
@@ -665,7 +665,7 @@ function StaffServiceAssignmentPanel({ staff }: { staff: StaffMember | null }) {
           {services.map((service) => (
             <label
               key={service.beautyServiceId}
-              className="flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-xl border border-border bg-background px-3 py-2.5 transition-colors hover:bg-accent"
+              className="flex min-w-0 cursor-pointer items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-2.5 transition-colors hover:bg-accent"
             >
               <span className="min-w-0">
                 <span className={`block truncate text-sm font-medium ${service.active ? "text-foreground" : "text-muted-foreground"}`}>
@@ -730,7 +730,7 @@ function SortableStaffRow({
         <button
           type="button"
           onClick={(e) => e.stopPropagation()}
-          className="inline-flex h-8 w-8 cursor-grab items-center justify-center rounded-lg border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:border-primary/35 hover:bg-accent hover:text-foreground active:cursor-grabbing"
+          className="inline-flex h-8 w-8 cursor-grab items-center justify-center rounded-md border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:border-primary/35 hover:bg-accent hover:text-foreground active:cursor-grabbing"
           aria-label={`${staff.name} 순서 변경`}
           {...attributes}
           {...listeners}
@@ -740,7 +740,7 @@ function SortableStaffRow({
       </td>
       <td className="py-3.5 pr-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted ring-1 ring-border/60">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted ring-1 ring-border/60">
             {staff.profileImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={staff.profileImageUrl} alt={staff.name} className="h-full w-full object-cover" />
@@ -755,7 +755,7 @@ function SortableStaffRow({
         </div>
       </td>
       <td className="py-3.5 pr-4">
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[staff.role]}`}>
+        <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[staff.role]}`}>
           {ROLE_LABELS[staff.role]}
         </span>
       </td>
@@ -763,10 +763,10 @@ function SortableStaffRow({
         {staff.introduction ?? "-"}
       </td>
       <td className="py-3.5 pr-4">
-        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+        <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ${
           staff.active ? "bg-emerald-50 text-emerald-700" : "bg-muted text-muted-foreground"
         }`}>
-          <span className={`h-1.5 w-1.5 rounded-full ${staff.active ? "bg-emerald-500" : "bg-muted-foreground/50"}`} />
+          <span className={`h-1.5 w-1.5 rounded-md ${staff.active ? "bg-emerald-500" : "bg-muted-foreground/50"}`} />
           {staff.active ? "활성" : "비활성"}
         </span>
       </td>
@@ -880,17 +880,17 @@ function StaffDetailPanel({
       {/* 헤더 */}
       <div className="mb-4 flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-muted">
             {staff.profileImageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={staff.profileImageUrl} alt={staff.name} className="h-12 w-12 rounded-full object-cover" />
+              <img src={staff.profileImageUrl} alt={staff.name} className="h-12 w-12 rounded-md object-cover" />
             ) : (
               <UserCircle2 className="h-7 w-7 text-muted-foreground" />
             )}
           </div>
           <div>
             <p className="font-semibold">{staff.name}</p>
-            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+            <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${
               staff.role === "DESIGNER" ? "bg-primary/10 text-primary" :
               staff.role === "STAFF" ? "bg-muted text-muted-foreground" :
               "border border-border text-muted-foreground"
@@ -1026,13 +1026,13 @@ function StaffScheduleModal({ staff, onClose }: { staff: StaffMember; onClose: (
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} className="h-10 animate-pulse rounded-lg bg-muted/50" />
+            <div key={i} className="h-10 animate-pulse rounded-md bg-muted/50" />
           ))}
         </div>
       ) : (
         <div className="space-y-1.5">
           {effectiveRows.map((row) => (
-            <div key={row.dayOfWeek} className="rounded-lg border border-border/50 px-3 py-2">
+            <div key={row.dayOfWeek} className="rounded-md border border-border/50 px-3 py-2">
               <div className="flex items-center gap-3">
                 <span className="w-5 text-center text-sm font-medium text-muted-foreground">
                   {DAY_LABELS[row.dayOfWeek]}
@@ -1156,7 +1156,7 @@ function StaffCard({
   }
 
   return (
-    <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden flex flex-col">
+    <div className="rounded-md border border-border bg-card shadow-sm overflow-hidden flex flex-col">
       {/* 이미지 영역 */}
       <div className="relative group h-40 bg-muted flex items-center justify-center">
         {staff.profileImageUrl ? (
@@ -1171,7 +1171,7 @@ function StaffCard({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
-            className="flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white disabled:opacity-60"
+            className="flex items-center gap-1.5 rounded-md bg-white/90 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-white disabled:opacity-60"
           >
             <Camera className="h-3.5 w-3.5" />
             {uploading ? "업로드 중..." : "이미지 변경"}
@@ -1191,7 +1191,7 @@ function StaffCard({
           </button>
         ) : null}
         {/* 활성 표시 */}
-        <div className={`absolute top-2 right-2 h-2.5 w-2.5 rounded-full border-2 border-card ${staff.active ? "bg-green-500" : "bg-muted-foreground/50"}`} title={staff.active ? "활성" : "비활성"} />
+        <div className={`absolute top-2 right-2 h-2.5 w-2.5 rounded-md border-2 border-card ${staff.active ? "bg-green-500" : "bg-muted-foreground/50"}`} title={staff.active ? "활성" : "비활성"} />
       </div>
 
       {/* 정보 영역 */}
@@ -1199,7 +1199,7 @@ function StaffCard({
         <div>
           <div className="flex items-center gap-1.5 mb-0.5">
             <p className="font-semibold text-sm">{staff.name}</p>
-            <span className={`rounded-full px-1.5 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[staff.role]}`}>
+            <span className={`rounded-md px-1.5 py-0.5 text-xs font-medium ${ROLE_BADGE_CLASS[staff.role]}`}>
               {ROLE_LABELS[staff.role]}
             </span>
           </div>

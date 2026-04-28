@@ -252,7 +252,7 @@ function TreeNode({
           onSelect(item);
           if (hasChildren) onToggle(item.id);
         }}
-        className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer group text-sm transition-colors ${
+        className={`flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer group text-sm transition-colors ${
           isSelected
             ? "bg-primary/10 text-primary font-medium"
             : "hover:bg-muted/60 text-muted-foreground hover:text-foreground"
@@ -397,7 +397,7 @@ export function MenuTreeTab() {
   return (
     <div className="flex gap-4 h-[600px]">
       {/* Left: Tree */}
-      <div className="w-72 shrink-0 rounded-lg border border-border bg-muted/20 flex flex-col overflow-hidden">
+      <div className="w-72 shrink-0 rounded-md border border-border bg-muted/20 flex flex-col overflow-hidden">
         <div className="px-3 py-2 border-b border-border flex items-center justify-between">
           <div className="text-xs font-semibold text-muted-foreground">
             메뉴 트리 <span className="ml-1 font-normal opacity-60">드래그로 순서 변경</span>
@@ -440,7 +440,7 @@ export function MenuTreeTab() {
       </div>
 
       {/* Right: Detail */}
-      <div className="flex-1 rounded-lg border border-border bg-background p-4 overflow-hidden">
+      <div className="flex-1 rounded-md border border-border bg-background p-4 overflow-hidden">
         {selected ? (
           <DetailPanel
             key={selected.id}

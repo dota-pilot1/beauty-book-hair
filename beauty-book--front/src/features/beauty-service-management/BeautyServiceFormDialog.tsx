@@ -179,7 +179,7 @@ export function BeautyServiceFormDialog({ open, beautyService, defaultCategoryId
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
-        className="max-h-[calc(100vh-2rem)] w-full max-w-5xl overflow-y-auto rounded-lg border border-border bg-background p-6 shadow-lg"
+        className="max-h-[calc(100vh-2rem)] w-full max-w-5xl overflow-y-auto rounded-md border border-border bg-background p-6 shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="mb-4 text-base font-semibold">{isEdit ? "시술 수정" : "시술 등록"}</h2>

@@ -1,7 +1,9 @@
 package com.cj.beautybook.site_settings.presentation;
 
 import com.cj.beautybook.site_settings.application.SiteSettingService;
+import com.cj.beautybook.site_settings.presentation.dto.MailSettingResponse;
 import com.cj.beautybook.site_settings.presentation.dto.SiteSettingResponse;
+import com.cj.beautybook.site_settings.presentation.dto.UpdateMailSettingRequest;
 import com.cj.beautybook.site_settings.presentation.dto.UpdateSiteSettingRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,5 +35,19 @@ public class SiteSettingController {
     @PreAuthorize("hasRole('ADMIN')")
     public SiteSettingResponse update(@Valid @RequestBody UpdateSiteSettingRequest request) {
         return service.update(request);
+    }
+
+    @GetMapping("/mail")
+    @Operation(summary = "메일 설정 조회 (ROLE_ADMIN 전용)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public MailSettingResponse getMailSetting() {
+        return service.getMailSetting();
+    }
+
+    @PutMapping("/mail")
+    @Operation(summary = "메일 설정 수정 (ROLE_ADMIN 전용)")
+    @PreAuthorize("hasRole('ADMIN')")
+    public MailSettingResponse updateMailSetting(@Valid @RequestBody UpdateMailSettingRequest request) {
+        return service.updateMailSetting(request);
     }
 }

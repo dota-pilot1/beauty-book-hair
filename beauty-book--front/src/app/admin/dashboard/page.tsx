@@ -16,6 +16,7 @@ const STATUS_META: Record<ReservationStatus, { label: string; className: string 
   CONFIRMED:             { label: "예약 확정",   className: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" },
   CANCELLED_BY_CUSTOMER: { label: "고객 취소",   className: "bg-muted text-muted-foreground" },
   CANCELLED_BY_ADMIN:    { label: "관리자 취소", className: "bg-muted text-muted-foreground" },
+  EXPIRED:               { label: "요청 만료",   className: "bg-zinc-100 text-zinc-500 ring-1 ring-zinc-200" },
   COMPLETED:             { label: "완료",        className: "bg-blue-50 text-blue-700 ring-1 ring-blue-200" },
   NO_SHOW:               { label: "노쇼",        className: "bg-rose-50 text-rose-700 ring-1 ring-rose-200" },
 };
@@ -74,13 +75,13 @@ export default function AdminDashboardPage() {
         <div className="flex shrink-0 items-center gap-2">
           <Link
             href="/reservations"
-            className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+            className="inline-flex items-center gap-1.5 rounded-md border border-black/10 bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
           >
             예약 홈
           </Link>
           <Link
             href="/admin/reservations"
-            className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background"
+            className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background"
           >
             <TrendingUp className="h-4 w-4" />
             전체 예약 보기
@@ -97,9 +98,9 @@ export default function AdminDashboardPage() {
           {stats.map(({ label, value, icon: Icon, accent }) => (
             <article
               key={label}
-              className="flex items-start gap-4 rounded-2xl border border-black/8 bg-card p-5 shadow-sm"
+              className="flex items-start gap-4 rounded-md border border-black/8 bg-card p-5 shadow-sm"
             >
-              <div className="rounded-xl bg-muted/60 p-2.5">
+              <div className="rounded-md bg-muted/60 p-2.5">
                 <Icon className={`h-4 w-4 ${accent}`} />
               </div>
               <div className="min-w-0">
@@ -112,14 +113,14 @@ export default function AdminDashboardPage() {
       </section>
 
       {/* 오늘 예약 현황 */}
-      <section className="rounded-2xl border border-black/8 bg-card shadow-sm">
+      <section className="rounded-md border border-black/8 bg-card shadow-sm">
         {/* 섹션 헤더 */}
         <div className="flex items-center justify-between border-b border-black/6 px-6 py-4">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-semibold text-foreground">오늘 예약 현황</span>
           </div>
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+          <span className="rounded-md bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
             {todayReservations.length}건
           </span>
         </div>
@@ -129,10 +130,10 @@ export default function AdminDashboardPage() {
           <div className="space-y-3">
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted/50" />
+                <div key={i} className="h-20 animate-pulse rounded-md bg-muted/50" />
               ))
             ) : todayReservations.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-black/10 bg-muted/20 py-12">
+              <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-black/10 bg-muted/20 py-12">
                 <CalendarDays className="h-8 w-8 text-muted-foreground/40" />
                 <p className="mt-3 text-sm text-muted-foreground">오늘 예약이 없습니다.</p>
               </div>
@@ -159,6 +160,7 @@ export default function AdminDashboardPage() {
 const DELETABLE_STATUSES: ReservationStatus[] = [
   "CANCELLED_BY_CUSTOMER",
   "CANCELLED_BY_ADMIN",
+  "EXPIRED",
   "COMPLETED",
   "NO_SHOW",
 ];
@@ -189,10 +191,10 @@ function ReservationCard({
   const meta = STATUS_META[r.status];
 
   return (
-    <div className="rounded-2xl border border-black/8 bg-background p-4">
+    <div className="rounded-md border border-black/8 bg-background p-4">
       {/* 카드 헤더: 상태 배지 + 시간 + 삭제 버튼 */}
       <div className="flex items-center gap-2">
-        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${meta.className}`}>
+        <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${meta.className}`}>
           {meta.label}
         </span>
         <span className="text-xs text-muted-foreground">
@@ -204,14 +206,14 @@ function ReservationCard({
               type="button"
               disabled={isPending}
               onClick={() => setShowDeleteConfirm(true)}
-              className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2 py-0.5 text-xs text-red-500 hover:bg-red-50 disabled:opacity-40"
+              className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2 py-0.5 text-xs text-red-500 hover:bg-red-50 disabled:opacity-40"
             >
               <Trash2 className="h-3 w-3" />
               삭제
             </button>
           )}
           {showDeleteConfirm && (
-            <div className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-1">
+            <div className="flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-1">
               <p className="text-xs text-red-600">삭제할까요?</p>
               <button
                 type="button"
@@ -257,7 +259,7 @@ function ReservationCard({
                     type="button"
                     disabled={isPending || isCurrent}
                     onClick={() => isCancelBtn ? setShowCancelInput(true) : onChangeStatus(status)}
-                    className={`rounded-lg border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-default ${
+                    className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-default ${
                       isCurrent
                         ? className
                         : "border-black/10 bg-background text-muted-foreground hover:bg-accent disabled:opacity-40"
@@ -276,15 +278,15 @@ function ReservationCard({
                 onChange={(e) => setCancelMemo(e.target.value)}
                 placeholder="취소 사유를 입력하세요..."
                 rows={2}
-                className="w-full resize-none rounded-xl border border-black/10 bg-muted/30 px-3 py-2 text-xs outline-none focus:border-black/20"
+                className="w-full resize-none rounded-md border border-black/10 bg-muted/30 px-3 py-2 text-xs outline-none focus:border-black/20"
               />
               <div className="flex gap-1.5">
                 <button type="button" disabled={isPending} onClick={handleAdminCancel}
-                  className="flex-1 rounded-lg bg-rose-500 py-1.5 text-xs font-medium text-white disabled:opacity-50">
+                  className="flex-1 rounded-md bg-rose-500 py-1.5 text-xs font-medium text-white disabled:opacity-50">
                   취소 확정
                 </button>
                 <button type="button" onClick={() => { setShowCancelInput(false); setCancelMemo(""); }}
-                  className="flex-1 rounded-lg border border-black/10 py-1.5 text-xs font-medium text-muted-foreground">
+                  className="flex-1 rounded-md border border-black/10 py-1.5 text-xs font-medium text-muted-foreground">
                   돌아가기
                 </button>
               </div>

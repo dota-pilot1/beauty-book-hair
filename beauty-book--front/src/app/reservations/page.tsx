@@ -16,6 +16,7 @@ import { reservationApi } from "@/entities/reservation/api/reservationApi";
 const DELETABLE_STATUSES: ReservationStatus[] = [
   "CANCELLED_BY_CUSTOMER",
   "CANCELLED_BY_ADMIN",
+  "EXPIRED",
   "COMPLETED",
   "NO_SHOW",
 ];
@@ -25,6 +26,7 @@ const STATUS_META: Record<ReservationStatus, { label: string; badgeClass: string
   CONFIRMED:            { label: "예약 확정",   badgeClass: "bg-emerald-100 text-emerald-700", headerClass: "bg-emerald-50/60 border-b border-emerald-200", legacyClass: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200", borderClass: "border-l-emerald-400 bg-emerald-50/40" },
   CANCELLED_BY_CUSTOMER:{ label: "고객 취소",   badgeClass: "bg-slate-100 text-slate-500",     headerClass: "bg-slate-50/60 border-b border-slate-200",   legacyClass: "bg-muted text-muted-foreground",                     borderClass: "border-l-slate-300 bg-slate-50/40" },
   CANCELLED_BY_ADMIN:   { label: "관리자 취소", badgeClass: "bg-slate-100 text-slate-500",     headerClass: "bg-slate-50/60 border-b border-slate-200",   legacyClass: "bg-muted text-muted-foreground",                     borderClass: "border-l-slate-300 bg-slate-50/40" },
+  EXPIRED:              { label: "요청 만료",   badgeClass: "bg-zinc-100 text-zinc-500",       headerClass: "bg-zinc-50/60 border-b border-zinc-200",     legacyClass: "bg-zinc-100 text-zinc-500 ring-1 ring-zinc-200",     borderClass: "border-l-zinc-300 bg-zinc-50/40" },
   COMPLETED:            { label: "완료",        badgeClass: "bg-blue-100 text-blue-700",       headerClass: "bg-blue-50/60 border-b border-blue-200",     legacyClass: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",      borderClass: "border-l-blue-400 bg-blue-50/40" },
   NO_SHOW:              { label: "노쇼",        badgeClass: "bg-rose-100 text-rose-700",       headerClass: "bg-rose-50/60 border-b border-rose-200",     legacyClass: "bg-rose-50 text-rose-700 ring-1 ring-rose-200",      borderClass: "border-l-rose-400 bg-rose-50/40" },
 };

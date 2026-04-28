@@ -82,13 +82,13 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
   };
 
   return (
-    <section className="rounded-2xl border border-black/12 bg-card shadow-sm">
+    <section className="rounded-md border border-black/12 bg-card shadow-sm">
       <div className="flex items-center justify-between border-b border-black/8 px-5 py-4">
         <h2 className="text-base font-semibold text-foreground">게시판 설정</h2>
         <button
           type="button"
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:opacity-90"
+          className="rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:opacity-90"
         >
           {showForm ? "닫기" : "게시판 추가"}
         </button>
@@ -104,7 +104,7 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="예: notice"
-                className="w-full rounded-xl border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="w-full rounded-md border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </div>
             <div>
@@ -112,7 +112,7 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
               <select
                 value={kind}
                 onChange={(e) => setKind(e.target.value as BoardKind)}
-                className="w-full rounded-xl border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="w-full rounded-md border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               >
                 {BOARD_KINDS.map((k) => (
                   <option key={k} value={k}>
@@ -127,7 +127,7 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="예: 공지사항"
-                className="w-full rounded-xl border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="w-full rounded-md border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </div>
             <div>
@@ -136,7 +136,7 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="간단한 설명"
-                className="w-full rounded-xl border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="w-full rounded-md border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
             </div>
           </div>
@@ -145,7 +145,7 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
               type="button"
               disabled={createConfig.isPending || !code.trim() || !displayName.trim()}
               onClick={handleSubmit}
-              className="rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 hover:opacity-90"
+              className="rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 hover:opacity-90"
             >
               {createConfig.isPending ? "저장 중…" : "저장"}
             </button>
@@ -157,7 +157,7 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
       <div className="divide-y divide-black/8">
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-14 animate-pulse mx-5 my-3 rounded-xl bg-muted/50" />
+            <div key={i} className="h-14 animate-pulse mx-5 my-3 rounded-md bg-muted/50" />
           ))
         ) : configs.length === 0 ? (
           <p className="px-5 py-8 text-center text-sm text-muted-foreground">
@@ -168,11 +168,11 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
             const kb = KIND_BADGE[config.kind];
             return (
               <div key={config.id} className="flex items-center gap-3 px-5 py-3.5">
-                <code className="shrink-0 rounded-lg bg-muted px-2 py-1 text-xs font-mono text-muted-foreground">
+                <code className="shrink-0 rounded-md bg-muted px-2 py-1 text-xs font-mono text-muted-foreground">
                   {config.code}
                 </code>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${kb.className}`}
+                  className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-medium ${kb.className}`}
                 >
                   {kb.label}
                 </span>
@@ -180,7 +180,7 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
                   {config.displayName}
                 </span>
                 {!config.isActive && (
-                  <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs text-rose-700">
+                  <span className="rounded-md bg-rose-100 px-2 py-0.5 text-xs text-rose-700">
                     비활성
                   </span>
                 )}
@@ -188,7 +188,7 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
                   <button
                     type="button"
                     onClick={() => onSelectCode(config.code)}
-                    className="rounded-full border border-black/12 px-4 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+                    className="rounded-md border border-black/12 px-4 py-1.5 text-xs font-medium text-muted-foreground hover:border-primary hover:text-primary transition-colors"
                   >
                     게시글 보기
                   </button>
@@ -200,7 +200,7 @@ function BoardConfigSection({ onSelectCode }: { onSelectCode: (code: string) => 
                         deleteConfig.mutate(config.id);
                       }
                     }}
-                    className="rounded-full border border-rose-200 px-4 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                    className="rounded-md border border-rose-200 px-4 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
                   >
                     삭제
                   </button>
@@ -246,7 +246,7 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
   };
 
   return (
-    <section className="rounded-2xl border border-black/12 bg-card shadow-sm">
+    <section className="rounded-md border border-black/12 bg-card shadow-sm">
       <div className="flex items-center justify-between border-b border-black/8 px-5 py-4">
         <div>
           <h2 className="text-base font-semibold text-foreground">게시글 관리</h2>
@@ -258,7 +258,7 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
         <button
           type="button"
           onClick={() => setShowForm((v) => !v)}
-          className="rounded-full bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:opacity-90"
+          className="rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:opacity-90"
         >
           {showForm ? "닫기" : "게시글 작성"}
         </button>
@@ -273,7 +273,7 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="게시글 제목을 입력하세요"
-              className="w-full rounded-xl border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              className="w-full rounded-md border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
           <div>
@@ -283,7 +283,7 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
               onChange={(e) => setContent(e.target.value)}
               placeholder="본문 내용을 입력하세요"
               rows={4}
-              className="w-full resize-none rounded-xl border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+              className="w-full resize-none rounded-md border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
           <div className="flex items-center gap-3">
@@ -292,7 +292,7 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as BoardStatus)}
-                className="rounded-xl border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                className="rounded-md border border-black/12 bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               >
                 {BOARD_STATUSES.map((s) => (
                   <option key={s} value={s}>
@@ -306,7 +306,7 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
               type="button"
               disabled={createPost.isPending || !title.trim()}
               onClick={handleCreate}
-              className="self-end rounded-full bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 hover:opacity-90"
+              className="self-end rounded-md bg-primary px-5 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 hover:opacity-90"
             >
               {createPost.isPending ? "저장 중…" : "저장"}
             </button>
@@ -318,7 +318,7 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
       {isLoading ? (
         <div className="space-y-3 p-5">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-12 animate-pulse rounded-xl bg-muted/50" />
+            <div key={i} className="h-12 animate-pulse rounded-md bg-muted/50" />
           ))}
         </div>
       ) : posts.length === 0 ? (
@@ -346,13 +346,13 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
                       {post.title}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${sb.className}`}>
+                      <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${sb.className}`}>
                         {sb.label}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
                       {post.isPinned ? (
-                        <span className="inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                        <span className="inline-flex rounded-md bg-primary/10 px-2 py-0.5 text-xs text-primary">
                           고정
                         </span>
                       ) : (
@@ -369,7 +369,7 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
                             type="button"
                             disabled={unpinPost.isPending}
                             onClick={() => unpinPost.mutate(post.id)}
-                            className="rounded-lg border border-black/12 px-2.5 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-40"
+                            className="rounded-md border border-black/12 px-2.5 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-40"
                           >
                             고정해제
                           </button>
@@ -378,7 +378,7 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
                             type="button"
                             disabled={pinPost.isPending}
                             onClick={() => pinPost.mutate(post.id)}
-                            className="rounded-lg border border-black/12 px-2.5 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-40"
+                            className="rounded-md border border-black/12 px-2.5 py-1 text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors disabled:opacity-40"
                           >
                             고정
                           </button>
@@ -391,7 +391,7 @@ function BoardPostSection({ selectedCode }: { selectedCode: string }) {
                               deletePost.mutate(post.id);
                             }
                           }}
-                          className="rounded-lg border border-rose-200 px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
+                          className="rounded-md border border-rose-200 px-2.5 py-1 text-xs text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-40"
                         >
                           삭제
                         </button>
