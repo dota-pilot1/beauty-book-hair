@@ -94,7 +94,7 @@ export const adminNavItems: AdminNavItem[] = [
     icon: BookOpen,
   },
   {
-    href: "/booking",
+    href: "/booking?start=1",
     label: "예약 홈",
     description: "고객 예약 화면을 미리 봅니다.",
     icon: CalendarRange,
@@ -176,9 +176,10 @@ export function AdminSidebar() {
           )}
         >
           {adminNavItems.map(({ href, label, description, icon: Icon, exact }) => {
+            const hrefPath = href.split("?")[0] ?? href;
             const active = exact
-              ? pathname === href
-              : pathname === href || pathname.startsWith(`${href}/`);
+              ? pathname === hrefPath
+              : pathname === hrefPath || pathname.startsWith(`${hrefPath}/`);
             return (
               <Link
                 key={href}

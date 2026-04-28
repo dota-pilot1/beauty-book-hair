@@ -42,7 +42,7 @@ const customerNavItems: CustomerNavItem[] = [
     icon: LayoutGrid,
   },
   {
-    href: "/booking",
+    href: "/booking?start=1",
     label: "예약하기",
     description: "날짜·시간·디자이너 선택",
     icon: CalendarCheck2,
@@ -179,7 +179,8 @@ export function CustomerShell({
             )}
           >
             {customerNavItems.map(({ href, label, description: desc, icon: Icon }) => {
-              const normalizedHref = href !== "/" ? href.replace(/\/+$/, "") || "/" : href;
+              const hrefPath = href.split("?")[0] ?? href;
+              const normalizedHref = hrefPath !== "/" ? hrefPath.replace(/\/+$/, "") || "/" : hrefPath;
               const active =
                 normalizedPathname === normalizedHref ||
                 Boolean(

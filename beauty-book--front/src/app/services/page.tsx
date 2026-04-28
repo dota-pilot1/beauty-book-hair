@@ -171,7 +171,7 @@ function ServicesContent() {
                     </p>
                   </div>
                   <a
-                    href="/booking"
+                    href="/booking?start=1"
                     className="mt-5 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
                   >
                     이 시술로 예약하기
@@ -247,7 +247,7 @@ function ServicesContent() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <a
-                      href="/booking"
+                      href="/booking?start=1"
                       className="inline-flex rounded-full bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       예약하기

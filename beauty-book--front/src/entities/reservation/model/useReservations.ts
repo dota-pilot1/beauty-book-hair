@@ -73,3 +73,11 @@ export function usePendingReservations() {
     refetchInterval: 30_000,
   });
 }
+
+export function useAllRequestedReservations() {
+  return useQuery({
+    queryKey: ["reservations", "requested-all"],
+    queryFn: reservationApi.listAllRequested,
+    refetchInterval: 30_000,
+  });
+}

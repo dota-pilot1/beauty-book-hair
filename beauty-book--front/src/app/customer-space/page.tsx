@@ -252,7 +252,7 @@ export default function CustomerSpacePage() {
               직원 스케쥴
             </button>
             <Link
-              href="/booking"
+              href="/booking?start=1"
               className="inline-flex items-center justify-center rounded-md bg-foreground px-4 py-2 text-sm font-semibold text-background hover:opacity-80 transition-opacity"
             >
               예약 하기

@@ -95,6 +95,18 @@ public class ReservationController {
                 .toList();
     }
 
+    @GetMapping("/requested")
+    public List<ReservationResponse> listAllRequested(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        boolean isAdmin = "ROLE_ADMIN".equals(principal.getRoleCode())
+                || "ROLE_MANAGER".equals(principal.getRoleCode());
+        return reservationService.findAllRequested()
+                .stream()
+                .map(r -> ReservationResponse.from(r, isAdmin))
+                .toList();
+    }
+
     @PatchMapping("/{id}/status")
     public ReservationResponse changeStatus(
             @PathVariable Long id,

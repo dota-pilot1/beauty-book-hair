@@ -70,4 +70,8 @@ public class User {
     public void updateProfileImage(String profileImageUrl) {
         this.profileImageUrl = profileImageUrl;
     }
+
+    public void changePassword(String newPasswordHash) {
+        this.passwordHash = newPasswordHash;
+    }
 }

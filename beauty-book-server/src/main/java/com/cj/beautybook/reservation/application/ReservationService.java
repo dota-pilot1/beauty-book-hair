@@ -124,6 +124,11 @@ public class ReservationService {
         return reservationRepository.findByStartAtBetweenOrderByStartAtAsc(from, to);
     }
 
+    @Transactional(readOnly = true)
+    public List<Reservation> findAllRequested() {
+        return reservationRepository.findAllActive(List.of(ReservationStatus.REQUESTED));
+    }
+
     @Transactional
     public Reservation changeStatus(Long id, ChangeReservationStatusRequest req, UserPrincipal principal) {
         ReservationStatus status = req.status();

@@ -106,7 +106,7 @@ const adminNavItems: AdminNavItem[] = [
     icon: BookOpen,
   },
   {
-    href: "/booking",
+    href: "/booking?start=1",
     label: "예약 홈",
     description: "고객 예약 화면을 미리 봅니다.",
     icon: CalendarRange,
@@ -156,7 +156,8 @@ export function AdminShell({
             )}
           >
             {adminNavItems.map(({ href, label, icon: Icon }) => {
-              const normalizedHref = href !== "/" ? href.replace(/\/+$/, "") || "/" : href;
+              const hrefPath = href.split("?")[0] ?? href;
+              const normalizedHref = hrefPath !== "/" ? hrefPath.replace(/\/+$/, "") || "/" : hrefPath;
               const active =
                 normalizedPathname === normalizedHref ||
                 Boolean(

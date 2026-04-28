@@ -34,4 +34,7 @@ export const reservationApi = {
 
   listPending: () =>
     api.get<Reservation[]>("/api/reservations/pending").then((r) => r.data),
+
+  listAllRequested: () =>
+    api.get<Reservation[]>("/api/reservations/requested").then((r) => r.data),
 };

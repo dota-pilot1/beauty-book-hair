@@ -2,6 +2,7 @@ package com.cj.beautybook.user.application;
 
 import com.cj.beautybook.auth.domain.RefreshToken;
 import com.cj.beautybook.auth.infrastructure.RefreshTokenRepository;
+import com.cj.beautybook.notification.application.NotificationService;
 import com.cj.beautybook.auth.jwt.JwtTokenProvider;
 import com.cj.beautybook.auth.jwt.TokenType;
 import com.cj.beautybook.auth.security.UserPrincipal;
@@ -18,6 +19,7 @@ import com.cj.beautybook.user.presentation.dto.*;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -39,6 +42,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
+    private final NotificationService notificationService;
 
     @Transactional
     public SignupResponse signup(SignupRequest req) {
@@ -52,6 +56,11 @@ public class AuthService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND));
         String hash = passwordEncoder.encode(req.password());
         User saved = userRepository.save(User.createNewUser(req.email(), hash, req.username(), defaultRole));
+        try {
+            notificationService.sendWelcome(saved);
+        } catch (Exception e) {
+            log.warn("환영 메일 발송 실패 userId={}", saved.getId(), e);
+        }
         return SignupResponse.from(saved);
     }
 

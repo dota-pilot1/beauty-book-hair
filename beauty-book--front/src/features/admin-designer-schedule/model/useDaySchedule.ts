@@ -115,10 +115,10 @@ export function useDaySchedule(staffId: number, date: string, enabled: boolean):
   const monthEnd = new Date(Date.UTC(y, m, 0, 23, 59, 59)).toISOString();
 
   const blockedTimesQ = useQuery({
-    queryKey: ["admin-blocked-times", y, m],
+    queryKey: ["blocked-times", y, m],
     queryFn: () =>
       api
-        .get<BlockedTimeItem[]>("/api/admin/schedules/blocked-times", {
+        .get<BlockedTimeItem[]>("/api/schedules/blocked-times", {
           params: { startAt: monthStart, endAt: monthEnd },
         })
         .then((r) => r.data),
@@ -129,7 +129,7 @@ export function useDaySchedule(staffId: number, date: string, enabled: boolean):
     queryKey: ["recurring-blocked-times"],
     queryFn: () =>
       api
-        .get<RecurringBlockedTimeItem[]>("/api/admin/schedules/recurring-blocked-times")
+        .get<RecurringBlockedTimeItem[]>("/api/schedules/recurring-blocked-times")
         .then((r) => r.data),
     enabled,
   });

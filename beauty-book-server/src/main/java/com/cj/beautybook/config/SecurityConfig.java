@@ -82,14 +82,16 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/login",
                                 "/api/auth/refresh",
-                                "/api/auth/check-email"
+                                "/api/auth/check-email",
+                                "/api/auth/password-reset/request",
+                                "/api/auth/password-reset/confirm"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/site-settings").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/menus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/beauty-services", "/api/beauty-services/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/staff").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reservation-slots").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/schedules/business-hours").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/schedules/business-hours", "/api/schedules/staff-working-hours", "/api/schedules/staff-slots", "/api/schedules/blocked-times", "/api/schedules/recurring-blocked-times").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/boards/configs").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/boards/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/blog/posts", "/api/blog/posts/**", "/api/blog/tags", "/api/blog/categories").permitAll()

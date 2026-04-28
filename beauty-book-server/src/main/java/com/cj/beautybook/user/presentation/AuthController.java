@@ -4,6 +4,9 @@ import com.cj.beautybook.auth.security.UserPrincipal;
 import com.cj.beautybook.common.exception.BusinessException;
 import com.cj.beautybook.common.exception.ErrorCode;
 import com.cj.beautybook.user.application.AuthService;
+import com.cj.beautybook.user.application.PasswordResetService;
+import com.cj.beautybook.user.presentation.dto.PasswordResetConfirmDto;
+import com.cj.beautybook.user.presentation.dto.PasswordResetRequestDto;
 import com.cj.beautybook.user.infrastructure.UserRepository;
 import com.cj.beautybook.user.presentation.dto.*;
 import jakarta.validation.Valid;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasswordResetService passwordResetService;
     private final UserRepository userRepository;
 
     @PostMapping("/signup")
@@ -58,6 +62,18 @@ public class AuthController {
                 .map(UserSummary::from)
                 .map(ResponseEntity::ok)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+    }
+
+    @PostMapping("/password-reset/request")
+    public ResponseEntity<Void> passwordResetRequest(@Valid @RequestBody PasswordResetRequestDto req) {
+        passwordResetService.requestReset(req.email());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/password-reset/confirm")
+    public ResponseEntity<Void> passwordResetConfirm(@Valid @RequestBody PasswordResetConfirmDto req) {
+        passwordResetService.confirmReset(req.token(), req.newPassword());
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/me/profile-image")

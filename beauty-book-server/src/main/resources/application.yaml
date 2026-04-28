@@ -20,6 +20,18 @@ spring:
         format_sql: true
     show-sql: true
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
+
 cors:
   allowed-origin: ${ALLOWED_ORIGIN:https://dxline-tallent.com,http://localhost:3000,http://localhost:4100}
 
@@ -28,6 +40,9 @@ jwt:
   access-token-expiration-ms: 1800000
   refresh-token-expiration-ms: 604800000
   issuer: beauty-book
+
+app:
+  front-url: ${FRONT_URL:https://dxline-tallent.com}
 
 aws:
   s3:

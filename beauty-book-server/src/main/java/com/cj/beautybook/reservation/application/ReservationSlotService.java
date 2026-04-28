@@ -9,6 +9,7 @@ import com.cj.beautybook.reservation.domain.ReservationStatus;
 import com.cj.beautybook.reservation.infrastructure.ReservationRepository;
 import com.cj.beautybook.reservation.presentation.dto.AvailableStaffResponse;
 import com.cj.beautybook.reservation.presentation.dto.ReservationSlotResponse;
+import com.cj.beautybook.reservation.presentation.dto.StaffSlotResponse;
 import com.cj.beautybook.schedule.domain.BlockedTime;
 import com.cj.beautybook.schedule.domain.BusinessHour;
 import com.cj.beautybook.schedule.domain.RecurringBlockedTime;
@@ -352,5 +353,94 @@ public class ReservationSlotService {
             case PERSONAL -> "🙏 개인 사정";
             case ETC -> "📌 기타";
         };
+    }
+
+    @Transactional(readOnly = true)
+    public List<StaffSlotResponse> findStaffAvailability(Long staffId, LocalDate date) {
+        Staff staff = staffRepository.findById(staffId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STAFF_NOT_FOUND));
+
+        DayOfWeek dayOfWeek = date.getDayOfWeek();
+        BusinessHour businessHour = businessHourRepository.findByDayOfWeek(dayOfWeek)
+                .orElseThrow(() -> new BusinessException(ErrorCode.BUSINESS_HOUR_NOT_FOUND));
+
+        if (businessHour.isClosed() || businessHour.getOpenTime() == null || businessHour.getCloseTime() == null) {
+            return List.of();
+        }
+
+        Instant dayStart = date.atStartOfDay(STORE_ZONE).toInstant();
+        Instant dayEnd = date.plusDays(1).atStartOfDay(STORE_ZONE).toInstant();
+
+        StaffWorkingHour workingHour = staffWorkingHourRepository
+                .findByStaffIdAndDayOfWeek(staffId, dayOfWeek)
+                .orElse(null);
+
+        List<RecurringBlockedTime> allRecurring = recurringBlockedTimeRepository.findByActiveTrue();
+        List<BlockedTime> recurringBlocked = allRecurring.stream()
+                .filter(r -> r.parseDaysOfWeek().contains(dayOfWeek))
+                .filter(r -> r.getStaff() == null || r.getStaff().getId().equals(staffId))
+                .map(r -> BlockedTime.create(
+                        r.getStaff(),
+                        date.atTime(r.getStartTime()).atZone(STORE_ZONE).toInstant(),
+                        date.atTime(r.getEndTime()).atZone(STORE_ZONE).toInstant(),
+                        r.getReason(),
+                        r.getBlockType()
+                ))
+                .toList();
+
+        List<BlockedTime> oneTimeBlocked = blockedTimeRepository.findConflicting(staffId, dayStart, dayEnd);
+        List<BlockedTime> allBlocked = new ArrayList<>(oneTimeBlocked);
+        allBlocked.addAll(recurringBlocked);
+
+        List<Reservation> reservations = reservationRepository
+                .findByStaffIdAndStartAtLessThanAndEndAtGreaterThanAndStatusIn(
+                        staffId, dayEnd, dayStart, OCCUPYING_STATUSES);
+
+        LocalDateTime cursor = date.atTime(businessHour.getOpenTime());
+        LocalDateTime closeAt = date.atTime(businessHour.getCloseTime());
+        Instant now = Instant.now();
+
+        List<StaffSlotResponse> result = new ArrayList<>();
+        while (cursor.isBefore(closeAt)) {
+            Instant startAt = cursor.atZone(STORE_ZONE).toInstant();
+            Instant endAt = cursor.plusMinutes(SLOT_UNIT_MINUTES).atZone(STORE_ZONE).toInstant();
+
+            String status;
+            String blockType = null;
+            String reason = null;
+
+            boolean isOffDuty = workingHour == null || !workingHour.isWorking()
+                    || workingHour.getStartTime() == null || workingHour.getEndTime() == null
+                    || cursor.toLocalTime().isBefore(workingHour.getStartTime())
+                    || cursor.plusMinutes(SLOT_UNIT_MINUTES).toLocalTime().isAfter(workingHour.getEndTime());
+
+            BlockedTime overlappingBlock = allBlocked.stream()
+                    .filter(b -> overlaps(b.getStartAt(), b.getEndAt(), startAt, endAt))
+                    .findFirst()
+                    .orElse(null);
+
+            if (overlappingBlock != null) {
+                status = "BLOCKED";
+                blockType = overlappingBlock.getBlockType().name();
+                reason = overlappingBlock.getReason();
+            } else if (startAt.isBefore(now)) {
+                status = "PAST";
+            } else if (isOffDuty) {
+                status = "OFF_DUTY";
+            } else if (reservations.stream().anyMatch(r ->
+                    r.getStatus() == ReservationStatus.CONFIRMED && overlaps(r.getStartAt(), r.getEndAt(), startAt, endAt))) {
+                status = "BOOKED";
+            } else if (reservations.stream().anyMatch(r ->
+                    r.getStatus() == ReservationStatus.REQUESTED && overlaps(r.getStartAt(), r.getEndAt(), startAt, endAt))) {
+                status = "REQUESTED";
+            } else {
+                status = "AVAILABLE";
+            }
+
+            result.add(new StaffSlotResponse(startAt.toString(), endAt.toString(), status, blockType, reason));
+            cursor = cursor.plusMinutes(SLOT_UNIT_MINUTES);
+        }
+
+        return result;
     }
 }

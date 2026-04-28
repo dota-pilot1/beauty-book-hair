@@ -148,6 +148,10 @@ function BookingFlowPage() {
   const createReservation = useCreateReservation();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const shouldRedirectToIntro =
+    searchParams.get("start") !== "1" &&
+    !searchParams.has("designerId") &&
+    !searchParams.has("designerName");
   const [phoneInput, setPhoneInput] = useState("");
   const [serviceViewMode, setServiceViewMode] = useState<"card" | "table">("card");
   const [serviceQuery, setServiceQuery] = useState("");
@@ -207,8 +211,12 @@ function BookingFlowPage() {
   }, [selectedDate, businessHours]);
 
   useEffect(() => {
+    if (shouldRedirectToIntro) {
+      router.replace("/customer-space");
+      return;
+    }
     bookingFlowActions.hydrate();
-  }, []);
+  }, [router, shouldRedirectToIntro]);
 
   // 오늘 슬롯이 전부 PAST이면 내일로 자동 이동 + 오늘 버튼 비활성화
   useEffect(() => {
@@ -235,6 +243,7 @@ function BookingFlowPage() {
 
   // 모바일 자동 오픈 + designerPreset 처리
   useEffect(() => {
+    if (shouldRedirectToIntro) return;
     if (!hydrated) return;
     if (designerPreset) {
       setDesignerFirstOpen(true);
@@ -243,9 +252,11 @@ function BookingFlowPage() {
     if (window.matchMedia("(max-width: 639px)").matches) {
       setOneShotOpen(true);
     }
-  }, [hydrated, designerPreset]);
+  }, [hydrated, designerPreset, shouldRedirectToIntro]);
 
   const currentIndex = steps.findIndex((item) => item.key === step);
+
+  if (shouldRedirectToIntro) return null;
 
   const goNext = () => {
     if (currentIndex < steps.length - 1) {
@@ -1246,7 +1257,7 @@ function SlotSelectableCard({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-2xl border p-4 text-left transition-colors disabled:cursor-not-allowed ${
+      className={`flex min-h-[9rem] flex-col rounded-2xl border p-4 text-left transition-colors disabled:cursor-not-allowed ${
         selected ? "border-black/25 bg-primary/10" : meta.className
       }`}
     >
@@ -1268,7 +1279,7 @@ function SlotSelectableCard({
           {selected ? "선택됨" : meta.label}
         </span>
       </div>
-      <div className="mt-3 space-y-1">
+      <div className="mt-3 flex-1 space-y-1">
         {slot.selectable ? (
           <>
             <p className="text-sm text-muted-foreground">{meta.description}</p>

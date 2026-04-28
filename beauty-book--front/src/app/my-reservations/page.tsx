@@ -37,6 +37,17 @@ function formatDateTime(iso: string) {
   }).format(new Date(iso));
 }
 
+function formatTimeOnly(iso: string) {
+  return new Intl.DateTimeFormat("ko-KR", {
+    hour: "numeric", minute: "2-digit", hour12: true,
+    timeZone: "Asia/Seoul",
+  }).format(new Date(iso));
+}
+
+function formatTimeRange(startIso: string, endIso: string) {
+  return `${formatDateTime(startIso)} ~ ${formatTimeOnly(endIso)}`;
+}
+
 function formatDate(iso: string) {
   return new Intl.DateTimeFormat("ko-KR", {
     year: "numeric", month: "numeric", day: "numeric",
@@ -134,7 +145,7 @@ function MyReservationsContent() {
             </h1>
           </div>
           <Link
-            href="/booking"
+            href="/booking?start=1"
             className="inline-flex h-8 items-center rounded-md bg-foreground px-3.5 text-xs font-semibold text-background hover:opacity-80 transition-opacity"
           >
             새 예약하기
@@ -323,7 +334,7 @@ function ReservationCard({
         </div>
         <div className="flex items-center gap-1.5">
           <span className={`text-[11px] font-medium ${isMuted ? "text-foreground/30" : "text-foreground/50"}`}>일시</span>
-          <span className={`text-[11px] ${isMuted ? "text-foreground/35" : "text-foreground/70"}`}>{formatDateTime(r.startAt)}</span>
+          <span className={`text-[11px] ${isMuted ? "text-foreground/35" : "text-foreground/70"}`}>{formatTimeRange(r.startAt, r.endAt)}</span>
         </div>
         {totalDuration > 0 && (
           <div className="flex items-center gap-1.5">
@@ -371,7 +382,7 @@ function ReservationRow({
           )}
         </div>
         <p className="mt-0.5 text-[11px] text-foreground/45 truncate">
-          {r.staffName} &middot; {formatDateTime(r.startAt)}
+          {r.staffName} &middot; {formatTimeRange(r.startAt, r.endAt)}
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2">

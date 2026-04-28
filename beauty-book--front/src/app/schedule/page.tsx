@@ -530,6 +530,7 @@ function BlockedTimeSection() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-blocked-times"] });
+      queryClient.invalidateQueries({ queryKey: ["blocked-times"] });
       setForm({ startAt: "", endAt: "", reason: "", blockType: "STORE_CLOSED" });
       setFormError("");
     },
@@ -538,7 +539,10 @@ function BlockedTimeSection() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/api/admin/schedules/blocked-times/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["admin-blocked-times"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-blocked-times"] });
+      queryClient.invalidateQueries({ queryKey: ["blocked-times"] });
+    },
   });
 
   function handleCreate() {

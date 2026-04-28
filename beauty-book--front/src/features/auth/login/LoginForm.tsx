@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -24,11 +24,6 @@ export function LoginForm({ nextPath }: LoginFormProps) {
   const router = useRouter();
   const { t } = useTranslation("auth");
   const [formError, setFormError] = useState<string | null>(null);
-  const [selectedDev, setSelectedDev] = useState<string>("관리자");
-  useEffect(() => {
-    const stored = localStorage.getItem("dev-account");
-    if (stored && stored !== "관리자") setSelectedDev(stored);
-  }, []);
   const devAccounts = [
     {
       label: "관리자",
@@ -43,6 +38,14 @@ export function LoginForm({ nextPath }: LoginFormProps) {
       icon: UserRound,
     },
   ] as const;
+
+  const storedLabel =
+    typeof window !== "undefined"
+      ? (localStorage.getItem("dev-account") ?? "관리자")
+      : "관리자";
+  const initialAccount =
+    devAccounts.find((a) => a.label === storedLabel) ?? devAccounts[0];
+  const [selectedDev, setSelectedDev] = useState<string>(initialAccount.label);
 
   const safePath =
     nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//")
@@ -59,8 +62,8 @@ export function LoginForm({ nextPath }: LoginFormProps) {
     resolver: zodResolver(loginSchema),
     mode: "onBlur",
     defaultValues: {
-      email: selectedDev === "고객" ? "customer@daum.net" : "admin@daum.net",
-      password: "password123",
+      email: initialAccount.email,
+      password: initialAccount.password,
     },
   });
 
